@@ -15,32 +15,29 @@
       max-width: 100%;
       padding: 0;
     }
-    .overlay-bar {
-      position: fixed;
-      top: 0;
-      left: 0;
+    .top-bar {
       width: 100%;
       z-index: 1000;
+      background: rgba(255, 255, 255, 0.95);
     }
-    .overlay-table {
+    .top-table {
       display: grid;
       grid-template-columns: 1fr 1fr 1fr 1fr;
-      background: rgba(255, 255, 255, 0.85);
     }
-    .overlay-table .cell {
+    .top-table .cell {
       display: flex;
       align-items: center;
       justify-content: center;
       padding: 10px;
       text-align: center;
     }
-    .overlay-table .cell a {
+    .top-table .cell a {
       text-decoration: none;
       font-weight: 600;
       color: #000;
       font-size: 14px;
     }
-    .overlay-table .logo img {
+    .top-table .logo img {
       max-width: 100%;
       height: 40px;
       object-fit: contain;
@@ -49,7 +46,7 @@
       margin: 0;
       padding: 0;
     }
-    .section img {
+    .section a img {
       width: 100%;
       height: auto;
       display: block;
@@ -59,8 +56,8 @@
 </head>
 <body>
   <div class="container">
-    <div class="overlay-bar">
-      <div class="overlay-table">
+    <div class="top-bar">
+      <div class="top-table">
         <div class="cell logo">
           <a href="https://ski49n.com">
             <img src="https://www.ski49n.com/images/logo.png" alt="ski" />
@@ -79,15 +76,21 @@
     </div>
 
     <div class="section">
-      <img src="https://www.ski49n.com/webcams/lodge.jpg" alt="Lodge Webcam" />
+      <a href="https://www.ski49n.com/webcams/lodge.jpg">
+        <img src="https://www.ski49n.com/webcams/lodge.jpg" alt="Lodge Webcam" />
+      </a>
     </div>
 
     <div class="section">
-      <img src="https://www.ski49n.com/webcams/summit.jpg" alt="Summit Webcam" />
+      <a href="https://www.ski49n.com/webcams/summit.jpg">
+        <img src="https://www.ski49n.com/webcams/summit.jpg" alt="Summit Webcam" />
+      </a>
     </div>
 
     <div class="section">
-      <img src="https://www.ski49n.com/webcams/sunrise.jpg" alt="Chair 5 Webcam" />
+      <a href="https://www.ski49n.com/webcams/sunrise.jpg">
+        <img src="https://www.ski49n.com/webcams/sunrise.jpg" alt="Chair 5 Webcam" />
+      </a>
     </div>
   </div>
 </body>
