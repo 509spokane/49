@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ski 49°N Live Views</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: #ffffff;
+      color: #111;
+    }
+    .container {
+      max-width: 100%;
+      padding: 0;
+    }
+    .top-bar {
+      width: 100%;
+      z-index: 1000;
+      background: rgba(255, 255, 255, 0.95);
+    }
+    .top-table {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr 1fr;
+    }
+    .top-table .cell {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px;
+      text-align: center;
+    }
+    .top-table .cell a {
+      text-decoration: none;
+      font-weight: 600;
+      color: #000;
+      font-size: 14px;
+    }
+    .top-table .logo img {
+      max-width: 100%;
+      height: 40px;
+      object-fit: contain;
+    }
+    .section {
+      margin: 0;
+      padding: 0;
+    }
+    .section a img {
+      width: 100%;
+      height: auto;
+      display: block;
+      border-radius: 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="top-bar">
+      <div class="top-table">
+        <div class="cell logo">
+          <a href="https://ski49n.com">
+            <img src="https://www.ski49n.com/images/logo.png" alt="ski" />
+          </a>
+        </div>
+        <div class="cell">
+          <a href="https://forecast.weather.gov/MapClick.php?lon=-117.56499767303468&lat=48.285800530169524">Weather</a>
+        </div>
+        <div class="cell">
+          <a href="https://www.ski49n.com/mountain-info/expanded-conditions">Conditions</a>
+        </div>
+        <div class="cell">
+          <a href="https://www.ski49n.com/mountain-info/trail-status">Grooming</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <a href="https://www.ski49n.com/webcams/lodge.jpg">
+        <img src="https://www.ski49n.com/webcams/lodge.jpg" alt="Lodge Webcam" />
+      </a>
+    </div>
+
+    <div class="section">
+      <a href="https://www.ski49n.com/webcams/summit.jpg">
+        <img src="https://www.ski49n.com/webcams/summit.jpg" alt="Summit Webcam" />
+      </a>
+    </div>
+
+    <div class="section">
+      <a href="https://www.ski49n.com/webcams/sunrise.jpg">
+        <img src="https://www.ski49n.com/webcams/sunrise.jpg" alt="Chair 5 Webcam" />
+      </a>
+    </div>
+  </div>
+</body>
+</html>
