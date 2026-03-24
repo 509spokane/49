@@ -148,8 +148,8 @@
           } else {
             // Create a small table with left/right aligned columns
             statsOverlay.innerHTML = `
-              <div><strong>${data["updated"]}</strong></div>
               <table>
+              <tr><td colspan=2"><strong>${data["updated"]}</strong></td></tr>
                 <tr><td class="label">12h</td><td class="value">${data["12h"]}"</td></tr>
                 <tr><td class="label">24h</td><td class="value">${data["24h"]}"</td></tr>
                 <tr><td class="label">48h</td><td class="value">${data["48h"]}"</td></tr>
