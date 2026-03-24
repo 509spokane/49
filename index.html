@@ -61,7 +61,7 @@
       border-radius: 0;
     }
 
-    /* Stats overlay styling */
+    /* Stats overlay styling (horizontal layout) */
     #statsOverlay {
       position: absolute;
       top: 0;
@@ -74,7 +74,17 @@
       display: none;
       text-align: center;
       box-sizing: border-box;
+
+      /* Horizontal layout */
+      display: flex;
+      justify-content: space-around;
+      flex-wrap: wrap;
+      align-items: center;
     }
+    #statsOverlay div {
+      margin: 0 5px; /* small horizontal spacing */
+    }
+
     .stats-button {
       cursor: pointer;
       font-weight: 600;
@@ -135,7 +145,7 @@
     statsToggle.addEventListener('click', () => {
       statsVisible = !statsVisible;
       if (statsVisible) {
-        statsOverlay.style.display = 'block';
+        statsOverlay.style.display = 'flex';
         statsOverlay.textContent = 'Loading...';
 
         // Fetch the snow stats from your Worker
@@ -146,12 +156,11 @@
               statsOverlay.textContent = "Data Error";
             } else {
               statsOverlay.innerHTML = `
-                <strong>New Snow (Summit)</strong><br>
-                12h: ${data["12h"]} in<br>
-                24h: ${data["24h"]} in<br>
-                48h: ${data["48h"]} in<br>
-                72h: ${data["72h"]} in<br>
-                Snow Depth: ${data["summitDepth"]} in
+                <div><strong>12h:</strong> ${data["12h"]} in</div>
+                <div><strong>24h:</strong> ${data["24h"]} in</div>
+                <div><strong>48h:</strong> ${data["48h"]} in</div>
+                <div><strong>72h:</strong> ${data["72h"]} in</div>
+                <div><strong>Snow Depth:</strong> ${data["summitDepth"]} in</div>
               `;
             }
           })
