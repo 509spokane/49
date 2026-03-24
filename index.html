@@ -35,7 +35,7 @@
       text-decoration: none;
       font-weight: 600;
       color: #000;
-      font-size: 14px;
+      font-size: 13px; /* slightly smaller text */
     }
     .top-table .logo img {
       max-width: 100%;
@@ -45,12 +45,38 @@
     .section {
       margin: 0;
       padding: 0;
+      position: relative;
     }
     .section a img {
       width: 100%;
       height: auto;
       display: block;
       border-radius: 0;
+    }
+    /* Stats overlay div */
+    .stats-overlay {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      right: 10px;
+      background: rgba(255,255,255,0.8);
+      color: #000;
+      padding: 10px;
+      font-weight: 600;
+      font-size: 14px;
+      border-radius: 5px;
+      display: none; /* hidden initially */
+      z-index: 500;
+    }
+    /* Toggle button style */
+    #stats-toggle {
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 13px;
+      padding: 5px 8px;
+      border: 1px solid #000;
+      border-radius: 3px;
+      background: #fff;
     }
   </style>
 </head>
@@ -70,7 +96,7 @@
           <a href="https://www.ski49n.com/mountain-info/expanded-conditions">Conditions</a>
         </div>
         <div class="cell">
-          <a href="https://www.ski49n.com/mountain-info/trail-status">Grooming</a>
+          <span id="stats-toggle">Stats</span>
         </div>
       </div>
     </div>
@@ -79,6 +105,7 @@
       <a href="https://www.ski49n.com/webcams/lodge.jpg">
         <img src="https://www.ski49n.com/webcams/lodge.jpg" alt="Lodge Webcam" />
       </a>
+      <div class="stats-overlay" id="snow-stats">Loading snow info...</div>
     </div>
 
     <div class="section">
@@ -93,5 +120,36 @@
       </a>
     </div>
   </div>
+
+  <script>
+    const statsToggle = document.getElementById('stats-toggle');
+    const statsOverlay = document.getElementById('snow-stats');
+
+    // Toggle visibility
+    statsToggle.addEventListener('click', () => {
+      if (statsOverlay.style.display === 'none') {
+        statsOverlay.style.display = 'block';
+      } else {
+        statsOverlay.style.display = 'none';
+      }
+    });
+
+    // Fetch snow data from Cloudflare Worker
+    async function fetchSnowData() {
+      try {
+        const res = await fetch('https://your-worker-url.workers.dev'); // replace with your Worker URL
+        const data = await res.json();
+        statsOverlay.textContent = 
+          `24h Snow: ${data.snow24} in, Base Depth: ${data.baseDepth} in, Summit Depth: ${data.summitDepth} in`;
+      } catch (err) {
+        console.error(err);
+        statsOverlay.textContent = 'Snow data unavailable';
+      }
+    }
+
+    fetchSnowData();
+    // Optionally, refresh every 4 hours (14400000 ms)
+    setInterval(fetchSnowData, 14400000);
+  </script>
 </body>
 </html>
