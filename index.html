@@ -1,158 +1,102 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Ski 49°N Live Views</title>
-  <style>
-    body {
-      margin: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      background-color: #ffffff;
-      color: #111;
-    }
-    .container {
-      max-width: 100%;
-      padding: 0;
-    }
+addEventListener("fetch", event => {
+  event.respondWith(handleRequest(event.request))
+})
 
-    /* Top bar */
-    .top-bar {
-      width: 100%;
-      background: rgba(255, 255, 255, 0.95);
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-      position: sticky;
-      top: 0;
-      z-index: 1000;
-    }
-    .top-table {
-      display: grid;
-      grid-template-columns: 1fr 1fr 1fr 1fr;
-    }
-    .cell {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 8px;
-      text-align: center;
-    }
-    .cell a {
-      text-decoration: none;
-      font-weight: 600;
-      color: #000;
-      font-size: 13px;
-    }
-    .logo img {
-      max-width: 100%;
-      height: 40px;
-      object-fit: contain;
-    }
+async function handleRequest(request) {
+  const url = 'https://www.ski49n.com/mountain-info/expanded-conditions';
 
-    /* Image sections */
-    .section {
-      position: relative;
-    }
-    .section a img {
-      width: 100%;
-      display: block;
-    }
+  try {
+    const res = await fetch(url, {
+      headers: { "User-Agent": "Mozilla/5.0" }
+    });
+    const html = await res.text();
 
-    /* Stats overlay (single horizontal line) */
-    #statsOverlay {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      background: rgba(255, 255, 255, 0.75);
-      color: #000;
-      padding: 6px 8px;
-      font-size: 12px;
-      box-sizing: border-box;
+    const snowData = {
+      "12h": "N/A",
+      "24h": "N/A",
+      "48h": "N/A",
+      "72h": "N/A",
+      "summitDepth": "N/A",
+      "updated": "N/A"
+    };
 
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
+    // --- Snow boxes ---
+    const boxRegex = /<div class=["']box["']>[\s\S]*?<\/div>/gi;
+    const boxes = html.match(boxRegex);
 
-      white-space: nowrap;
-      overflow: hidden;
-    }
-  </style>
-</head>
-<body>
-  <div class="container">
+    if (boxes) {
+      boxes.forEach(box => {
+        const labelMatch = box.match(/<h4>(.*?)<\/h4>/i);
+        const valueMatch = box.match(/<h3>(.*?)<\/h3>/i);
 
-    <!-- Top bar -->
-    <div class="top-bar">
-      <div class="top-table">
-        <div class="cell logo">
-          <a href="https://ski49n.com">
-            <img src="https://www.ski49n.com/images/logo.png" alt="ski" />
-          </a>
-        </div>
-        <div class="cell">
-          <a href="https://forecast.weather.gov/MapClick.php?lon=-117.56499767303468&lat=48.285800530169524">Weather</a>
-        </div>
-        <div class="cell">
-          <a href="https://www.ski49n.com/mountain-info/expanded-conditions">Conditions</a>
-        </div>
-        <div class="cell">
-          <a href="https://www.ski49n.com/mountain-info/trail-status">Grooming</a>
-        </div>
-      </div>
-    </div>
+        if (labelMatch && valueMatch) {
+          const label = labelMatch[1].trim();
+          const value = valueMatch[1].trim().replace(/"/g, "");
 
-    <!-- Lodge webcam with always-visible stats -->
-    <div class="section">
-      <a href="https://www.ski49n.com/webcams/lodge.jpg">
-        <img src="https://www.ski49n.com/webcams/lodge.jpg" alt="Lodge Webcam" />
-      </a>
-      <div id="statsOverlay">Loading snow data...</div>
-    </div>
-
-    <!-- Summit webcam -->
-    <div class="section">
-      <a href="https://www.ski49n.com/webcams/summit.jpg">
-        <img src="https://www.ski49n.com/webcams/summit.jpg" alt="Summit Webcam" />
-      </a>
-    </div>
-
-    <!-- Chair 5 webcam -->
-    <div class="section">
-      <a href="https://www.ski49n.com/webcams/sunrise.jpg">
-        <img src="https://www.ski49n.com/webcams/sunrise.jpg" alt="Chair 5 Webcam" />
-      </a>
-    </div>
-
-  </div>
-
-  <!-- Stats script -->
-  <script>
-    const statsOverlay = document.getElementById('statsOverlay');
-
-    function loadStats() {
-      fetch('https://49.todd-0ce.workers.dev') // your Cloudflare Worker URL
-        .then(res => res.json())
-        .then(data => {
-          if (data.error) {
-            statsOverlay.textContent = "Data Error";
-          } else {
-            statsOverlay.innerHTML = `
-              <span><strong>12h:</strong> ${data["12h"]}"</span>
-              <span><strong>24h:</strong> ${data["24h"]}"</span>
-              <span><strong>48h:</strong> ${data["48h"]}"</span>
-              <span><strong>72h:</strong> ${data["72h"]}"</span>
-              <span><strong>Depth:</strong> ${data["summitDepth"]}"</span>
-              <span>${data["updated"]}</span>
-            `;
+          switch(label) {
+            case "12 Hours":
+              snowData["12h"] = value;
+              break;
+            case "24 Hours":
+              snowData["24h"] = value;
+              break;
+            case "48 Hours":
+              snowData["48h"] = value;
+              break;
+            case "72 Hours":
+              snowData["72h"] = value;
+              break;
+            case "Snow Depth":
+              snowData["summitDepth"] = value;
+              break;
           }
-        })
-        .catch(() => {
-          statsOverlay.textContent = "Data Error";
-        });
+        }
+      });
     }
 
-    // Load immediately
-    loadStats();
-  </script>
-</body>
-</html>
+    // --- Last Updated (rounded, with 11pm exception) ---
+    const updatedMatch = html.match(/Last Updated:\s*([0-9\/]+)\s*at\s*([0-9:]+)(am|pm)/i);
+
+    if (updatedMatch) {
+      const date = updatedMatch[1]; // e.g., 03/22/26
+      let hour = parseInt(updatedMatch[2].split(":")[0]);
+      let minutes = parseInt(updatedMatch[2].split(":")[1]);
+      let period = updatedMatch[3].toLowerCase();
+
+      // Convert to 24-hour
+      if (period === "pm" && hour !== 12) hour += 12;
+      if (period === "am" && hour === 12) hour = 0;
+
+      // Round minutes
+      if (minutes >= 30) hour += 1;
+
+      // Exception: if hour == 24, force 23 (11pm)
+      if (hour >= 24) hour = 23;
+
+      // Convert back to 12-hour
+      let displayHour = hour % 12;
+      if (displayHour === 0) displayHour = 12;
+      let displayPeriod = hour >= 12 ? "pm" : "am";
+
+      // Remove year
+      const shortDate = date.split('/').slice(0,2).join('/');
+
+      snowData["updated"] = `${shortDate} ${displayHour}${displayPeriod}`;
+    }
+
+    return new Response(JSON.stringify(snowData), {
+      headers: {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*"
+      }
+    });
+
+  } catch (err) {
+    return new Response(JSON.stringify({error: "Data Error"}), {
+      headers: {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*"
+      }
+    });
+  }
+}
