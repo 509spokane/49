@@ -24,9 +24,6 @@
       position: sticky;
       top: 0;
       z-index: 1000;
-      display: flex;
-      flex-direction: column;
-      padding-bottom: 4px;
     }
     .top-table {
       display: grid;
@@ -36,7 +33,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 6px;
+      padding: 8px;
       text-align: center;
     }
     .cell a {
@@ -51,44 +48,62 @@
       object-fit: contain;
     }
 
-    /* Snow data in header */
-    #statsHeader {
-      display: flex;
-      justify-content: space-between; /* spread evenly across width */
-      font-size: 12px;
-      color: #000;
-      padding: 2px 6px 4px 6px;
-      background: rgba(255, 255, 255, 0.75);
-      white-space: nowrap;
-      overflow-x: auto; /* allow horizontal scrolling if too narrow */
-    }
-    #statsHeader span {
-      flex-shrink: 0; /* prevent items from shrinking too small */
-      margin-right: 8px; /* small gap between items */
-    }
-
-    /* Responsive adjustment for small screens */
-    @media (max-width: 500px) {
-      #statsHeader {
-        gap: 4px; /* smaller gaps on phones */
-        padding: 2px 4px;
-      }
-      #statsHeader span {
-        margin-right: 4px;
-      }
-    }
-
     /* Image sections */
+    .section {
+      position: relative;
+    }
     .section a img {
       width: 100%;
       display: block;
+    }
+
+    /* Stats overlay (horizontal line) */
+    #statsOverlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      background: rgba(255, 255, 255, 0.75);
+      color: #000;
+      padding: 6px 8px;
+      font-size: 12px;
+      box-sizing: border-box;
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+      white-space: nowrap;
+      overflow: hidden;
+    }
+
+    /* TESTING section */
+    #testing {
+      padding: 10px 15px;
+      background: #f0f0f0;
+      margin-top: 15px;
+      font-size: 14px;
+    }
+    #testing h2 {
+      margin: 0 0 5px 0;
+      font-size: 16px;
+    }
+    #testing div {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    #testing div span {
+      background: #fff;
+      padding: 4px 8px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
     }
   </style>
 </head>
 <body>
   <div class="container">
 
-    <!-- Top bar with links -->
+    <!-- Top bar -->
     <div class="top-bar">
       <div class="top-table">
         <div class="cell logo">
@@ -106,9 +121,7 @@
           <a href="https://www.ski49n.com/mountain-info/trail-status">Grooming</a>
         </div>
       </div>
-
-      <!-- Snow data horizontally -->
-      <div id="statsHeader">Loading snow data...</div>
+      <div id="statsOverlay">Loading snow data...</div>
     </div>
 
     <!-- Lodge webcam -->
@@ -132,35 +145,50 @@
       </a>
     </div>
 
+    <!-- TESTING section -->
+    <div id="testing">
+      <h2>TESTING - Mt. Baker Snow Forecast</h2>
+      <div id="mtBakerData">Loading Mt. Baker data...</div>
+    </div>
+
   </div>
 
   <!-- Stats script -->
   <script>
-    const statsHeader = document.getElementById('statsHeader');
+    const statsOverlay = document.getElementById('statsOverlay');
+    const mtBakerDiv = document.getElementById('mtBakerData');
 
-    function loadStats() {
-      fetch('https://49.todd-0ce.workers.dev')
-        .then(res => res.json())
-        .then(data => {
-          if (data.error) {
-            statsHeader.textContent = "Data Error";
-          } else {
-            statsHeader.innerHTML = `
-              <span>${data["updated"]}</span>
-              <span><strong>12h:</strong> ${data["12h"]}"</span>
-              <span><strong>24h:</strong> ${data["24h"]}"</span>
-              <span><strong>48h:</strong> ${data["48h"]}"</span>
-              <span><strong>72h:</strong> ${data["72h"]}"</span>
-              <span><strong>Depth:</strong> ${data["summitDepth"]}"</span>
-            `;
-          }
-        })
-        .catch(() => {
-          statsHeader.textContent = "Data Error";
-        });
-    }
+    // Load 49°N + Mt. Baker data
+    fetch('https://49.todd-0ce.workers.dev') // Cloudflare Worker URL
+      .then(res => res.json())
+      .then(data => {
+        // --- 49°N overlay ---
+        statsOverlay.innerHTML = `
+          <span>${data["updated"]}</span>
+          <span><strong>12h:</strong> ${data["12h"]}"</span>
+          <span><strong>24h:</strong> ${data["24h"]}"</span>
+          <span><strong>48h:</strong> ${data["48h"]}"</span>
+          <span><strong>72h:</strong> ${data["72h"]}"</span>
+          <span><strong>Depth:</strong> ${data["summitDepth"]}"</span>
+        `;
 
-    loadStats();
+        // --- Mt. Baker TESTING ---
+        if (data.mtBaker && data.mtBaker.length) {
+          mtBakerDiv.innerHTML = '';
+          data.mtBaker.forEach((val, idx) => {
+            const dayLabel = `D${Math.floor(idx/2)+1} ${idx%2===0?'Day':'Night'}`;
+            const span = document.createElement('span');
+            span.textContent = `${dayLabel}: ${val}`;
+            mtBakerDiv.appendChild(span);
+          });
+        } else {
+          mtBakerDiv.textContent = "Mt. Baker data unavailable";
+        }
+      })
+      .catch(() => {
+        statsOverlay.textContent = "Data Error";
+        mtBakerDiv.textContent = "Mt. Baker data unavailable";
+      });
   </script>
 </body>
 </html>
