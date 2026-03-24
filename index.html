@@ -136,13 +136,14 @@
           if (data.error) {
             statsOverlay.textContent = "Data Error";
           } else {
-            statsOverlay.innerHTML = `
-              <span><strong>12h:</strong> ${data["12h"]}"</span>
-              <span><strong>24h:</strong> ${data["24h"]}"</span>
-              <span><strong>48h:</strong> ${data["48h"]}"</span>
-              <span><strong>72h:</strong> ${data["72h"]}"</span>
-              <span><strong>Depth:</strong> ${data["summitDepth"]}"</span>
-            `;
+           statsOverlay.innerHTML = `
+  <span><strong>12h:</strong> ${data["12h"]}"</span>
+  <span><strong>24h:</strong> ${data["24h"]}"</span>
+  <span><strong>48h:</strong> ${data["48h"]}"</span>
+  <span><strong>72h:</strong> ${data["72h"]}"</span>
+  <span><strong>Depth:</strong> ${data["summitDepth"]}"</span>
+  <span>${data["updated"]}</span>
+`;
           }
         })
         .catch(() => {
