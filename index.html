@@ -33,7 +33,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 8px;
+      padding: 6px;
       text-align: center;
     }
     .cell a {
@@ -57,20 +57,34 @@
       display: block;
     }
 
-    /* Stats overlay (vertical, top-left) */
+    /* Stats overlay (top-left) */
     #statsOverlay {
       position: absolute;
       top: 0;
       left: 0;
-      width: auto;
       background: rgba(255, 255, 255, 0.75);
       color: #000;
-      padding: 6px 8px;
+      padding: 4px 6px; /* slightly smaller padding */
       font-size: 12px;
       box-sizing: border-box;
-
       text-align: left;
       white-space: normal;
+    }
+
+    /* Snow data table inside overlay */
+    #statsOverlay table {
+      border-collapse: collapse;
+      width: 100%;
+    }
+    #statsOverlay td {
+      padding: 2px 4px; /* tight padding */
+    }
+    #statsOverlay .label {
+      text-align: left;
+      font-weight: 600;
+    }
+    #statsOverlay .value {
+      text-align: right;
     }
   </style>
 </head>
@@ -132,13 +146,16 @@
           if (data.error) {
             statsOverlay.textContent = "Data Error";
           } else {
+            // Create a small table with left/right aligned columns
             statsOverlay.innerHTML = `
-              <span>${data["updated"]}</span><br>
-              <span><strong>12h:</strong> ${data["12h"]}"</span><br>
-              <span><strong>24h:</strong> ${data["24h"]}"</span><br>
-              <span><strong>48h:</strong> ${data["48h"]}"</span><br>
-              <span><strong>72h:</strong> ${data["72h"]}"</span><br>
-              <span><strong>Depth:</strong> ${data["summitDepth"]}"</span>
+              <div><strong>${data["updated"]}</strong></div>
+              <table>
+                <tr><td class="label">12h</td><td class="value">${data["12h"]}"</td></tr>
+                <tr><td class="label">24h</td><td class="value">${data["24h"]}"</td></tr>
+                <tr><td class="label">48h</td><td class="value">${data["48h"]}"</td></tr>
+                <tr><td class="label">72h</td><td class="value">${data["72h"]}"</td></tr>
+                <tr><td class="label">Depth</td><td class="value">${data["summitDepth"]}"</td></tr>
+              </table>
             `;
           }
         })
