@@ -24,6 +24,9 @@
       position: sticky;
       top: 0;
       z-index: 1000;
+      display: flex;
+      flex-direction: column;
+      padding-bottom: 4px;
     }
     .top-table {
       display: grid;
@@ -48,50 +51,30 @@
       object-fit: contain;
     }
 
-    /* Image sections */
-    .section {
-      position: relative;
+    /* Snow data in header */
+    #statsHeader {
+      display: flex;
+      justify-content: flex-start;
+      gap: 12px;
+      font-size: 12px;
+      color: #000;
+      padding: 2px 6px 4px 6px;
+      background: rgba(255, 255, 255, 0.75);
+      white-space: nowrap;
+      overflow: hidden;
     }
+
+    /* Image sections */
     .section a img {
       width: 100%;
       display: block;
-    }
-
-    /* Stats overlay (top-left) */
-    #statsOverlay {
-      position: absolute;
-      top: 0;
-      left: 0;
-      background: rgba(255, 255, 255, 0.75);
-      color: #000;
-      padding: 4px 6px; /* slightly smaller padding */
-      font-size: 12px;
-      box-sizing: border-box;
-      text-align: left;
-      white-space: normal;
-    }
-
-    /* Snow data table inside overlay */
-    #statsOverlay table {
-      border-collapse: collapse;
-      width: 100%;
-    }
-    #statsOverlay td {
-      padding: 2px 4px; /* tight padding */
-    }
-    #statsOverlay .label {
-      text-align: left;
-      font-weight: 600;
-    }
-    #statsOverlay .value {
-      text-align: right;
     }
   </style>
 </head>
 <body>
   <div class="container">
 
-    <!-- Top bar -->
+    <!-- Top bar with links -->
     <div class="top-bar">
       <div class="top-table">
         <div class="cell logo">
@@ -109,14 +92,16 @@
           <a href="https://www.ski49n.com/mountain-info/trail-status">Grooming</a>
         </div>
       </div>
+
+      <!-- Snow data horizontally -->
+      <div id="statsHeader">Loading snow data...</div>
     </div>
 
-    <!-- Lodge webcam with stats overlay -->
+    <!-- Lodge webcam -->
     <div class="section">
       <a href="https://www.ski49n.com/webcams/lodge.jpg">
         <img src="https://www.ski49n.com/webcams/lodge.jpg" alt="Lodge Webcam" />
       </a>
-      <div id="statsOverlay">Loading snow data...</div>
     </div>
 
     <!-- Summit webcam -->
@@ -137,30 +122,27 @@
 
   <!-- Stats script -->
   <script>
-    const statsOverlay = document.getElementById('statsOverlay');
+    const statsHeader = document.getElementById('statsHeader');
 
     function loadStats() {
       fetch('https://49.todd-0ce.workers.dev')
         .then(res => res.json())
         .then(data => {
           if (data.error) {
-            statsOverlay.textContent = "Data Error";
+            statsHeader.textContent = "Data Error";
           } else {
-            // Create a small table with left/right aligned columns
-            statsOverlay.innerHTML = `
-              <table>
-              <tr><td colspan=2"><strong>${data["updated"]}</strong></td></tr>
-                <tr><td class="label">12h</td><td class="value">${data["12h"]}"</td></tr>
-                <tr><td class="label">24h</td><td class="value">${data["24h"]}"</td></tr>
-                <tr><td class="label">48h</td><td class="value">${data["48h"]}"</td></tr>
-                <tr><td class="label">72h</td><td class="value">${data["72h"]}"</td></tr>
-                <tr><td class="label">Depth</td><td class="value">${data["summitDepth"]}"</td></tr>
-              </table>
+            statsHeader.innerHTML = `
+              <span>${data["updated"]}</span>
+              <span><strong>12h:</strong> ${data["12h"]}"</span>
+              <span><strong>24h:</strong> ${data["24h"]}"</span>
+              <span><strong>48h:</strong> ${data["48h"]}"</span>
+              <span><strong>72h:</strong> ${data["72h"]}"</span>
+              <span><strong>Depth:</strong> ${data["summitDepth"]}"</span>
             `;
           }
         })
         .catch(() => {
-          statsOverlay.textContent = "Data Error";
+          statsHeader.textContent = "Data Error";
         });
     }
 
