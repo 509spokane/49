@@ -16,85 +16,72 @@
       padding: 0;
     }
 
-    /* Top bar styling */
+    /* Top bar */
     .top-bar {
       width: 100%;
-      z-index: 1000;
       background: rgba(255, 255, 255, 0.95);
       box-shadow: 0 1px 3px rgba(0,0,0,0.1);
       position: sticky;
       top: 0;
+      z-index: 1000;
     }
     .top-table {
       display: grid;
       grid-template-columns: 1fr 1fr 1fr 1fr;
     }
-    .top-table .cell {
+    .cell {
       display: flex;
       align-items: center;
       justify-content: center;
       padding: 8px;
       text-align: center;
     }
-    .top-table .cell a {
+    .cell a {
       text-decoration: none;
       font-weight: 600;
       color: #000;
-      font-size: 13px; /* slightly smaller */
+      font-size: 13px;
     }
-    .top-table .logo img {
+    .logo img {
       max-width: 100%;
       height: 40px;
       object-fit: contain;
     }
 
-    /* Webcam sections */
+    /* Image sections */
     .section {
-      margin: 0;
-      padding: 0;
       position: relative;
     }
     .section a img {
       width: 100%;
-      height: auto;
       display: block;
-      border-radius: 0;
     }
 
-    /* Stats overlay styling (horizontal layout) */
-   #statsOverlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  background: rgba(255, 255, 255, 0.8);
-  color: #000;
-  padding: 6px 8px;
-  font-size: 12px;
-  display: none;
-  box-sizing: border-box;
+    /* Stats overlay (single line) */
+    #statsOverlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      background: rgba(255, 255, 255, 0.75);
+      color: #000;
+      padding: 6px 8px;
+      font-size: 12px;
+      box-sizing: border-box;
 
-  /* Force single horizontal line */
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: center;
-  white-space: nowrap;   /* prevents wrapping */
-  overflow: hidden;      /* prevents spillover */
-}
-    #statsOverlay div {
-      margin: 0 5px; /* small horizontal spacing */
-    }
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
 
-    .stats-button {
-      cursor: pointer;
-      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <!-- Top navigation bar -->
+
+    <!-- Top bar -->
     <div class="top-bar">
       <div class="top-table">
         <div class="cell logo">
@@ -108,18 +95,18 @@
         <div class="cell">
           <a href="https://www.ski49n.com/mountain-info/expanded-conditions">Conditions</a>
         </div>
-        <div class="cell stats-button" id="statsToggle">
-          Stats
+        <div class="cell">
+          <a href="https://www.ski49n.com/mountain-info/trail-status">Grooming</a>
         </div>
       </div>
     </div>
 
-    <!-- Lodge webcam with overlay -->
-    <div class="section" style="position: relative;">
+    <!-- Lodge webcam with always-visible stats -->
+    <div class="section">
       <a href="https://www.ski49n.com/webcams/lodge.jpg">
         <img src="https://www.ski49n.com/webcams/lodge.jpg" alt="Lodge Webcam" />
       </a>
-      <div id="statsOverlay">Loading...</div>
+      <div id="statsOverlay">Loading snow data...</div>
     </div>
 
     <!-- Summit webcam -->
@@ -135,43 +122,36 @@
         <img src="https://www.ski49n.com/webcams/sunrise.jpg" alt="Chair 5 Webcam" />
       </a>
     </div>
+
   </div>
 
   <!-- Stats script -->
   <script>
-    const statsToggle = document.getElementById('statsToggle');
     const statsOverlay = document.getElementById('statsOverlay');
-    let statsVisible = false;
 
-    statsToggle.addEventListener('click', () => {
-      statsVisible = !statsVisible;
-      if (statsVisible) {
-        statsOverlay.style.display = 'flex';
-        statsOverlay.textContent = 'Loading...';
-
-        // Fetch the snow stats from your Worker
-        fetch('https://49.todd-0ce.workers.dev')
-          .then(res => res.json())
-          .then(data => {
-            if (data.error) {
-              statsOverlay.textContent = "Data Error";
-            } else {
-              statsOverlay.innerHTML = `
-                <div><strong>12h:</strong> ${data["12h"]} in</div>
-                <div><strong>24h:</strong> ${data["24h"]} in</div>
-                <div><strong>48h:</strong> ${data["48h"]} in</div>
-                <div><strong>72h:</strong> ${data["72h"]} in</div>
-                <div><strong>Snow Depth:</strong> ${data["summitDepth"]} in</div>
-              `;
-            }
-          })
-          .catch(err => {
+    function loadStats() {
+      fetch('https://49.todd-0ce.workers.dev')
+        .then(res => res.json())
+        .then(data => {
+          if (data.error) {
             statsOverlay.textContent = "Data Error";
-          });
-      } else {
-        statsOverlay.style.display = 'none';
-      }
-    });
+          } else {
+            statsOverlay.innerHTML = `
+              <span><strong>12h:</strong> ${data["12h"]}"</span>
+              <span><strong>24h:</strong> ${data["24h"]}"</span>
+              <span><strong>48h:</strong> ${data["48h"]}"</span>
+              <span><strong>72h:</strong> ${data["72h"]}"</span>
+              <span><strong>Depth:</strong> ${data["summitDepth"]}"</span>
+            `;
+          }
+        })
+        .catch(() => {
+          statsOverlay.textContent = "Data Error";
+        });
+    }
+
+    // Load immediately
+    loadStats();
   </script>
 </body>
 </html>
