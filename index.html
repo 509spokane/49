@@ -88,13 +88,13 @@
           <img src="https://www.ski49n.com/images/logo.png" alt="ski" />
         </a>
       </div>
-      <div id="statsOverlay">Loading snow data...</div>
       <div class="top-table">
         <div class="cell"><a href="https://forecast.weather.gov/MapClick.php?lon=-117.56499767303468&lat=48.285800530169524">Weather</a></div>
         <div class="cell"><a href="https://www.ski49n.com/mountain-info/expanded-conditions">Conditions</a></div>
         <div class="cell"><a href="https://www.ski49n.com/mountain-info/trail-status">Grooming</a></div>
         <div class="cell"></div>
       </div>
+      <div id="statsOverlay">Loading snow data...</div>
     </div>
 
     <div class="section">
@@ -114,7 +114,7 @@
     </div>
 
     <h2>TESTING</h2>
-    <div id="testing">Loading Mt. Baker data...</div>
+    <div id="testing">Loading data...</div>
 
   </div>
 
@@ -135,16 +135,16 @@
           <span><strong>Depth:</strong> ${data["summitDepth"]}"</span>
         `;
 
-        // Mt. Baker testing data
+        // Testing section
         if (data.mtBaker && data.mtBaker["Today"]) {
-          testingDiv.textContent = `Mt. Baker Today: ${data.mtBaker["Today"]}`;
+          testingDiv.textContent = data.mtBaker["Today"];
         } else {
-          testingDiv.textContent = "Mt. Baker data unavailable";
+          testingDiv.textContent = "Data unavailable";
         }
       })
       .catch(() => {
         statsOverlay.textContent = "Data Error";
-        testingDiv.textContent = "Mt. Baker data unavailable";
+        testingDiv.textContent = "Data unavailable";
       });
   </script>
 </body>
