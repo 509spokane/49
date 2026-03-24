@@ -131,7 +131,7 @@
     const statsOverlay = document.getElementById('statsOverlay');
 
     function loadStats() {
-      fetch('https://YOUR_WORKER_URL_HERE') // replace with your Cloudflare Worker URL
+      fetch('https://49.todd-0ce.workers.dev') // replace with your Cloudflare Worker URL
         .then(res => res.json())
         .then(data => {
           if (data.error) {
