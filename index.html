@@ -140,7 +140,7 @@
         const res = await fetch('https://your-worker-url.workers.dev'); // replace with your Worker URL
         const data = await res.json();
         statsOverlay.textContent = 
-          `24h Snow: ${data.snow24} in, Base Depth: ${data.baseDepth} in, Summit Depth: ${data.summitDepth} in`;
+  `New Snow (Summit): 12h: ${data["12h"]} in, 24h: ${data["24h"]} in, 48h: ${data["48h"]} in, 72h: ${data["72h"]} in, Snow Depth: ${data["summitDepth"]} in`;
       } catch (err) {
         console.error(err);
         statsOverlay.textContent = 'Snow data unavailable';
