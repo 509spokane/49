@@ -57,25 +57,20 @@
       display: block;
     }
 
-    /* Stats overlay (horizontal line) */
+    /* Stats overlay (vertical, top-left) */
     #statsOverlay {
       position: absolute;
       top: 0;
       left: 0;
-      width: 100%;
+      width: auto;
       background: rgba(255, 255, 255, 0.75);
       color: #000;
       padding: 6px 8px;
       font-size: 12px;
       box-sizing: border-box;
 
-      display: flex;
-      justify-content: flex-start;
-      gap: 10px;
-      align-items: center;
-
-      white-space: nowrap;
-      overflow: hidden;
+      text-align: left;
+      white-space: normal;
     }
   </style>
 </head>
@@ -102,7 +97,7 @@
       </div>
     </div>
 
-    <!-- Lodge webcam with always-visible stats -->
+    <!-- Lodge webcam with stats overlay -->
     <div class="section">
       <a href="https://www.ski49n.com/webcams/lodge.jpg">
         <img src="https://www.ski49n.com/webcams/lodge.jpg" alt="Lodge Webcam" />
@@ -127,35 +122,33 @@
   </div>
 
   <!-- Stats script -->
-<script>
-const statsOverlay = document.getElementById('statsOverlay');
+  <script>
+    const statsOverlay = document.getElementById('statsOverlay');
 
-function loadStats() {
-  fetch('https://49.todd-0ce.workers.dev')
-    .then(res => res.json())
-    .then(data => {
-      console.log('Worker JSON:', data); // <-- debug log
-      if (data.error) {
-        statsOverlay.textContent = "Data Error: " + JSON.stringify(data);
-      } else {
-        statsOverlay.innerHTML = `
-          <span>${data["updated"]}</span>
-          <span><strong>12h:</strong> ${data["12h"]}"</span>
-          <span><strong>24h:</strong> ${data["24h"]}"</span>
-          <span><strong>48h:</strong> ${data["48h"]}"</span>
-          <span><strong>72h:</strong> ${data["72h"]}"</span>
-          <span><strong>Depth:</strong> ${data["summitDepth"]}"</span>
-        `;
-      }
-    })
-    .catch(err => {
-      console.error('Fetch error:', err); // <-- debug log
-      statsOverlay.textContent = "Data Error: " + err;
-    });
-}
+    function loadStats() {
+      fetch('https://49.todd-0ce.workers.dev')
+        .then(res => res.json())
+        .then(data => {
+          if (data.error) {
+            statsOverlay.textContent = "Data Error";
+          } else {
+            statsOverlay.innerHTML = `
+              <span>${data["updated"]}</span><br>
+              <span><strong>12h:</strong> ${data["12h"]}"</span><br>
+              <span><strong>24h:</strong> ${data["24h"]}"</span><br>
+              <span><strong>48h:</strong> ${data["48h"]}"</span><br>
+              <span><strong>72h:</strong> ${data["72h"]}"</span><br>
+              <span><strong>Depth:</strong> ${data["summitDepth"]}"</span>
+            `;
+          }
+        })
+        .catch(() => {
+          statsOverlay.textContent = "Data Error";
+        });
+    }
 
-// Load immediately
-loadStats();
-</script>
+    // Load immediately
+    loadStats();
+  </script>
 </body>
 </html>
