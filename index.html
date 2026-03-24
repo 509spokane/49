@@ -15,10 +15,15 @@
       max-width: 100%;
       padding: 0;
     }
+
+    /* Top bar styling */
     .top-bar {
       width: 100%;
       z-index: 1000;
       background: rgba(255, 255, 255, 0.95);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      position: sticky;
+      top: 0;
     }
     .top-table {
       display: grid;
@@ -28,20 +33,22 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 10px;
+      padding: 8px;
       text-align: center;
     }
     .top-table .cell a {
       text-decoration: none;
       font-weight: 600;
       color: #000;
-      font-size: 13px; /* slightly smaller text */
+      font-size: 13px; /* slightly smaller */
     }
     .top-table .logo img {
       max-width: 100%;
       height: 40px;
       object-fit: contain;
     }
+
+    /* Webcam sections */
     .section {
       margin: 0;
       padding: 0;
@@ -53,35 +60,30 @@
       display: block;
       border-radius: 0;
     }
-    /* Stats overlay div */
-    .stats-overlay {
+
+    /* Stats overlay styling */
+    #statsOverlay {
       position: absolute;
-      top: 10px;
-      left: 10px;
-      right: 10px;
-      background: rgba(255,255,255,0.8);
+      top: 0;
+      left: 0;
+      width: 100%;
+      background: rgba(255, 255, 255, 0.8);
       color: #000;
       padding: 10px;
-      font-weight: 600;
       font-size: 14px;
-      border-radius: 5px;
-      display: none; /* hidden initially */
-      z-index: 500;
+      display: none;
+      text-align: center;
+      box-sizing: border-box;
     }
-    /* Toggle button style */
-    #stats-toggle {
+    .stats-button {
       cursor: pointer;
       font-weight: 600;
-      font-size: 13px;
-      padding: 5px 8px;
-      border: 1px solid #000;
-      border-radius: 3px;
-      background: #fff;
     }
   </style>
 </head>
 <body>
   <div class="container">
+    <!-- Top navigation bar -->
     <div class="top-bar">
       <div class="top-table">
         <div class="cell logo">
@@ -95,25 +97,28 @@
         <div class="cell">
           <a href="https://www.ski49n.com/mountain-info/expanded-conditions">Conditions</a>
         </div>
-        <div class="cell">
-          <span id="stats-toggle">Stats</span>
+        <div class="cell stats-button" id="statsToggle">
+          Stats
         </div>
       </div>
     </div>
 
-    <div class="section">
+    <!-- Lodge webcam with overlay -->
+    <div class="section" style="position: relative;">
       <a href="https://www.ski49n.com/webcams/lodge.jpg">
         <img src="https://www.ski49n.com/webcams/lodge.jpg" alt="Lodge Webcam" />
       </a>
-      <div class="stats-overlay" id="snow-stats">Loading snow info...</div>
+      <div id="statsOverlay">Loading...</div>
     </div>
 
+    <!-- Summit webcam -->
     <div class="section">
       <a href="https://www.ski49n.com/webcams/summit.jpg">
         <img src="https://www.ski49n.com/webcams/summit.jpg" alt="Summit Webcam" />
       </a>
     </div>
 
+    <!-- Chair 5 webcam -->
     <div class="section">
       <a href="https://www.ski49n.com/webcams/sunrise.jpg">
         <img src="https://www.ski49n.com/webcams/sunrise.jpg" alt="Chair 5 Webcam" />
@@ -121,35 +126,42 @@
     </div>
   </div>
 
+  <!-- Stats script -->
   <script>
-    const statsToggle = document.getElementById('stats-toggle');
-    const statsOverlay = document.getElementById('snow-stats');
+    const statsToggle = document.getElementById('statsToggle');
+    const statsOverlay = document.getElementById('statsOverlay');
+    let statsVisible = false;
 
-    // Toggle visibility
     statsToggle.addEventListener('click', () => {
-      if (statsOverlay.style.display === 'none') {
+      statsVisible = !statsVisible;
+      if (statsVisible) {
         statsOverlay.style.display = 'block';
+        statsOverlay.textContent = 'Loading...';
+
+        // Fetch the snow stats from your Worker
+        fetch('https://49.todd-0ce.workers.dev')
+          .then(res => res.json())
+          .then(data => {
+            if (data.error) {
+              statsOverlay.textContent = "Data Error";
+            } else {
+              statsOverlay.innerHTML = `
+                <strong>New Snow (Summit)</strong><br>
+                12h: ${data["12h"]} in<br>
+                24h: ${data["24h"]} in<br>
+                48h: ${data["48h"]} in<br>
+                72h: ${data["72h"]} in<br>
+                Snow Depth: ${data["summitDepth"]} in
+              `;
+            }
+          })
+          .catch(err => {
+            statsOverlay.textContent = "Data Error";
+          });
       } else {
         statsOverlay.style.display = 'none';
       }
     });
-
-    // Fetch snow data from Cloudflare Worker
-    async function fetchSnowData() {
-      try {
-        const res = await fetch('https://your-worker-url.workers.dev'); // replace with your Worker URL
-        const data = await res.json();
-        statsOverlay.textContent = 
-  `New Snow (Summit): 12h: ${data["12h"]} in, 24h: ${data["24h"]} in, 48h: ${data["48h"]} in, 72h: ${data["72h"]} in, Snow Depth: ${data["summitDepth"]} in`;
-      } catch (err) {
-        console.error(err);
-        statsOverlay.textContent = 'Snow data unavailable';
-      }
-    }
-
-    fetchSnowData();
-    // Optionally, refresh every 4 hours (14400000 ms)
-    setInterval(fetchSnowData, 14400000);
   </script>
 </body>
 </html>
