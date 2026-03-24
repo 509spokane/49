@@ -54,14 +54,28 @@
     /* Snow data in header */
     #statsHeader {
       display: flex;
-      justify-content: flex-start;
-      gap: 12px;
+      justify-content: space-between; /* spread evenly across width */
       font-size: 12px;
       color: #000;
       padding: 2px 6px 4px 6px;
       background: rgba(255, 255, 255, 0.75);
       white-space: nowrap;
-      overflow: hidden;
+      overflow-x: auto; /* allow horizontal scrolling if too narrow */
+    }
+    #statsHeader span {
+      flex-shrink: 0; /* prevent items from shrinking too small */
+      margin-right: 8px; /* small gap between items */
+    }
+
+    /* Responsive adjustment for small screens */
+    @media (max-width: 500px) {
+      #statsHeader {
+        gap: 4px; /* smaller gaps on phones */
+        padding: 2px 4px;
+      }
+      #statsHeader span {
+        margin-right: 4px;
+      }
     }
 
     /* Image sections */
@@ -146,7 +160,6 @@
         });
     }
 
-    // Load immediately
     loadStats();
   </script>
 </body>
