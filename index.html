@@ -21,9 +21,10 @@
       top: 0;
       z-index: 1000;
       background: rgba(255, 255, 255, 0.95);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
       display: flex;
       flex-direction: column;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      gap: 4px;
     }
 
     .top-table {
@@ -50,16 +51,15 @@
     }
 
     #statsOverlay {
-      width: 100%;
       display: flex;
       justify-content: space-between;
-      padding: 4px 8px;
+      width: 100%;
       background: rgba(255,255,255,0.75);
-      color: #000;
+      padding: 4px 8px;
       font-size: 12px;
       box-sizing: border-box;
       white-space: nowrap;
-      overflow: hidden;
+      overflow-x: auto;
     }
 
     .section {
@@ -74,6 +74,8 @@
       padding: 8px;
       font-size: 14px;
       background: #f0f0f0;
+      white-space: nowrap;
+      overflow-x: auto;
     }
   </style>
 </head>
@@ -123,24 +125,21 @@
     fetch('https://49.todd-0ce.workers.dev')
       .then(res => res.json())
       .then(data => {
-        if (data.error) {
-          statsOverlay.textContent = "Data Error";
-          testingDiv.textContent = "Mt. Baker data unavailable";
-        } else {
-          statsOverlay.innerHTML = `
-            <span>${data["updated"]}</span><br>
-            <span><strong>12h:</strong> ${data["12h"]}"</span><br>
-            <span><strong>24h:</strong> ${data["24h"]}"</span><br>
-            <span><strong>48h:</strong> ${data["48h"]}"</span><br>
-            <span><strong>72h:</strong> ${data["72h"]}"</span><br>
-            <span><strong>Depth:</strong> ${data["summitDepth"]}"</span>
-          `;
+        // 49°N snow data
+        statsOverlay.innerHTML = `
+          <span>${data["updated"]}</span>
+          <span><strong>12h:</strong> ${data["12h"]}"</span>
+          <span><strong>24h:</strong> ${data["24h"]}"</span>
+          <span><strong>48h:</strong> ${data["48h"]}"</span>
+          <span><strong>72h:</strong> ${data["72h"]}"</span>
+          <span><strong>Depth:</strong> ${data["summitDepth"]}"</span>
+        `;
 
-          if (data.mtBaker && data.mtBaker["Today"]) {
-            testingDiv.textContent = `Mt. Baker Today: ${data.mtBaker["Today"]}`;
-          } else {
-            testingDiv.textContent = "Mt. Baker data unavailable";
-          }
+        // Mt. Baker testing data
+        if (data.mtBaker && data.mtBaker["Today"]) {
+          testingDiv.textContent = `Mt. Baker Today: ${data.mtBaker["Today"]}`;
+        } else {
+          testingDiv.textContent = "Mt. Baker data unavailable";
         }
       })
       .catch(() => {
