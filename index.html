@@ -172,7 +172,7 @@ function loadStats() {
 
         const label = dayKey.replace(/Day|Night/, '');
         dayNamesRow.innerHTML += `<th colspan="2">${label}</th>`;
-        dayNightRow.innerHTML += `<th>Day</th><th>Night</th>`;
+        dayNightRow.innerHTML += `<th style="font-size:11px;">Day</th><th style="font-size:11px;">Night</th>`;
 
         const dayVal = forecast[dayKey] ? `${forecast[dayKey]}"` : "";
         const nightVal = forecast[nightKey] ? `${forecast[nightKey]}"` : "";
