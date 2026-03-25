@@ -13,7 +13,7 @@
     }
     .container {
       max-width: 100%;
-      padding: 0 8px; /* add horizontal padding */
+      padding: 0 8px;
     }
 
     .top-bar {
@@ -81,8 +81,12 @@
       margin: 0 0 4px 0;
       font-size: 14px;
     }
-    #testing span {
+    #testing div.day {
+      margin-bottom: 4px;
+    }
+    #testing span.dayName {
       font-weight: bold;
+      margin-right: 6px;
     }
   </style>
 </head>
@@ -121,20 +125,40 @@
     </div>
 
     <div id="testing">
-      <h3>Today</h3>
-      <span id="mtBakerData">Loading...</span>
+      <h3>TESTING</h3>
+      <div class="day"><span class="dayName">Today:</span><span id="mtBakerToday">Loading...</span></div>
+      <div class="day"><span class="dayName">Tonight:</span><span id="mtBakerTonight">Loading...</span></div>
+      <div class="day"><span class="dayName">Wed:</span><span id="mtBakerWedDay">Loading...</span></div>
+      <div class="day"><span class="dayName">Wed Night:</span><span id="mtBakerWedNight">Loading...</span></div>
+      <div class="day"><span class="dayName">Thu:</span><span id="mtBakerThuDay">Loading...</span></div>
+      <div class="day"><span class="dayName">Thu Night:</span><span id="mtBakerThuNight">Loading...</span></div>
+      <div class="day"><span class="dayName">Fri:</span><span id="mtBakerFriDay">Loading...</span></div>
+      <div class="day"><span class="dayName">Fri Night:</span><span id="mtBakerFriNight">Loading...</span></div>
+      <div class="day"><span class="dayName">Sat:</span><span id="mtBakerSatDay">Loading...</span></div>
+      <div class="day"><span class="dayName">Sat Night:</span><span id="mtBakerSatNight">Loading...</span></div>
     </div>
 
   </div>
 
   <script>
     const statsOverlay = document.getElementById('statsOverlay');
-    const mtBakerSpan = document.getElementById('mtBakerData');
+
+    const mtIds = {
+      Today: 'mtBakerToday',
+      Tonight: 'mtBakerTonight',
+      WedDay: 'mtBakerWedDay',
+      WedNight: 'mtBakerWedNight',
+      ThuDay: 'mtBakerThuDay',
+      ThuNight: 'mtBakerThuNight',
+      FriDay: 'mtBakerFriDay',
+      FriNight: 'mtBakerFriNight',
+      SatDay: 'mtBakerSatDay',
+      SatNight: 'mtBakerSatNight'
+    };
 
     fetch('https://49.todd-0ce.workers.dev')
       .then(res => res.json())
       .then(data => {
-        // 49°N snow data
         statsOverlay.innerHTML = `
           <span>${data["updated"]}</span>
           <span><strong>12h:</strong> ${data["12h"]}"</span>
@@ -144,16 +168,28 @@
           <span><strong>Depth:</strong> ${data["summitDepth"]}"</span>
         `;
 
-        // Mt Baker / Testing data
-        if (data.mtBaker && data.mtBaker["Today"]) {
-          mtBakerSpan.textContent = data.mtBaker["Today"].replace(/[()]/g,''); // remove parentheses
+        if (data.mtBaker) {
+          Object.keys(mtIds).forEach(key => {
+            const el = document.getElementById(mtIds[key]);
+            if (el && data.mtBaker[key]) {
+              el.textContent = data.mtBaker[key].replace(/[()]/g,'');
+            } else if (el) {
+              el.textContent = 'Data unavailable';
+            }
+          });
         } else {
-          mtBakerSpan.textContent = "Data unavailable";
+          Object.values(mtIds).forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.textContent = 'Data unavailable';
+          });
         }
       })
       .catch(() => {
         statsOverlay.textContent = "Data Error";
-        mtBakerSpan.textContent = "Data unavailable";
+        Object.values(mtIds).forEach(id => {
+          const el = document.getElementById(id);
+          if (el) el.textContent = 'Data unavailable';
+        });
       });
   </script>
 </body>
