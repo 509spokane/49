@@ -157,32 +157,28 @@ function loadStats() {
         `;
 
         const mt = data.mtBaker || {};
-        const dayNames = document.getElementById('dayNames');
-        const dayNight = document.getElementById('dayNight');
-        const forecastValues = document.getElementById('forecastValues');
 
-        const days = ["Today","Tonight","Wed","Wed Night","Thu","Thu Night","Fri","Fri Night","Sat","Sat Night"];
-        const keys = ["mtBakerToday","mtBakerTonight","mtBakerWedDay","mtBakerWedNight","mtBakerThuDay","mtBakerThuNight","mtBakerFriDay","mtBakerFriNight","mtBakerSatDay","mtBakerSatNight"];
+        const dayKeys = ["mtBakerToday","mtBakerTonight","mtBakerWedDay","mtBakerWedNight","mtBakerThuDay","mtBakerThuNight","mtBakerFriDay","mtBakerFriNight","mtBakerSatDay","mtBakerSatNight"];
+        const dayLabels = ["Today","Tonight","Wed","Wed Night","Thu","Thu Night","Fri","Fri Night","Sat","Sat Night"];
 
-        dayNames.innerHTML = "";
-        dayNight.innerHTML = "";
-        forecastValues.innerHTML = "";
+        // Build headers
+        const dayNamesRow = document.getElementById('dayNames');
+        const dayNightRow = document.getElementById('dayNight');
+        const forecastRow = document.getElementById('forecastValues');
 
-        for (let i = 0; i < days.length; i += 2) {
-          // first header row: day names spanning 2 columns
-          dayNames.innerHTML += `<th colspan="2">${days[i]}</th>`;
-        }
+        dayNamesRow.innerHTML = "";
+        dayNightRow.innerHTML = "";
+        forecastRow.innerHTML = "";
 
-        // second header row: Day / Night labels
-        for (let i = 0; i < days.length; i += 2) {
-          dayNight.innerHTML += `<th>Day</th><th>Night</th>`;
-        }
-
-        // forecast values
-        for (let i = 0; i < keys.length; i += 2) {
-          const dayVal = mt[keys[i]] || "0";
-          const nightVal = mt[keys[i+1]] || "0";
-          forecastValues.innerHTML += `<td>${dayVal}</td><td>${nightVal}</td>`;
+        for (let i = 0; i < dayKeys.length; i += 2) {
+          // first header row: day name spanning 2 columns
+          dayNamesRow.innerHTML += `<th colspan="2">${dayLabels[i]}</th>`;
+          // second header row: Day / Night
+          dayNightRow.innerHTML += `<th>Day</th><th>Night</th>`;
+          // values row
+          const dayVal = mt[dayKeys[i]] || "0";
+          const nightVal = mt[dayKeys[i+1]] || "0";
+          forecastRow.innerHTML += `<td>${dayVal}</td><td>${nightVal}</td>`;
         }
     }
   })
