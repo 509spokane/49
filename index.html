@@ -63,20 +63,20 @@ body {
   width: 100%;
   display: block;
 }
-#mtBakerTest {
+#forecastTable {
   margin: 10px;
   border-collapse: collapse;
   width: 100%;
   text-align: center;
 }
-#mtBakerTest th, #mtBakerTest td {
+#forecastTable th, #forecastTable td {
   border: 1px solid #ccc;
   padding: 4px 6px;
 }
-#mtBakerTest th {
+#forecastTable th {
   background: #f5f5f5;
 }
-#mtBakerTest td.alt {
+#forecastTable td.alt {
   background: #eee;
 }
 </style>
@@ -123,9 +123,9 @@ body {
     </a>
   </div>
 
-  <!-- Testing table -->
+  <!-- Forecast table -->
   <h3 style="margin-left:10px;">TESTING</h3>
-  <table id="mtBakerTest">
+  <table id="forecastTable">
     <thead>
       <tr id="dayNames"></tr>
       <tr id="dayNight"></tr>
@@ -156,12 +156,11 @@ function loadStats() {
           <span><strong>Depth:</strong> ${data["summitDepth"]}"</span>
         `;
 
-        const mt = data.mtBaker || {};
+        const forecast = data.mtBaker || {};
 
-        const dayKeys = ["mtBakerToday","mtBakerTonight","mtBakerWedDay","mtBakerWedNight","mtBakerThuDay","mtBakerThuNight","mtBakerFriDay","mtBakerFriNight","mtBakerSatDay","mtBakerSatNight"];
+        const dayKeys = ["Today","Tonight","WedDay","WedNight","ThuDay","ThuNight","FriDay","FriNight","SatDay","SatNight"];
         const dayLabels = ["Today","Tonight","Wed","Wed Night","Thu","Thu Night","Fri","Fri Night","Sat","Sat Night"];
 
-        // Build headers
         const dayNamesRow = document.getElementById('dayNames');
         const dayNightRow = document.getElementById('dayNight');
         const forecastRow = document.getElementById('forecastValues');
@@ -170,19 +169,19 @@ function loadStats() {
         dayNightRow.innerHTML = "";
         forecastRow.innerHTML = "";
 
-        for (let i = 0; i < dayKeys.length; i += 2) {
-          // first header row: day name spanning 2 columns
+        for (let i = 0; i < dayKeys.length; i +=2) {
+          // Header row: day name spanning 2 columns
           dayNamesRow.innerHTML += `<th colspan="2">${dayLabels[i]}</th>`;
-          // second header row: Day / Night
+          // Second row: Day / Night
           dayNightRow.innerHTML += `<th>Day</th><th>Night</th>`;
-          // values row
-          const dayVal = mt[dayKeys[i]] || "0";
-          const nightVal = mt[dayKeys[i+1]] || "0";
+          // Forecast values
+          const dayVal = forecast[dayKeys[i]] || "0";
+          const nightVal = forecast[dayKeys[i+1]] || "0";
           forecastRow.innerHTML += `<td>${dayVal}</td><td>${nightVal}</td>`;
         }
-    }
-  })
-  .catch(() => { statsOverlay.textContent = "Data Error"; });
+      }
+    })
+    .catch(() => { statsOverlay.textContent = "Data Error"; });
 }
 
 loadStats();
