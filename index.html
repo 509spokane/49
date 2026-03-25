@@ -13,7 +13,7 @@
     }
     .container {
       max-width: 100%;
-      padding: 0;
+      padding: 0 8px; /* add horizontal padding */
     }
 
     .top-bar {
@@ -77,6 +77,13 @@
       white-space: nowrap;
       overflow-x: auto;
     }
+    #testing h3 {
+      margin: 0 0 4px 0;
+      font-size: 14px;
+    }
+    #testing span {
+      font-weight: bold;
+    }
   </style>
 </head>
 <body>
@@ -113,14 +120,16 @@
       </a>
     </div>
 
-    <h2>TESTING</h2>
-    <div id="testing">Loading data...</div>
+    <div id="testing">
+      <h3>Today</h3>
+      <span id="mtBakerData">Loading...</span>
+    </div>
 
   </div>
 
   <script>
     const statsOverlay = document.getElementById('statsOverlay');
-    const testingDiv = document.getElementById('testing');
+    const mtBakerSpan = document.getElementById('mtBakerData');
 
     fetch('https://49.todd-0ce.workers.dev')
       .then(res => res.json())
@@ -135,16 +144,16 @@
           <span><strong>Depth:</strong> ${data["summitDepth"]}"</span>
         `;
 
-        // Testing section
+        // Mt Baker / Testing data
         if (data.mtBaker && data.mtBaker["Today"]) {
-          testingDiv.textContent = data.mtBaker["Today"];
+          mtBakerSpan.textContent = data.mtBaker["Today"].replace(/[()]/g,''); // remove parentheses
         } else {
-          testingDiv.textContent = "Data unavailable";
+          mtBakerSpan.textContent = "Data unavailable";
         }
       })
       .catch(() => {
         statsOverlay.textContent = "Data Error";
-        testingDiv.textContent = "Data unavailable";
+        mtBakerSpan.textContent = "Data unavailable";
       });
   </script>
 </body>
