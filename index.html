@@ -76,6 +76,9 @@ body {
 #dayNight th {
   font-size: 11px; /* smaller font for Day/Night row */
 }
+#forecastTable td {
+  white-space: nowrap; /* prevent snow totals from wrapping */
+}
 </style>
 </head>
 <body>
@@ -156,7 +159,9 @@ function loadStats() {
       `;
 
       const forecast = data;
-      const forecastKeys = Object.keys(forecast).filter(k => !["12h","24h","48h","72h","summitDepth","updated"].includes(k));
+      const forecastKeys = Object.keys(forecast)
+        .filter(k => !["12h","24h","48h","72h","summitDepth","updated"].includes(k))
+        .slice(0, 10); // only take 5 days (Day/Night pairs)
 
       const dayNamesRow = document.getElementById('dayNames');
       const dayNightRow = document.getElementById('dayNight');
