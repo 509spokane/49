@@ -76,9 +76,6 @@ body {
 #forecastTable th {
   background: #f5f5f5;
 }
-#forecastTable td.alt {
-  background: #eee;
-}
 </style>
 </head>
 <body>
@@ -156,7 +153,7 @@ function loadStats() {
           <span><strong>Depth:</strong> ${data["summitDepth"]}"</span>
         `;
 
-        const forecast = data.mtBaker || {};
+        const forecast = data;
 
         const dayKeys = ["Today","Tonight","WedDay","WedNight","ThuDay","ThuNight","FriDay","FriNight","SatDay","SatNight"];
         const dayLabels = ["Today","Tonight","Wed","Wed Night","Thu","Thu Night","Fri","Fri Night","Sat","Sat Night"];
@@ -169,14 +166,13 @@ function loadStats() {
         dayNightRow.innerHTML = "";
         forecastRow.innerHTML = "";
 
-        for (let i = 0; i < dayKeys.length; i +=2) {
-          // Header row: day name spanning 2 columns
+        for (let i = 0; i < dayKeys.length; i += 2) {
           dayNamesRow.innerHTML += `<th colspan="2">${dayLabels[i]}</th>`;
-          // Second row: Day / Night
           dayNightRow.innerHTML += `<th>Day</th><th>Night</th>`;
-          // Forecast values
+
           const dayVal = forecast[dayKeys[i]] || "0";
           const nightVal = forecast[dayKeys[i+1]] || "0";
+
           forecastRow.innerHTML += `<td>${dayVal}</td><td>${nightVal}</td>`;
         }
       }
