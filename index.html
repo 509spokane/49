@@ -150,16 +150,16 @@
     <div id="testing">
       <h3>TESTING</h3>
       <div class="forecast-row">
-        <div class="forecast-item" id="day1">Day 1</div>
-        <div class="forecast-item" id="night1">Night 1</div>
-        <div class="forecast-item alt" id="day2">Day 2</div>
-        <div class="forecast-item alt" id="night2">Night 2</div>
-        <div class="forecast-item" id="day3">Day 3</div>
-        <div class="forecast-item" id="night3">Night 3</div>
-        <div class="forecast-item alt" id="day4">Day 4</div>
-        <div class="forecast-item alt" id="night4">Night 4</div>
-        <div class="forecast-item" id="day5">Day 5</div>
-        <div class="forecast-item" id="night5">Night 5</div>
+        <div class="forecast-item" id="day1">0</div>
+        <div class="forecast-item" id="night1">0</div>
+        <div class="forecast-item alt" id="day2">0</div>
+        <div class="forecast-item alt" id="night2">0</div>
+        <div class="forecast-item" id="day3">0</div>
+        <div class="forecast-item" id="night3">0</div>
+        <div class="forecast-item alt" id="day4">0</div>
+        <div class="forecast-item alt" id="night4">0</div>
+        <div class="forecast-item" id="day5">0</div>
+        <div class="forecast-item" id="night5">0</div>
       </div>
     </div>
 
@@ -168,7 +168,6 @@
   <!-- Stats script -->
   <script>
     const statsOverlay = document.getElementById('statsOverlay');
-
     const dayIds = ["day1","night1","day2","night2","day3","night3","day4","night4","day5","night5"];
 
     fetch('https://49.todd-0ce.workers.dev')
@@ -187,8 +186,7 @@
             <span><strong>Depth:</strong> ${data["summitDepth"]}"</span>
           `;
 
-          // Mt Baker testing values
-          const mt = data.mtBaker;
+          const mt = data.mtBaker || {};
           const values = [
             mt.day1 || "0",
             mt.night1 || "0",
