@@ -73,6 +73,9 @@ body {
 #forecastTable th {
   background: #f5f5f5;
 }
+#dayNight th {
+  font-size: 11px; /* smaller font for Day/Night row */
+}
 </style>
 </head>
 <body>
@@ -142,6 +145,7 @@ function loadStats() {
         return;
       }
 
+      // Top overlay
       statsOverlay.innerHTML = `
         <span>${data.updated || ''}</span>
         ${data["12h"] ? `<span><strong>12h:</strong> ${data["12h"]}"</span>` : ''}
@@ -152,8 +156,6 @@ function loadStats() {
       `;
 
       const forecast = data;
-
-      // Build an array of all the periods returned by the worker
       const forecastKeys = Object.keys(forecast).filter(k => !["12h","24h","48h","72h","summitDepth","updated"].includes(k));
 
       const dayNamesRow = document.getElementById('dayNames');
@@ -168,13 +170,12 @@ function loadStats() {
         const dayKey = forecastKeys[i];
         const nightKey = forecastKeys[i+1];
 
-        // Determine day label
         const label = dayKey.replace(/Day|Night/, '');
         dayNamesRow.innerHTML += `<th colspan="2">${label}</th>`;
         dayNightRow.innerHTML += `<th>Day</th><th>Night</th>`;
 
-        const dayVal = forecast[dayKey] || "";
-        const nightVal = forecast[nightKey] || "";
+        const dayVal = forecast[dayKey] ? `${forecast[dayKey]}"` : "";
+        const nightVal = forecast[nightKey] ? `${forecast[nightKey]}"` : "";
 
         forecastRow.innerHTML += `<td>${dayVal}</td><td>${nightVal}</td>`;
       }
