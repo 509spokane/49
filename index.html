@@ -13,20 +13,20 @@
     }
     .container {
       max-width: 100%;
-      padding: 0 8px;
+      padding: 0;
     }
 
+    /* Top bar */
     .top-bar {
+      width: 100%;
+      background: rgba(255, 255, 255, 0.95);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
       position: sticky;
       top: 0;
       z-index: 1000;
-      background: rgba(255, 255, 255, 0.95);
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
       display: flex;
       flex-direction: column;
-      gap: 4px;
     }
-
     .top-table {
       display: grid;
       grid-template-columns: 1fr 1fr 1fr 1fr;
@@ -50,18 +50,20 @@
       object-fit: contain;
     }
 
+    /* Stats overlay inside header */
     #statsOverlay {
-      display: flex;
-      justify-content: space-between;
       width: 100%;
-      background: rgba(255,255,255,0.75);
-      padding: 4px 8px;
+      background: rgba(255, 255, 255, 0.75);
+      color: #000;
+      padding: 6px 8px;
       font-size: 12px;
       box-sizing: border-box;
-      white-space: nowrap;
-      overflow-x: auto;
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
     }
 
+    /* Image sections */
     .section {
       position: relative;
     }
@@ -70,126 +72,143 @@
       display: block;
     }
 
+    /* TESTING area */
     #testing {
-      padding: 8px;
-      font-size: 14px;
-      background: #f0f0f0;
-      white-space: nowrap;
-      overflow-x: auto;
+      margin-top: 20px;
+      padding: 10px;
+      border-top: 1px solid #ccc;
     }
     #testing h3 {
-      margin: 0 0 4px 0;
-      font-size: 14px;
+      margin: 0 0 10px 0;
+      font-size: 16px;
     }
-    #testing div.day {
-      margin-bottom: 4px;
+    #testing .forecast-row {
+      display: flex;
+      justify-content: flex-start;
+      flex-wrap: wrap;
     }
-    #testing span.dayName {
-      font-weight: bold;
-      margin-right: 6px;
+    #testing .forecast-item {
+      min-width: 60px;
+      padding: 5px 10px;
+      margin-right: 2px;
+      text-align: center;
+      font-size: 12px;
+    }
+    #testing .forecast-item.alt {
+      background-color: #eee;
     }
   </style>
 </head>
 <body>
   <div class="container">
 
+    <!-- Top bar -->
     <div class="top-bar">
-      <div class="logo">
-        <a href="https://ski49n.com">
-          <img src="https://www.ski49n.com/images/logo.png" alt="ski" />
-        </a>
-      </div>
       <div class="top-table">
-        <div class="cell"><a href="https://forecast.weather.gov/MapClick.php?lon=-117.56499767303468&lat=48.285800530169524">Weather</a></div>
-        <div class="cell"><a href="https://www.ski49n.com/mountain-info/expanded-conditions">Conditions</a></div>
-        <div class="cell"><a href="https://www.ski49n.com/mountain-info/trail-status">Grooming</a></div>
-        <div class="cell"></div>
+        <div class="cell logo">
+          <a href="https://ski49n.com">
+            <img src="https://www.ski49n.com/images/logo.png" alt="ski" />
+          </a>
+        </div>
+        <div class="cell">
+          <a href="https://forecast.weather.gov/MapClick.php?lon=-117.56499767303468&lat=48.285800530169524">Weather</a>
+        </div>
+        <div class="cell">
+          <a href="https://www.ski49n.com/mountain-info/expanded-conditions">Conditions</a>
+        </div>
+        <div class="cell">
+          <a href="https://www.ski49n.com/mountain-info/trail-status">Grooming</a>
+        </div>
       </div>
+
+      <!-- Stats overlay -->
       <div id="statsOverlay">Loading snow data...</div>
     </div>
 
+    <!-- Lodge webcam -->
     <div class="section">
       <a href="https://www.ski49n.com/webcams/lodge.jpg">
         <img src="https://www.ski49n.com/webcams/lodge.jpg" alt="Lodge Webcam" />
       </a>
     </div>
+
+    <!-- Summit webcam -->
     <div class="section">
       <a href="https://www.ski49n.com/webcams/summit.jpg">
         <img src="https://www.ski49n.com/webcams/summit.jpg" alt="Summit Webcam" />
       </a>
     </div>
+
+    <!-- Chair 5 webcam -->
     <div class="section">
       <a href="https://www.ski49n.com/webcams/sunrise.jpg">
         <img src="https://www.ski49n.com/webcams/sunrise.jpg" alt="Chair 5 Webcam" />
       </a>
     </div>
 
+    <!-- TESTING section -->
     <div id="testing">
       <h3>TESTING</h3>
-      <div class="day"><span class="dayName">Today:</span><span id="mtBakerToday">Loading...</span></div>
-      <div class="day"><span class="dayName">Tonight:</span><span id="mtBakerTonight">Loading...</span></div>
-      <div class="day"><span class="dayName">Wed:</span><span id="mtBakerWedDay">Loading...</span></div>
-      <div class="day"><span class="dayName">Wed Night:</span><span id="mtBakerWedNight">Loading...</span></div>
-      <div class="day"><span class="dayName">Thu:</span><span id="mtBakerThuDay">Loading...</span></div>
-      <div class="day"><span class="dayName">Thu Night:</span><span id="mtBakerThuNight">Loading...</span></div>
-      <div class="day"><span class="dayName">Fri:</span><span id="mtBakerFriDay">Loading...</span></div>
-      <div class="day"><span class="dayName">Fri Night:</span><span id="mtBakerFriNight">Loading...</span></div>
-      <div class="day"><span class="dayName">Sat:</span><span id="mtBakerSatDay">Loading...</span></div>
-      <div class="day"><span class="dayName">Sat Night:</span><span id="mtBakerSatNight">Loading...</span></div>
+      <div class="forecast-row">
+        <div class="forecast-item" id="day1">Day 1</div>
+        <div class="forecast-item" id="night1">Night 1</div>
+        <div class="forecast-item alt" id="day2">Day 2</div>
+        <div class="forecast-item alt" id="night2">Night 2</div>
+        <div class="forecast-item" id="day3">Day 3</div>
+        <div class="forecast-item" id="night3">Night 3</div>
+        <div class="forecast-item alt" id="day4">Day 4</div>
+        <div class="forecast-item alt" id="night4">Night 4</div>
+        <div class="forecast-item" id="day5">Day 5</div>
+        <div class="forecast-item" id="night5">Night 5</div>
+      </div>
     </div>
 
   </div>
 
+  <!-- Stats script -->
   <script>
     const statsOverlay = document.getElementById('statsOverlay');
 
-    const mtIds = {
-      Today: 'mtBakerToday',
-      Tonight: 'mtBakerTonight',
-      WedDay: 'mtBakerWedDay',
-      WedNight: 'mtBakerWedNight',
-      ThuDay: 'mtBakerThuDay',
-      ThuNight: 'mtBakerThuNight',
-      FriDay: 'mtBakerFriDay',
-      FriNight: 'mtBakerFriNight',
-      SatDay: 'mtBakerSatDay',
-      SatNight: 'mtBakerSatNight'
-    };
+    const dayIds = ["day1","night1","day2","night2","day3","night3","day4","night4","day5","night5"];
 
     fetch('https://49.todd-0ce.workers.dev')
       .then(res => res.json())
       .then(data => {
-        statsOverlay.innerHTML = `
-          <span>${data["updated"]}</span>
-          <span><strong>12h:</strong> ${data["12h"]}"</span>
-          <span><strong>24h:</strong> ${data["24h"]}"</span>
-          <span><strong>48h:</strong> ${data["48h"]}"</span>
-          <span><strong>72h:</strong> ${data["72h"]}"</span>
-          <span><strong>Depth:</strong> ${data["summitDepth"]}"</span>
-        `;
-
-        if (data.mtBaker) {
-          Object.keys(mtIds).forEach(key => {
-            const el = document.getElementById(mtIds[key]);
-            if (el && data.mtBaker[key]) {
-              el.textContent = data.mtBaker[key].replace(/[()]/g,'');
-            } else if (el) {
-              el.textContent = 'Data unavailable';
-            }
-          });
+        if (data.error) {
+          statsOverlay.textContent = "Data Error";
+          dayIds.forEach(id => document.getElementById(id).textContent = "0");
         } else {
-          Object.values(mtIds).forEach(id => {
-            const el = document.getElementById(id);
-            if (el) el.textContent = 'Data unavailable';
+          statsOverlay.innerHTML = `
+            <span>${data.updated}</span>
+            <span><strong>12h:</strong> ${data["12h"]}"</span>
+            <span><strong>24h:</strong> ${data["24h"]}"</span>
+            <span><strong>48h:</strong> ${data["48h"]}"</span>
+            <span><strong>72h:</strong> ${data["72h"]}"</span>
+            <span><strong>Depth:</strong> ${data["summitDepth"]}"</span>
+          `;
+
+          // Mt Baker testing values
+          const mt = data.mtBaker;
+          const values = [
+            mt.day1 || "0",
+            mt.night1 || "0",
+            mt.day2 || "0",
+            mt.night2 || "0",
+            mt.day3 || "0",
+            mt.night3 || "0",
+            mt.day4 || "0",
+            mt.night4 || "0",
+            mt.day5 || "0",
+            mt.night5 || "0"
+          ];
+          dayIds.forEach((id,i) => {
+            document.getElementById(id).textContent = values[i];
           });
         }
       })
       .catch(() => {
         statsOverlay.textContent = "Data Error";
-        Object.values(mtIds).forEach(id => {
-          const el = document.getElementById(id);
-          if (el) el.textContent = 'Data unavailable';
-        });
+        dayIds.forEach(id => document.getElementById(id).textContent = "0");
       });
   </script>
 </body>
