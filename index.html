@@ -257,6 +257,19 @@ body {
 <script>
 const statsOverlay = document.getElementById('statsOverlay');
 
+function sameDay(a, b) {
+  return a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate();
+}
+function dateLabel(date, hourStr) {
+  const today = new Date(), yesterday = new Date();
+  yesterday.setDate(today.getDate() - 1);
+  if (sameDay(date, today)) return `Today ${hourStr}`;
+  if (sameDay(date, yesterday)) return `Yesterday ${hourStr}`;
+  const mo = (date.getMonth()+1).toString().padStart(2,'0');
+  const dy = date.getDate().toString().padStart(2,'0');
+  return `${mo}/${dy} ${hourStr}`;
+}
+
 // Load ski conditions from Cloudflare Worker (scrapes ski49n.com)
 async function loadStats() {
   try {
@@ -265,18 +278,6 @@ async function loadStats() {
     const t = data.totals;
     if (!t) { statsOverlay.textContent = "Data Error"; return; }
 
-    function sameDay(a, b) {
-      return a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate();
-    }
-    function dateLabel(date, hourStr) {
-      const today = new Date(), yesterday = new Date();
-      yesterday.setDate(today.getDate() - 1);
-      if (sameDay(date, today)) return `Today ${hourStr}`;
-      if (sameDay(date, yesterday)) return `Yesterday ${hourStr}`;
-      const mo = (date.getMonth()+1).toString().padStart(2,'0');
-      const dy = date.getDate().toString().padStart(2,'0');
-      return `${mo}/${dy} ${hourStr}`;
-    }
     function formatUpdated(str) {
       const match = str.match(/(\d+)\/(\d+)\/(\d+)\s+(\d+):(\d+)(am|pm)/i);
       if (!match) return str;
