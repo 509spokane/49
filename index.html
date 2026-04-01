@@ -93,6 +93,9 @@ body {
   display: block;
 }
 .forecast-caption {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   font-weight: 700;
   font-size: 12px;
   letter-spacing: 0.08em;
@@ -224,7 +227,7 @@ body {
 </div>
 
 <!-- Forecast cards -->
-<div class="forecast-caption">NOAA Snow Forecast</div>
+<div class="forecast-caption"><span>NOAA Snow Forecast</span><span id="noaaUpdated"></span></div>
 <div class="forecast-grid" id="forecastGrid"></div>
 
 <!-- Webcam sections -->
@@ -347,6 +350,16 @@ async function loadForecast() {
       if (fMin === 0 && fMax === 0) return '';
       if (fMin === fMax) return `${fMin}"`;
       return `${fMin}-${fMax}"`;
+    }
+
+    const updated = new Date(data.properties.updateTime);
+    const noaaUpdated = document.getElementById('noaaUpdated');
+    if (noaaUpdated) {
+      const mo = (updated.getMonth()+1).toString().padStart(2,'0');
+      const day = updated.getDate().toString().padStart(2,'0');
+      let hr = updated.getHours(), ampm = hr >= 12 ? 'pm' : 'am';
+      hr = hr % 12 || 12;
+      noaaUpdated.textContent = `Updated: ${mo}/${day} ${hr}${ampm}`;
     }
 
     const grid = document.getElementById('forecastGrid');
