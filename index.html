@@ -100,14 +100,6 @@ body {
   border-bottom: 1px solid #f0f0f0;
 }
 #cumulativeValues td { font-weight: 500; }
-#forecastValues td:first-child,
-#cumulativeValues td:first-child {
-  text-align: left;
-  padding-left: 12px;
-  color: #64748b;
-  font-size: 12px;
-  background: #fff;
-}
 </style>
 </head>
 <body>
@@ -138,12 +130,12 @@ body {
 <table id="forecastTable">
   <caption>NOAA Snow Forecast</caption>
   <thead>
-    <tr id="dayNames"><th></th></tr>
-    <tr id="dayNight"><th></th></tr>
+    <tr id="dayNames"></tr>
+    <tr id="dayNight"></tr>
   </thead>
   <tbody>
-    <tr id="forecastValues"><td></td></tr>
-    <tr id="cumulativeValues"><td></td></tr>
+    <tr id="forecastValues"></tr>
+    <tr id="cumulativeValues"></tr>
   </tbody>
 </table>
 
@@ -249,10 +241,10 @@ async function loadForecast() {
     const forecastRow = document.getElementById('forecastValues');
     const cumulativeRow = document.getElementById('cumulativeValues');
 
-    dayNamesRow.innerHTML = '<th></th>';
-    dayNightRow.innerHTML = '<th></th>';
-    forecastRow.innerHTML = '<td></td>';
-    cumulativeRow.innerHTML = '<td></td>';
+    dayNamesRow.innerHTML = '';
+    dayNightRow.innerHTML = '';
+    forecastRow.innerHTML = '';
+    cumulativeRow.innerHTML = '';
 
     let cumMin = 0, cumMax = 0;
 
@@ -286,7 +278,7 @@ async function loadForecast() {
       cumMin += nightRange.min; cumMax += nightRange.max;
       const afterNight = nightSnow ? formatCumulative(cumMin, cumMax) : '';
 
-      const dayLabel2 = pair === 0 ? '<span style="font-weight:600;color:#64748b;font-size:12px;">Totals:</span>' : '';
+      const dayLabel2 = pair === 0 ? '<span style="font-weight:600;color:#64748b;font-size:12px;">Totals &#8594;</span>' : '';
       cumulativeRow.innerHTML += `
         <td style="background:${s.dayCum}">${afterDay || dayLabel2}</td>
         <td style="background:${s.nightCum}">${afterNight}</td>`;
