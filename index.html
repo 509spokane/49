@@ -58,10 +58,29 @@ body {
   align-items: center;
   margin-bottom: 3px;
 }
-#statsOverlay .stats-data {
+.stats-grid {
   display: flex;
-  justify-content: space-between;
-  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}
+.stat-card {
+  flex: 1;
+  border-radius: 6px;
+  overflow: hidden;
+  text-align: center;
+  font-size: 13px;
+}
+.stat-card .stat-label {
+  background: #94a3b8;
+  color: #fff;
+  font-weight: 700;
+  padding: 5px 4px;
+  font-size: 12px;
+}
+.stat-card .stat-value {
+  background: #f1f5f9;
+  padding: 7px 4px;
+  font-weight: 600;
 }
 .section {
   position: relative;
@@ -251,17 +270,20 @@ async function loadStats() {
       return `${date} ${hour}${period}`;
     }
 
+    const statCard = (label, val) =>
+      `<div class="stat-card"><div class="stat-label">${label}</div><div class="stat-value">${val}"</div></div>`;
+
     statsOverlay.innerHTML = `
       <div class="stats-header">
         <span style="font-weight:700;font-size:12px;letter-spacing:0.08em;text-transform:uppercase;color:#888;">Latest Snowfall</span>
         <span style="color:#888;">Updated: ${formatUpdated(t.updated || '')}</span>
       </div>
-      <div class="stats-data">
-        ${t["12h"] !== undefined ? `<span><strong>12h:</strong> ${t["12h"]}"</span>` : ''}
-        ${t["24h"] !== undefined ? `<span><strong>24h:</strong> ${t["24h"]}"</span>` : ''}
-        ${t["48h"] !== undefined ? `<span><strong>48h:</strong> ${t["48h"]}"</span>` : ''}
-        ${t["72h"] !== undefined ? `<span><strong>72h:</strong> ${t["72h"]}"</span>` : ''}
-        ${t.summitDepth ? `<span><strong>Depth:</strong> ${t.summitDepth}"</span>` : ''}
+      <div class="stats-grid">
+        ${t["12h"]  !== undefined ? statCard('12h',   t["12h"])      : ''}
+        ${t["24h"]  !== undefined ? statCard('24h',   t["24h"])      : ''}
+        ${t["48h"]  !== undefined ? statCard('48h',   t["48h"])      : ''}
+        ${t["72h"]  !== undefined ? statCard('72h',   t["72h"])      : ''}
+        ${t.summitDepth           ? statCard('Depth', t.summitDepth) : ''}
       </div>
     `;
   } catch(e) {
