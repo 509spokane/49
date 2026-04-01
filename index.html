@@ -194,6 +194,67 @@ body {
   text-transform: uppercase;
 }
 .short-name { display: none; }
+.settings-section {
+  margin: 16px 10px 24px;
+  padding: 12px 14px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+}
+.settings-section .settings-title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #94a3b8;
+  margin-bottom: 10px;
+}
+.settings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 7px 0;
+  border-bottom: 1px solid #e2e8f0;
+}
+.settings-row:last-child { border-bottom: none; }
+.settings-row label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #334155;
+  cursor: pointer;
+}
+.toggle-switch {
+  position: relative;
+  width: 40px;
+  height: 22px;
+  flex-shrink: 0;
+}
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+.toggle-slider {
+  position: absolute;
+  inset: 0;
+  background: #cbd5e1;
+  border-radius: 22px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.toggle-slider:before {
+  content: '';
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  left: 3px;
+  top: 3px;
+  background: #fff;
+  border-radius: 50%;
+  transition: transform 0.2s;
+}
+.toggle-switch input:checked + .toggle-slider { background: #64748b; }
+.toggle-switch input:checked + .toggle-slider:before { transform: translateX(18px); }
 @media (max-width: 480px) and (orientation: portrait) {
   .day-card { font-size: 10px; }
   .day-card .day-header { font-size: 10px; padding: 5px 2px; }
@@ -250,6 +311,25 @@ body {
   <a href="https://www.ski49n.com/webcams/sunrise.jpg">
     <img src="https://www.ski49n.com/webcams/sunrise.jpg" alt="Chair 5 Webcam" />
   </a>
+</div>
+
+<!-- Settings -->
+<div class="settings-section">
+  <div class="settings-title">Settings</div>
+  <div class="settings-row">
+    <label for="toggleConditions">Show Snow Conditions</label>
+    <label class="toggle-switch">
+      <input type="checkbox" id="toggleConditions" checked>
+      <span class="toggle-slider"></span>
+    </label>
+  </div>
+  <div class="settings-row">
+    <label for="toggleForecast">Show Snow Forecast</label>
+    <label class="toggle-switch">
+      <input type="checkbox" id="toggleForecast" checked>
+      <span class="toggle-slider"></span>
+    </label>
+  </div>
 </div>
 
 </div>
@@ -423,6 +503,31 @@ async function loadForecast() {
 
 loadStats();
 loadForecast();
+
+// Settings
+const conditionsEl = document.getElementById('statsOverlay');
+const forecastCaptionEl = document.querySelector('.forecast-caption');
+const forecastGridEl = document.getElementById('forecastGrid');
+
+function applySettings() {
+  const showConditions = document.getElementById('toggleConditions').checked;
+  const showForecast = document.getElementById('toggleForecast').checked;
+  conditionsEl.style.display = showConditions ? '' : 'none';
+  forecastCaptionEl.style.display = showForecast ? '' : 'none';
+  forecastGridEl.style.display = showForecast ? '' : 'none';
+  localStorage.setItem('showConditions', showConditions);
+  localStorage.setItem('showForecast', showForecast);
+}
+
+// Load saved prefs
+const savedConditions = localStorage.getItem('showConditions');
+const savedForecast = localStorage.getItem('showForecast');
+if (savedConditions !== null) document.getElementById('toggleConditions').checked = savedConditions === 'true';
+if (savedForecast !== null) document.getElementById('toggleForecast').checked = savedForecast === 'true';
+applySettings();
+
+document.getElementById('toggleConditions').addEventListener('change', applySettings);
+document.getElementById('toggleForecast').addEventListener('change', applySettings);
 </script>
 <script data-goatcounter="https://49status.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
 </body>
