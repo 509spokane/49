@@ -170,6 +170,7 @@ body {
   .day-card .cell-day, .day-card .cell-night { padding: 5px 2px; }
   .day-card .total-day, .day-card .total-night { font-size: 10px; padding: 5px 2px; }
   .forecast-grid { gap: 3px; }
+  .totals-label { display: none; }
 }
 </style>
 </head>
@@ -289,8 +290,6 @@ async function loadForecast() {
       if (singleMatch) return `${singleMatch[1]}"`;
       return s;
     }
-
-    function extractSnow(detail) { return '22"'; } // TEST DATA - revert soon
 
     function dayLabel(name) {
       return name.replace(' Night', '').replace('Tonight', 'Today');
