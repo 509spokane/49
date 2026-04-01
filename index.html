@@ -103,6 +103,11 @@ body {
   color: #888;
   margin: 16px 10px 8px;
 }
+#noaaUpdated {
+  text-transform: none;
+  font-weight: normal;
+  letter-spacing: normal;
+}
 .forecast-grid {
   display: flex;
   gap: 6px;
@@ -260,20 +265,26 @@ async function loadStats() {
     const t = data.totals;
     if (!t) { statsOverlay.textContent = "Data Error"; return; }
 
+    function sameDay(a, b) {
+      return a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate();
+    }
+    function dateLabel(date, hourStr) {
+      const today = new Date(), yesterday = new Date();
+      yesterday.setDate(today.getDate() - 1);
+      if (sameDay(date, today)) return `Today ${hourStr}`;
+      if (sameDay(date, yesterday)) return `Yesterday ${hourStr}`;
+      const mo = (date.getMonth()+1).toString().padStart(2,'0');
+      const dy = date.getDate().toString().padStart(2,'0');
+      return `${mo}/${dy} ${hourStr}`;
+    }
     function formatUpdated(str) {
-      const match = str.match(/(\d+\/\d+)\/\d+\s+(\d+):(\d+)(am|pm)/i);
+      const match = str.match(/(\d+)\/(\d+)\/(\d+)\s+(\d+):(\d+)(am|pm)/i);
       if (!match) return str;
-      const [, date, h, m, ampm] = match;
-      let hour = parseInt(h);
-      const min = parseInt(m);
-      let period = ampm.toLowerCase();
-      if (min >= 30) {
-        hour++;
-        if (hour === 12) period = period === 'am' ? 'pm' : period;
-        if (hour === 13) { hour = 1; }
-        if (hour === 24) { hour = 12; }
-      }
-      return `${date} ${hour}${period}`;
+      const [, mo, dy, yr, h, m, ampm] = match;
+      const date = new Date(2000 + parseInt(yr), parseInt(mo)-1, parseInt(dy));
+      let hour = parseInt(h), period = ampm.toLowerCase();
+      if (parseInt(m) >= 30) { hour++; if (hour===12&&period==='am') period='pm'; if (hour===13) hour=1; }
+      return dateLabel(date, `${hour}${period}`);
     }
 
     const stats = [
@@ -355,11 +366,9 @@ async function loadForecast() {
     const updated = new Date(data.properties.updateTime);
     const noaaUpdated = document.getElementById('noaaUpdated');
     if (noaaUpdated) {
-      const mo = (updated.getMonth()+1).toString().padStart(2,'0');
-      const day = updated.getDate().toString().padStart(2,'0');
       let hr = updated.getHours(), ampm = hr >= 12 ? 'pm' : 'am';
       hr = hr % 12 || 12;
-      noaaUpdated.textContent = `Updated: ${mo}/${day} ${hr}${ampm}`;
+      noaaUpdated.textContent = `Updated: ${dateLabel(updated, `${hr}${ampm}`)}`;
     }
 
     const grid = document.getElementById('forecastGrid');
