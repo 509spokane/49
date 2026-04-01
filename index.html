@@ -256,31 +256,27 @@ async function loadForecast() {
 
     let cumMin = 0, cumMax = 0;
 
-    // Colours: even pairs = white/light-gray, odd pairs = pale-blue/blue-tint
-    function pairBg(pairIndex, isNight) {
-      return pairIndex % 2 === 0
-        ? (isNight ? '#f1f5f9' : '#ffffff')
-        : (isNight ? '#dbeafe' : '#eff6ff');
-    }
-    function cumBg(pairIndex, isNight) {
-      return pairIndex % 2 === 0
-        ? (isNight ? '#e8edf2' : '#f8fafc')
-        : (isNight ? '#c7ddf7' : '#e0effd');
-    }
+    // Even days = blue family, odd days = slate/gray family
+    // Within each: Day col = lighter, Night col = noticeably darker
+    const scheme = [
+      { dayData:'#dbeafe', nightData:'#7db5e8', dayHead:'#1e3a5f', nightHead:'#153052', dayCum:'#bfdbfe', nightCum:'#5a9fd4' },
+      { dayData:'#f1f5f9', nightData:'#94a3b8', dayHead:'#2d3748', nightHead:'#1f2d3d', dayCum:'#e2e8f0', nightCum:'#7a8fa3' },
+    ];
 
     for (let i = 0; i + 1 < periods.length; i += 2) {
       const day = periods[i];
       const night = periods[i + 1];
       const pair = i / 2;
+      const s = scheme[pair % 2];
 
-      dayNamesRow.innerHTML += `<th colspan="2">${dayLabel(day.name)}</th>`;
-      dayNightRow.innerHTML += `<th>Day</th><th>Night</th>`;
+      dayNamesRow.innerHTML += `<th colspan="2" style="background:${s.dayHead}">${dayLabel(day.name)}</th>`;
+      dayNightRow.innerHTML += `<th style="background:${s.dayHead}">Day</th><th style="background:${s.nightHead}">Night</th>`;
 
       const daySnow = extractSnow(day.detailedForecast);
       const nightSnow = extractSnow(night.detailedForecast);
       forecastRow.innerHTML += `
-        <td style="background:${pairBg(pair,false)}">${daySnow}</td>
-        <td style="background:${pairBg(pair,true)}">${nightSnow}</td>`;
+        <td style="background:${s.dayData}">${daySnow}</td>
+        <td style="background:${s.nightData}">${nightSnow}</td>`;
 
       const dayRange = parseRange(daySnow);
       cumMin += dayRange.min; cumMax += dayRange.max;
@@ -291,8 +287,8 @@ async function loadForecast() {
       const afterNight = nightSnow ? formatCumulative(cumMin, cumMax) : '';
 
       cumulativeRow.innerHTML += `
-        <td style="background:${cumBg(pair,false)}">${afterDay}</td>
-        <td style="background:${cumBg(pair,true)}">${afterNight}</td>`;
+        <td style="background:${s.dayCum}">${afterDay}</td>
+        <td style="background:${s.nightCum}">${afterNight}</td>`;
     }
   } catch(e) {
     document.querySelector('#forecastTable tbody').innerHTML = '<tr><td colspan="10">Forecast unavailable</td></tr>';
