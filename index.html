@@ -173,7 +173,7 @@ body {
   min-height: 1.2em;
 }
 .weather-temp.hidden { display: none; }
-.short-name { display: none; }
+.label-card { flex: none; width: 44px; }
 .settings-section {
   margin: 16px 10px 24px;
   padding: 12px 14px;
@@ -243,8 +243,7 @@ body {
   .day-card .night-label { font-size: 8px; padding: 3px 1px; }
   .day-card .row-total { font-size: 10px; padding: 5px 2px; }
   .forecast-grid { gap: 3px; }
-  .day-card:first-child .full-name { display: none; }
-  .day-card:first-child .short-name { display: inline; }
+  .label-card { width: 36px; }
 }
 </style>
 </head>
@@ -403,8 +402,10 @@ async function loadForecast() {
       return s;
     }
 
-    function dayLabel(name) {
-      return name.replace(' Night', '').replace('Tonight', 'Today');
+    function shortDayName(name) {
+      const clean = name.replace(/ Night$/, '').replace('Tonight', 'Today');
+      const map = { Monday:'Mon', Tuesday:'Tue', Wednesday:'Wed', Thursday:'Thu', Friday:'Fri', Saturday:'Sat', Sunday:'Sun' };
+      return map[clean] || clean;
     }
 
     function parseRange(formatted) {
@@ -442,14 +443,36 @@ async function loadForecast() {
     const grid = document.getElementById('forecastGrid');
     grid.innerHTML = '';
     let cumMin = 0, cumMax = 0;
+    const tempHidden = localStorage.getItem('showWeather') !== 'false' ? '' : ' hidden';
 
-    for (let i = 0; i + 1 < periods.length; i += 2) {
-      const day = periods[i];
-      const night = periods[i + 1];
-      const pair = i / 2;
+    // Label card — invisible placeholder that labels the Totals row
+    const labelCard = document.createElement('div');
+    labelCard.className = 'label-card';
+    labelCard.innerHTML = `
+      <div class="day-header" style="visibility:hidden">&nbsp;</div>
+      <div class="row-temp-day weather-temp${tempHidden}" style="visibility:hidden">&nbsp;</div>
+      <div class="row-snow-day" style="visibility:hidden">&nbsp;</div>
+      <div class="night-label" style="visibility:hidden">&nbsp;</div>
+      <div class="row-temp-night weather-temp${tempHidden}" style="visibility:hidden">&nbsp;</div>
+      <div class="row-snow-night" style="visibility:hidden">&nbsp;</div>
+      <div class="row-total" style="background:transparent;color:#64748b;text-align:right;padding-right:4px;border-top:none">Totals:</div>`;
+    grid.appendChild(labelCard);
 
-      const daySnow = extractSnow(day.detailedForecast);
-      const nightSnow = extractSnow(night.detailedForecast);
+    // If NOAA's first period is nighttime we're past today's daytime
+    const isEvening = periods.length > 0 && periods[0].isDaytime === false;
+    const cardDefs = [];
+    if (isEvening) {
+      cardDefs.push({ day: null, night: periods[0], isToday: true });
+      for (let i = 1; i + 1 < periods.length && cardDefs.length < 5; i += 2)
+        cardDefs.push({ day: periods[i], night: periods[i + 1], isToday: false });
+    } else {
+      for (let i = 0; i + 1 < periods.length && cardDefs.length < 5; i += 2)
+        cardDefs.push({ day: periods[i], night: periods[i + 1], isToday: i === 0 });
+    }
+
+    cardDefs.forEach(({ day, night, isToday }) => {
+      const daySnow = day ? extractSnow(day.detailedForecast) : '';
+      const nightSnow = night ? extractSnow(night.detailedForecast) : '';
 
       const dayRange = parseRange(daySnow);
       cumMin += dayRange.min; cumMax += dayRange.max;
@@ -459,42 +482,23 @@ async function loadForecast() {
       cumMin += nightRange.min; cumMax += nightRange.max;
       const afterNight = nightSnow ? formatCumulative(cumMin, cumMax) : '';
 
-      const totalsLabel = pair === 0 ? '<span class="totals-label">Totals &rarr;</span>' : '';
+      const headerName = isToday ? 'Today' : shortDayName(day.name);
+      const dayTempStr = day && day.temperature != null ? `▲ ${day.temperature}°` : '';
+      const nightTempStr = night && night.temperature != null ? `▼ ${night.temperature}°` : '';
+      const totalVal = afterNight || afterDay;
 
       const card = document.createElement('div');
       card.className = 'day-card';
-      const headerHTML = pair === 0
-        ? `<span class="full-name">${dayLabel(day.name)}</span><span class="short-name">Today</span>`
-        : dayLabel(day.name);
-
-      function wxEmoji(forecast) {
-        const f = (forecast || '').toLowerCase();
-        if (/thunder/.test(f)) return ' ⛈️';
-        if (/snow|blizzard|flurr/.test(f)) return ' 🌨️';
-        if (/rain|shower|drizzle/.test(f)) return ' 🌧️';
-        if (/sunny|clear/.test(f)) return ' ☀️';
-        if (/partly/.test(f)) return ' ⛅';
-        if (/cloud|overcast/.test(f)) return ' ☁️';
-        return '';
-      }
-
-      function snowFmt(s) { return s ? `${s} ⛄` : '&nbsp;'; }
-
-      const dayTemp = day.temperature != null ? `▲ ${day.temperature}°${wxEmoji(day.shortForecast)}` : '';
-      const nightTemp = night.temperature != null ? `▼ ${night.temperature}°${wxEmoji(night.shortForecast)}` : '';
-      const tempHidden = localStorage.getItem('showWeather') !== 'false' ? '' : ' hidden';
-      const totalVal = afterNight || afterDay;
-
       card.innerHTML = `
-        <div class="day-header">${headerHTML}</div>
-        <div class="row-temp-day weather-temp${tempHidden}">${dayTemp || '&nbsp;'}</div>
-        <div class="row-snow-day">${snowFmt(daySnow)}</div>
+        <div class="day-header">${headerName}</div>
+        <div class="row-temp-day weather-temp${tempHidden}">${dayTempStr || '&nbsp;'}</div>
+        <div class="row-snow-day">${daySnow || '&nbsp;'}</div>
         <div class="night-label">Night</div>
-        <div class="row-temp-night weather-temp${tempHidden}">${nightTemp || '&nbsp;'}</div>
-        <div class="row-snow-night">${snowFmt(nightSnow)}</div>
-        <div class="row-total">${totalVal ? totalVal + ' ⛄' : '&nbsp;'}</div>`;
+        <div class="row-temp-night weather-temp${tempHidden}">${nightTempStr || '&nbsp;'}</div>
+        <div class="row-snow-night">${nightSnow || '&nbsp;'}</div>
+        <div class="row-total">${totalVal || '&nbsp;'}</div>`;
       grid.appendChild(card);
-    }
+    });
   } catch(e) {
     document.getElementById('forecastGrid').textContent = 'Forecast unavailable';
   }
