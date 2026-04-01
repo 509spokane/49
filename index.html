@@ -163,6 +163,7 @@ body {
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
+.short-name { display: none; }
 @media (max-width: 480px) and (orientation: portrait) {
   .day-card { font-size: 10px; }
   .day-card .day-header { font-size: 10px; padding: 5px 2px; }
@@ -171,6 +172,8 @@ body {
   .day-card .total-day, .day-card .total-night { font-size: 10px; padding: 5px 2px; }
   .forecast-grid { gap: 3px; }
   .totals-label { display: none; }
+  .day-card:first-child .full-name { display: none; }
+  .day-card:first-child .short-name { display: inline; }
 }
 </style>
 </head>
@@ -343,8 +346,12 @@ async function loadForecast() {
 
       const card = document.createElement('div');
       card.className = 'day-card';
+      const headerHTML = pair === 0
+        ? `<span class="full-name">${dayLabel(day.name)}</span><span class="short-name">Today</span>`
+        : dayLabel(day.name);
+
       card.innerHTML = `
-        <div class="day-header">${dayLabel(day.name)}</div>
+        <div class="day-header">${headerHTML}</div>
         <div class="subheader-row">
           <div class="sub-day">Day</div>
           <div class="sub-night">Night</div>
