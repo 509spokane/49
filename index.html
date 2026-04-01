@@ -249,10 +249,10 @@ async function loadForecast() {
     const forecastRow = document.getElementById('forecastValues');
     const cumulativeRow = document.getElementById('cumulativeValues');
 
-    dayNamesRow.innerHTML = '';
-    dayNightRow.innerHTML = '';
-    forecastRow.innerHTML = '';
-    cumulativeRow.innerHTML = '';
+    dayNamesRow.innerHTML = '<th></th>';
+    dayNightRow.innerHTML = '<th></th>';
+    forecastRow.innerHTML = '<td style="font-weight:600;white-space:nowrap;">Daily Forecast</td>';
+    cumulativeRow.innerHTML = '<td style="font-weight:600;white-space:nowrap;">Totals:</td>';
 
     let cumMin = 0, cumMax = 0;
 
