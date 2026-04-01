@@ -124,13 +124,14 @@ body {
 
 <!-- Forecast table -->
 <table id="forecastTable">
+  <caption style="font-weight:bold;text-align:left;padding:6px 10px;font-size:14px;">NOAA Snow Forecast</caption>
   <thead>
-    <tr id="dayNames"></tr>
-    <tr id="dayNight"></tr>
+    <tr id="dayNames"><th></th></tr>
+    <tr id="dayNight"><th></th></tr>
   </thead>
   <tbody>
-    <tr id="forecastValues"></tr>
-    <tr id="cumulativeValues"></tr>
+    <tr id="forecastValues"><td style="font-weight:600;white-space:nowrap;">Daily Forecast</td></tr>
+    <tr id="cumulativeValues"><td style="font-weight:600;white-space:nowrap;">Forecasted Totals</td></tr>
   </tbody>
 </table>
 
@@ -172,7 +173,7 @@ async function loadForecast() {
       const match = detail.match(/new snow accumulation of ([^.]+)/i);
       if (!match) return '';
       let s = match[1].trim().toLowerCase().replace(/\s*possible\s*$/, '').trim();
-      if (/less than half an inch/.test(s)) return '< 1/2"';
+      if (/less than half an inch/.test(s)) return '< .5"';
       const ltMatch = s.match(/less than (\d+) inch/);
       if (ltMatch) return `< ${ltMatch[1]}"`;
       const rangeMatch = s.match(/(\d+) to (\d+) inch/);
@@ -192,7 +193,7 @@ async function loadForecast() {
 
     function parseRange(formatted) {
       if (!formatted) return { min: 0, max: 0 };
-      if (formatted === '< 1/2"') return { min: 0, max: 0.5 };
+      if (formatted === '< .5"') return { min: 0, max: 0.5 };
       const lt = formatted.match(/^< (\d+(?:\.\d+)?)"$/);
       if (lt) return { min: 0, max: parseFloat(lt[1]) };
       const range = formatted.match(/^(\d+(?:\.\d+)?)-(\d+(?:\.\d+)?)"$/);
@@ -244,7 +245,7 @@ async function loadForecast() {
       cumMin += nightRange.min; cumMax += nightRange.max;
       const afterNight = formatCumulative(cumMin, cumMax);
 
-      cumulativeRow.innerHTML += `<td style="font-size:11px;color:#555;">${afterDay}</td><td style="font-size:11px;color:#555;">${afterNight}</td>`;
+      cumulativeRow.innerHTML += `<td>${afterDay}</td><td>${afterNight}</td>`;
     }
   } catch(e) {
     document.querySelector('#forecastTable tbody').innerHTML = '<tr><td colspan="10">Forecast unavailable</td></tr>';
