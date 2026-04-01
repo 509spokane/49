@@ -99,14 +99,14 @@ body {
   border: none;
   border-bottom: 1px solid #f0f0f0;
 }
-#forecastValues td { background: #fff; }
-#cumulativeValues td { background: #f8fafc; font-weight: 500; }
+#cumulativeValues td { font-weight: 500; }
 #forecastValues td:first-child,
 #cumulativeValues td:first-child {
   text-align: left;
   padding-left: 12px;
   color: #64748b;
   font-size: 12px;
+  background: #fff;
 }
 </style>
 </head>
@@ -134,6 +134,19 @@ body {
   <div id="statsOverlay">Loading snow data...</div>
 </div>
 
+<!-- Forecast table -->
+<table id="forecastTable">
+  <caption>NOAA Snow Forecast</caption>
+  <thead>
+    <tr id="dayNames"><th></th></tr>
+    <tr id="dayNight"><th></th></tr>
+  </thead>
+  <tbody>
+    <tr id="forecastValues"><td style="font-weight:600;white-space:nowrap;">Daily Forecast</td></tr>
+    <tr id="cumulativeValues"><td style="font-weight:600;white-space:nowrap;">Totals:</td></tr>
+  </tbody>
+</table>
+
 <!-- Webcam sections -->
 <div class="section">
   <a href="https://www.ski49n.com/webcams/lodge.jpg">
@@ -150,19 +163,6 @@ body {
     <img src="https://www.ski49n.com/webcams/sunrise.jpg" alt="Chair 5 Webcam" />
   </a>
 </div>
-
-<!-- Forecast table -->
-<table id="forecastTable">
-  <caption>NOAA Snow Forecast</caption>
-  <thead>
-    <tr id="dayNames"><th></th></tr>
-    <tr id="dayNight"><th></th></tr>
-  </thead>
-  <tbody>
-    <tr id="forecastValues"><td style="font-weight:600;white-space:nowrap;">Daily Forecast</td></tr>
-    <tr id="cumulativeValues"><td style="font-weight:600;white-space:nowrap;">Forecasted Totals</td></tr>
-  </tbody>
-</table>
 
 </div>
 
@@ -256,26 +256,43 @@ async function loadForecast() {
 
     let cumMin = 0, cumMax = 0;
 
+    // Colours: even pairs = white/light-gray, odd pairs = pale-blue/blue-tint
+    function pairBg(pairIndex, isNight) {
+      return pairIndex % 2 === 0
+        ? (isNight ? '#f1f5f9' : '#ffffff')
+        : (isNight ? '#dbeafe' : '#eff6ff');
+    }
+    function cumBg(pairIndex, isNight) {
+      return pairIndex % 2 === 0
+        ? (isNight ? '#e8edf2' : '#f8fafc')
+        : (isNight ? '#c7ddf7' : '#e0effd');
+    }
+
     for (let i = 0; i + 1 < periods.length; i += 2) {
       const day = periods[i];
       const night = periods[i + 1];
+      const pair = i / 2;
 
       dayNamesRow.innerHTML += `<th colspan="2">${dayLabel(day.name)}</th>`;
       dayNightRow.innerHTML += `<th>Day</th><th>Night</th>`;
 
       const daySnow = extractSnow(day.detailedForecast);
       const nightSnow = extractSnow(night.detailedForecast);
-      forecastRow.innerHTML += `<td>${daySnow}</td><td>${nightSnow}</td>`;
+      forecastRow.innerHTML += `
+        <td style="background:${pairBg(pair,false)}">${daySnow}</td>
+        <td style="background:${pairBg(pair,true)}">${nightSnow}</td>`;
 
       const dayRange = parseRange(daySnow);
       cumMin += dayRange.min; cumMax += dayRange.max;
-      const afterDay = formatCumulative(cumMin, cumMax);
+      const afterDay = daySnow ? formatCumulative(cumMin, cumMax) : '';
 
       const nightRange = parseRange(nightSnow);
       cumMin += nightRange.min; cumMax += nightRange.max;
-      const afterNight = formatCumulative(cumMin, cumMax);
+      const afterNight = nightSnow ? formatCumulative(cumMin, cumMax) : '';
 
-      cumulativeRow.innerHTML += `<td>${afterDay}</td><td>${afterNight}</td>`;
+      cumulativeRow.innerHTML += `
+        <td style="background:${cumBg(pair,false)}">${afterDay}</td>
+        <td style="background:${cumBg(pair,true)}">${afterNight}</td>`;
     }
   } catch(e) {
     document.querySelector('#forecastTable tbody').innerHTML = '<tr><td colspan="10">Forecast unavailable</td></tr>';
