@@ -61,45 +61,99 @@ body {
   width: 100%;
   display: block;
 }
-#forecastTable {
-  margin: 16px 10px 10px;
-  border-collapse: collapse;
-  width: calc(100% - 20px);
-  text-align: center;
-  font-size: 13px;
-}
-#forecastTable caption {
+.forecast-caption {
   font-weight: 700;
-  text-align: left;
-  padding: 0 0 8px 0;
   font-size: 12px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: #888;
+  margin: 16px 10px 8px;
 }
-#forecastTable thead th {
-  background: #1e293b;
+.forecast-grid {
+  display: flex;
+  gap: 6px;
+  margin: 0 10px 10px;
+}
+.day-card {
+  flex: 1;
+  border-radius: 6px;
+  overflow: hidden;
+  font-size: 13px;
+  text-align: center;
+}
+.day-card .day-header {
+  background: #94a3b8;
   color: #fff;
-  padding: 9px 8px;
-  font-weight: 600;
-  border: none;
+  font-weight: 700;
+  padding: 7px 4px;
+  font-size: 13px;
 }
-#dayNight th {
-  background: #334155;
-  color: rgba(255,255,255,0.7);
-  font-size: 11px;
-  font-weight: 400;
-  padding: 5px 8px;
+.day-card .subheader-row {
+  display: flex;
+}
+.day-card .sub-day {
+  flex: 1;
+  background: #fef9c3;
+  color: #713f12;
+  font-size: 10px;
+  font-weight: 600;
   letter-spacing: 0.05em;
+  padding: 5px 2px;
   text-transform: uppercase;
 }
-#forecastTable td {
-  padding: 9px 8px;
-  white-space: nowrap;
-  border: none;
-  border-bottom: 1px solid #f0f0f0;
+.day-card .sub-night {
+  flex: 1;
+  background: #e2e8f0;
+  color: #334155;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  padding: 5px 2px;
+  text-transform: uppercase;
 }
-#cumulativeValues td { font-weight: 500; }
+.day-card .data-row {
+  display: flex;
+  border-top: 1px solid rgba(0,0,0,0.06);
+}
+.day-card .cell-day {
+  flex: 1;
+  background: #fffef5;
+  padding: 8px 4px;
+  min-height: 1em;
+}
+.day-card .cell-night {
+  flex: 1;
+  background: #f1f5f9;
+  padding: 8px 4px;
+  min-height: 1em;
+}
+.day-card .totals-row {
+  display: flex;
+  border-top: 1px solid rgba(0,0,0,0.08);
+}
+.day-card .total-day {
+  flex: 1;
+  background: #fefce8;
+  padding: 8px 4px;
+  font-weight: 600;
+  font-size: 12px;
+  min-height: 1em;
+}
+.day-card .total-night {
+  flex: 1;
+  background: #dde4ed;
+  padding: 8px 4px;
+  font-weight: 600;
+  font-size: 12px;
+  min-height: 1em;
+}
+.totals-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: #64748b;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
 </style>
 </head>
 <body>
@@ -126,18 +180,9 @@ body {
   <div id="statsOverlay">Loading snow data...</div>
 </div>
 
-<!-- Forecast table -->
-<table id="forecastTable">
-  <caption>NOAA Snow Forecast</caption>
-  <thead>
-    <tr id="dayNames"></tr>
-    <tr id="dayNight"></tr>
-  </thead>
-  <tbody>
-    <tr id="forecastValues"></tr>
-    <tr id="cumulativeValues"></tr>
-  </tbody>
-</table>
+<!-- Forecast cards -->
+<div class="forecast-caption">NOAA Snow Forecast</div>
+<div class="forecast-grid" id="forecastGrid"></div>
 
 <!-- Webcam sections -->
 <div class="section">
@@ -236,39 +281,17 @@ async function loadForecast() {
       return `${fMin}-${fMax}"`;
     }
 
-    const dayNamesRow = document.getElementById('dayNames');
-    const dayNightRow = document.getElementById('dayNight');
-    const forecastRow = document.getElementById('forecastValues');
-    const cumulativeRow = document.getElementById('cumulativeValues');
-
-    dayNamesRow.innerHTML = '';
-    dayNightRow.innerHTML = '';
-    forecastRow.innerHTML = '';
-    cumulativeRow.innerHTML = '';
-
+    const grid = document.getElementById('forecastGrid');
+    grid.innerHTML = '';
     let cumMin = 0, cumMax = 0;
-
-    // Even days = blue family, odd days = slate/gray family
-    // Within each: Day col = lighter, Night col = noticeably darker
-    const scheme = [
-      { dayData:'#dbeafe', nightData:'#7db5e8', dayHead:'#1e3a5f', nightHead:'#153052', dayCum:'#bfdbfe', nightCum:'#5a9fd4' },
-      { dayData:'#f1f5f9', nightData:'#94a3b8', dayHead:'#2d3748', nightHead:'#1f2d3d', dayCum:'#e2e8f0', nightCum:'#7a8fa3' },
-    ];
 
     for (let i = 0; i + 1 < periods.length; i += 2) {
       const day = periods[i];
       const night = periods[i + 1];
       const pair = i / 2;
-      const s = scheme[pair % 2];
-
-      dayNamesRow.innerHTML += `<th colspan="2" style="background:${s.dayHead}">${dayLabel(day.name)}</th>`;
-      dayNightRow.innerHTML += `<th style="background:${s.dayHead}">Day</th><th style="background:${s.nightHead}">Night</th>`;
 
       const daySnow = extractSnow(day.detailedForecast);
       const nightSnow = extractSnow(night.detailedForecast);
-      forecastRow.innerHTML += `
-        <td style="background:${s.dayData}">${daySnow}</td>
-        <td style="background:${s.nightData}">${nightSnow}</td>`;
 
       const dayRange = parseRange(daySnow);
       cumMin += dayRange.min; cumMax += dayRange.max;
@@ -278,13 +301,28 @@ async function loadForecast() {
       cumMin += nightRange.min; cumMax += nightRange.max;
       const afterNight = nightSnow ? formatCumulative(cumMin, cumMax) : '';
 
-      const dayLabel2 = pair === 0 ? '<span style="font-weight:600;color:#64748b;font-size:12px;">Totals &#8594;</span>' : '';
-      cumulativeRow.innerHTML += `
-        <td style="background:${s.dayCum}">${afterDay || dayLabel2}</td>
-        <td style="background:${s.nightCum}">${afterNight}</td>`;
+      const totalsLabel = pair === 0 ? '<span class="totals-label">Totals &rarr;</span>' : '';
+
+      const card = document.createElement('div');
+      card.className = 'day-card';
+      card.innerHTML = `
+        <div class="day-header">${dayLabel(day.name)}</div>
+        <div class="subheader-row">
+          <div class="sub-day">Day</div>
+          <div class="sub-night">Night</div>
+        </div>
+        <div class="data-row">
+          <div class="cell-day">${daySnow || '&nbsp;'}</div>
+          <div class="cell-night">${nightSnow || '&nbsp;'}</div>
+        </div>
+        <div class="totals-row">
+          <div class="total-day">${afterDay || totalsLabel || '&nbsp;'}</div>
+          <div class="total-night">${afterNight || '&nbsp;'}</div>
+        </div>`;
+      grid.appendChild(card);
     }
   } catch(e) {
-    document.querySelector('#forecastTable tbody').innerHTML = '<tr><td colspan="10">Forecast unavailable</td></tr>';
+    document.getElementById('forecastGrid').textContent = 'Forecast unavailable';
   }
 }
 
