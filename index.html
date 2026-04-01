@@ -354,7 +354,7 @@ body {
   <div class="settings-row">
     <label for="toggleWeather">Show Weather in Forecast</label>
     <label class="toggle-switch">
-      <input type="checkbox" id="toggleWeather">
+      <input type="checkbox" id="toggleWeather" checked>
       <span class="toggle-slider"></span>
     </label>
   </div>
@@ -508,15 +508,30 @@ async function loadForecast() {
         ? `<span class="full-name">${dayLabel(day.name)}</span><span class="short-name">Today</span>`
         : dayLabel(day.name);
 
-      const dayTemp = day.temperature != null ? `${day.temperature}°` : '&nbsp;';
-      const nightTemp = night.temperature != null ? `${night.temperature}°` : '&nbsp;';
-      const weatherVisible = localStorage.getItem('showWeather') === 'true' ? ' visible' : '';
+      function wxEmoji(forecast) {
+        const f = (forecast || '').toLowerCase();
+        if (/thunder/.test(f)) return ' ⛈️';
+        if (/snow|blizzard|flurr/.test(f)) return ' 🌨️';
+        if (/rain|shower|drizzle/.test(f)) return ' 🌧️';
+        if (/sunny|clear/.test(f)) return ' ☀️';
+        if (/partly/.test(f)) return ' ⛅';
+        if (/cloud|overcast/.test(f)) return ' ☁️';
+        return '';
+      }
+
+      const dayTemp = day.temperature != null ? `${day.temperature}°${wxEmoji(day.shortForecast)}` : '&nbsp;';
+      const nightTemp = night.temperature != null ? `${night.temperature}°${wxEmoji(night.shortForecast)}` : '&nbsp;';
+      const weatherVisible = localStorage.getItem('showWeather') !== 'false' ? ' visible' : '';
 
       card.innerHTML = `
         <div class="day-header">${headerHTML}</div>
         <div class="subheader-row">
           <div class="sub-day">Day</div>
           <div class="sub-night">Night</div>
+        </div>
+        <div class="weather-row${weatherVisible}">
+          <div class="cell-day">${dayTemp}</div>
+          <div class="cell-night">${nightTemp}</div>
         </div>
         <div class="data-row">
           <div class="cell-day">${daySnow || '&nbsp;'}</div>
@@ -525,10 +540,6 @@ async function loadForecast() {
         <div class="totals-row">
           <div class="total-day">${afterDay || totalsLabel || '&nbsp;'}</div>
           <div class="total-night">${afterNight || '&nbsp;'}</div>
-        </div>
-        <div class="weather-row${weatherVisible}">
-          <div class="cell-day">${dayTemp}</div>
-          <div class="cell-night">${nightTemp}</div>
         </div>`;
       grid.appendChild(card);
     }
@@ -566,7 +577,7 @@ const savedForecast = localStorage.getItem('showForecast');
 const savedWeather = localStorage.getItem('showWeather');
 if (savedConditions !== null) document.getElementById('toggleConditions').checked = savedConditions === 'true';
 if (savedForecast !== null) document.getElementById('toggleForecast').checked = savedForecast === 'true';
-if (savedWeather !== null) document.getElementById('toggleWeather').checked = savedWeather === 'true';
+if (savedWeather !== null) document.getElementById('toggleWeather').checked = savedWeather !== 'false';
 applySettings();
 
 document.getElementById('toggleConditions').addEventListener('change', applySettings);
