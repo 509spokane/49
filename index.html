@@ -127,93 +127,52 @@ body {
   padding: 7px 4px;
   font-size: 13px;
 }
-.day-card .subheader-row {
-  display: flex;
-}
-.day-card .sub-day {
-  flex: 1;
+.day-card .row-temp-day {
   background: #fefce8;
-  color: #713f12;
-  font-size: 10px;
+  color: #92400e;
   font-weight: 600;
-  letter-spacing: 0.05em;
-  padding: 5px 2px;
-  text-transform: uppercase;
+  padding: 7px 4px;
+  font-size: 13px;
 }
-.day-card .sub-night {
-  flex: 1;
+.day-card .row-snow-day {
+  background: #fffef5;
+  padding: 6px 4px;
+  border-top: 1px solid rgba(0,0,0,0.05);
+  min-height: 1.2em;
+}
+.day-card .night-label {
   background: #e2e8f0;
   color: #334155;
   font-size: 10px;
   font-weight: 600;
   letter-spacing: 0.05em;
-  padding: 5px 2px;
+  padding: 4px 2px;
   text-transform: uppercase;
-}
-.day-card .data-row {
-  display: flex;
-  border-top: 1px solid rgba(0,0,0,0.06);
-}
-.day-card .cell-day {
-  flex: 1;
-  background: #fffef5;
-  padding: 8px 4px;
-  min-height: 1em;
-}
-.day-card .cell-night {
-  flex: 1;
-  background: #f1f5f9;
-  padding: 8px 4px;
-  min-height: 1em;
-}
-.day-card .totals-row {
-  display: flex;
   border-top: 1px solid rgba(0,0,0,0.08);
 }
-.day-card .total-day {
-  flex: 1;
-  background: #fefce8;
-  padding: 8px 4px;
-  font-weight: 600;
-  font-size: 12px;
-  min-height: 1em;
-}
-.day-card .total-night {
-  flex: 1;
-  background: #dde4ed;
-  padding: 8px 4px;
-  font-weight: 600;
-  font-size: 12px;
-  min-height: 1em;
-}
-.totals-label {
-  font-size: 10px;
-  font-weight: 700;
-  color: #64748b;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-.weather-row {
-  display: none;
-  border-top: 1px solid rgba(0,0,0,0.06);
-}
-.weather-row.visible { display: flex; }
-.weather-row .cell-day {
-  flex: 1;
-  background: #fffef5;
-  padding: 6px 4px;
-  font-size: 12px;
-  color: #92400e;
-  font-weight: 600;
-}
-.weather-row .cell-night {
-  flex: 1;
+.day-card .row-temp-night {
   background: #f1f5f9;
-  padding: 6px 4px;
-  font-size: 12px;
   color: #334155;
   font-weight: 600;
+  padding: 7px 4px;
+  font-size: 13px;
 }
+.day-card .row-snow-night {
+  background: #f8fafc;
+  padding: 6px 4px;
+  border-top: 1px solid rgba(0,0,0,0.05);
+  min-height: 1.2em;
+}
+.day-card .row-total {
+  background: #dde4ed;
+  color: #1e293b;
+  font-weight: 700;
+  font-size: 12px;
+  padding: 7px 4px;
+  border-top: 1px solid rgba(0,0,0,0.08);
+  min-height: 1.2em;
+}
+.weather-temp.hidden { display: none; }
 .short-name { display: none; }
 .settings-section {
   margin: 16px 10px 24px;
@@ -279,11 +238,11 @@ body {
 @media (max-width: 480px) and (orientation: portrait) {
   .day-card { font-size: 10px; }
   .day-card .day-header { font-size: 10px; padding: 5px 2px; }
-  .day-card .sub-day, .day-card .sub-night { font-size: 8px; padding: 3px 1px; }
-  .day-card .cell-day, .day-card .cell-night { padding: 5px 2px; }
-  .day-card .total-day, .day-card .total-night { font-size: 10px; padding: 5px 2px; }
+  .day-card .row-temp-day, .day-card .row-temp-night { font-size: 10px; padding: 5px 2px; }
+  .day-card .row-snow-day, .day-card .row-snow-night { font-size: 10px; padding: 4px 2px; }
+  .day-card .night-label { font-size: 8px; padding: 3px 1px; }
+  .day-card .row-total { font-size: 10px; padding: 5px 2px; }
   .forecast-grid { gap: 3px; }
-  .totals-label { display: none; }
   .day-card:first-child .full-name { display: none; }
   .day-card:first-child .short-name { display: inline; }
 }
@@ -519,28 +478,21 @@ async function loadForecast() {
         return '';
       }
 
-      const dayTemp = day.temperature != null ? `${day.temperature}°${wxEmoji(day.shortForecast)}` : '&nbsp;';
-      const nightTemp = night.temperature != null ? `${night.temperature}°${wxEmoji(night.shortForecast)}` : '&nbsp;';
-      const weatherVisible = localStorage.getItem('showWeather') !== 'false' ? ' visible' : '';
+      function snowFmt(s) { return s ? `${s} ⛄` : '&nbsp;'; }
+
+      const dayTemp = day.temperature != null ? `▲ ${day.temperature}°${wxEmoji(day.shortForecast)}` : '';
+      const nightTemp = night.temperature != null ? `▼ ${night.temperature}°${wxEmoji(night.shortForecast)}` : '';
+      const tempHidden = localStorage.getItem('showWeather') !== 'false' ? '' : ' hidden';
+      const totalVal = afterNight || afterDay;
 
       card.innerHTML = `
         <div class="day-header">${headerHTML}</div>
-        <div class="subheader-row">
-          <div class="sub-day">Day</div>
-          <div class="sub-night">Night</div>
-        </div>
-        <div class="weather-row${weatherVisible}">
-          <div class="cell-day">${dayTemp}</div>
-          <div class="cell-night">${nightTemp}</div>
-        </div>
-        <div class="data-row">
-          <div class="cell-day">${daySnow || '&nbsp;'}</div>
-          <div class="cell-night">${nightSnow || '&nbsp;'}</div>
-        </div>
-        <div class="totals-row">
-          <div class="total-day">${afterDay || totalsLabel || '&nbsp;'}</div>
-          <div class="total-night">${afterNight || '&nbsp;'}</div>
-        </div>`;
+        <div class="row-temp-day weather-temp${tempHidden}">${dayTemp || '&nbsp;'}</div>
+        <div class="row-snow-day">${snowFmt(daySnow)}</div>
+        <div class="night-label">Night</div>
+        <div class="row-temp-night weather-temp${tempHidden}">${nightTemp || '&nbsp;'}</div>
+        <div class="row-snow-night">${snowFmt(nightSnow)}</div>
+        <div class="row-total">${totalVal ? totalVal + ' ⛄' : '&nbsp;'}</div>`;
       grid.appendChild(card);
     }
   } catch(e) {
@@ -563,8 +515,8 @@ function applySettings() {
   conditionsEl.style.display = showConditions ? '' : 'none';
   forecastCaptionEl.style.display = showForecast ? '' : 'none';
   forecastGridEl.style.display = showForecast ? '' : 'none';
-  document.querySelectorAll('.weather-row').forEach(el => {
-    el.classList.toggle('visible', showWeather);
+  document.querySelectorAll('.weather-temp').forEach(el => {
+    el.classList.toggle('hidden', !showWeather);
   });
   localStorage.setItem('showConditions', showConditions);
   localStorage.setItem('showForecast', showForecast);
