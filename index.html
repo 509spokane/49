@@ -169,7 +169,20 @@ async function loadForecast() {
 
     function extractSnow(detail) {
       const match = detail.match(/new snow accumulation of ([^.]+)/i);
-      return match ? match[1] : '';
+      if (!match) return '';
+      let s = match[1].trim().toLowerCase().replace(/\s*possible\s*$/, '').trim();
+      if (/less than half an inch/.test(s)) return '< 1/2"';
+      const ltMatch = s.match(/less than (\d+) inch/);
+      if (ltMatch) return `< ${ltMatch[1]}"`;
+      const rangeMatch = s.match(/(\d+) to (\d+) inch/);
+      if (rangeMatch) return `${rangeMatch[1]}-${rangeMatch[2]}"`;
+      const aroundMatch = s.match(/around (\d+) inch/);
+      if (aroundMatch) return `~${aroundMatch[1]}"`;
+      const upToMatch = s.match(/up to (\d+) inch/);
+      if (upToMatch) return `up to ${upToMatch[1]}"`;
+      const singleMatch = s.match(/^(\d+) inch/);
+      if (singleMatch) return `${singleMatch[1]}"`;
+      return s;
     }
 
     function dayLabel(name) {
