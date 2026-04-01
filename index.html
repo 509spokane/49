@@ -445,17 +445,11 @@ async function loadForecast() {
     let cumMin = 0, cumMax = 0;
     const tempHidden = localStorage.getItem('showWeather') !== 'false' ? '' : ' hidden';
 
-    // Label card — invisible placeholder that labels the Totals row
+    // Label card — stretches to full card height, "Totals:" pinned to bottom
     const labelCard = document.createElement('div');
     labelCard.className = 'label-card';
-    labelCard.innerHTML = `
-      <div class="day-header" style="visibility:hidden">&nbsp;</div>
-      <div class="row-temp-day weather-temp${tempHidden}" style="visibility:hidden">&nbsp;</div>
-      <div class="row-snow-day" style="visibility:hidden">&nbsp;</div>
-      <div class="night-label" style="visibility:hidden">&nbsp;</div>
-      <div class="row-temp-night weather-temp${tempHidden}" style="visibility:hidden">&nbsp;</div>
-      <div class="row-snow-night" style="visibility:hidden">&nbsp;</div>
-      <div class="row-total" style="background:transparent;color:#64748b;text-align:right;padding-right:4px;font-size:10px;font-weight:600">Totals:</div>`;
+    labelCard.style.cssText = 'display:flex;flex-direction:column;justify-content:flex-end';
+    labelCard.innerHTML = `<div style="background:transparent;color:#64748b;text-align:right;padding:7px 4px;font-size:10px;font-weight:600;border-top:1px solid rgba(0,0,0,0.08)">Totals:</div>`;
     grid.appendChild(labelCard);
 
     // If NOAA's first period is nighttime we're past today's daytime
@@ -483,8 +477,8 @@ async function loadForecast() {
       const afterNight = nightSnow ? formatCumulative(cumMin, cumMax) : '';
 
       const headerName = isToday ? 'Today' : shortDayName(day.name);
-      const dayTempStr = day && day.temperature != null ? `▲ ${day.temperature}°` : '';
-      const nightTempStr = night && night.temperature != null ? `▼ ${night.temperature}°` : '';
+      const dayTempStr = day && day.temperature != null ? `<span style="font-size:75%">▲</span> ${day.temperature}°` : '';
+      const nightTempStr = night && night.temperature != null ? `<span style="font-size:75%">▼</span> ${night.temperature}°` : '';
       const totalVal = afterNight || afterDay;
 
       const card = document.createElement('div');
