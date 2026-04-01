@@ -130,6 +130,7 @@ body {
   </thead>
   <tbody>
     <tr id="forecastValues"></tr>
+    <tr id="cumulativeValues"></tr>
   </tbody>
 </table>
 
@@ -189,13 +190,40 @@ async function loadForecast() {
       return name.replace(' Night', '').replace('Tonight', 'Today');
     }
 
+    function parseRange(formatted) {
+      if (!formatted) return { min: 0, max: 0 };
+      if (formatted === '< 1/2"') return { min: 0, max: 0.5 };
+      const lt = formatted.match(/^< (\d+(?:\.\d+)?)"$/);
+      if (lt) return { min: 0, max: parseFloat(lt[1]) };
+      const range = formatted.match(/^(\d+(?:\.\d+)?)-(\d+(?:\.\d+)?)"$/);
+      if (range) return { min: parseFloat(range[1]), max: parseFloat(range[2]) };
+      const around = formatted.match(/^~(\d+(?:\.\d+)?)"$/);
+      if (around) return { min: parseFloat(around[1]), max: parseFloat(around[1]) };
+      const upTo = formatted.match(/^up to (\d+(?:\.\d+)?)"$/);
+      if (upTo) return { min: 0, max: parseFloat(upTo[1]) };
+      const single = formatted.match(/^(\d+(?:\.\d+)?)"$/);
+      if (single) return { min: parseFloat(single[1]), max: parseFloat(single[1]) };
+      return { min: 0, max: 0 };
+    }
+
+    function formatCumulative(min, max) {
+      const fmt = n => Number.isInteger(n) ? n : n;
+      if (min === 0 && max === 0) return '';
+      if (min === max) return `${fmt(min)}"`;
+      return `${fmt(min)}-${fmt(max)}"`;
+    }
+
     const dayNamesRow = document.getElementById('dayNames');
     const dayNightRow = document.getElementById('dayNight');
     const forecastRow = document.getElementById('forecastValues');
+    const cumulativeRow = document.getElementById('cumulativeValues');
 
     dayNamesRow.innerHTML = '';
     dayNightRow.innerHTML = '';
     forecastRow.innerHTML = '';
+    cumulativeRow.innerHTML = '';
+
+    let cumMin = 0, cumMax = 0;
 
     for (let i = 0; i + 1 < periods.length; i += 2) {
       const day = periods[i];
@@ -207,6 +235,16 @@ async function loadForecast() {
       const daySnow = extractSnow(day.detailedForecast);
       const nightSnow = extractSnow(night.detailedForecast);
       forecastRow.innerHTML += `<td>${daySnow}</td><td>${nightSnow}</td>`;
+
+      const dayRange = parseRange(daySnow);
+      cumMin += dayRange.min; cumMax += dayRange.max;
+      const afterDay = formatCumulative(cumMin, cumMax);
+
+      const nightRange = parseRange(nightSnow);
+      cumMin += nightRange.min; cumMax += nightRange.max;
+      const afterNight = formatCumulative(cumMin, cumMax);
+
+      cumulativeRow.innerHTML += `<td style="font-size:11px;color:#555;">${afterDay}</td><td style="font-size:11px;color:#555;">${afterNight}</td>`;
     }
   } catch(e) {
     document.querySelector('#forecastTable tbody').innerHTML = '<tr><td colspan="10">Forecast unavailable</td></tr>';
