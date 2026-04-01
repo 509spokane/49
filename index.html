@@ -147,7 +147,8 @@ async function loadStats() {
     if (!t) { statsOverlay.textContent = "Data Error"; return; }
 
     statsOverlay.innerHTML = `
-      <span>${t.updated || ''}</span>
+      <span><strong>Latest Snowfall</strong></span>
+      <span>Last updated: ${t.updated || ''}</span>
       ${t["12h"] !== undefined ? `<span><strong>12h:</strong> ${t["12h"]}"</span>` : ''}
       ${t["24h"] !== undefined ? `<span><strong>24h:</strong> ${t["24h"]}"</span>` : ''}
       ${t["48h"] !== undefined ? `<span><strong>48h:</strong> ${t["48h"]}"</span>` : ''}
