@@ -290,6 +290,8 @@ async function loadForecast() {
       return s;
     }
 
+    function extractSnow(detail) { return '22"'; } // TEST DATA - revert soon
+
     function dayLabel(name) {
       return name.replace(' Night', '').replace('Tonight', 'Today');
     }
