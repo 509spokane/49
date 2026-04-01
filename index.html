@@ -123,7 +123,6 @@ body {
 </div>
 
 <!-- Forecast table -->
-<h3 style="margin-left:10px;">TESTING</h3>
 <table id="forecastTable">
   <thead>
     <tr id="dayNames"></tr>
@@ -139,57 +138,69 @@ body {
 <script>
 const statsOverlay = document.getElementById('statsOverlay');
 
-function loadStats() {
-  fetch('https://49.todd-0ce.workers.dev')
-    .then(res => res.json())
-    .then(data => {
-      if (data.error) {
-        statsOverlay.textContent = "Data Error";
-        return;
-      }
+// Load ski conditions from Cloudflare Worker (scrapes ski49n.com)
+async function loadStats() {
+  try {
+    const res = await fetch('https://49.todd-0ce.workers.dev?t=' + Date.now());
+    const data = await res.json();
+    const t = data.totals;
+    if (!t) { statsOverlay.textContent = "Data Error"; return; }
 
-      // Top overlay
-      statsOverlay.innerHTML = `
-        <span>${data.updated || ''}</span>
-        ${data["12h"] ? `<span><strong>12h:</strong> ${data["12h"]}"</span>` : ''}
-        ${data["24h"] ? `<span><strong>24h:</strong> ${data["24h"]}"</span>` : ''}
-        ${data["48h"] ? `<span><strong>48h:</strong> ${data["48h"]}"</span>` : ''}
-        ${data["72h"] ? `<span><strong>72h:</strong> ${data["72h"]}"</span>` : ''}
-        ${data.summitDepth ? `<span><strong>Depth:</strong> ${data.summitDepth}"</span>` : ''}
-      `;
+    statsOverlay.innerHTML = `
+      <span>${t.updated || ''}</span>
+      ${t["12h"] !== undefined ? `<span><strong>12h:</strong> ${t["12h"]}"</span>` : ''}
+      ${t["24h"] !== undefined ? `<span><strong>24h:</strong> ${t["24h"]}"</span>` : ''}
+      ${t["48h"] !== undefined ? `<span><strong>48h:</strong> ${t["48h"]}"</span>` : ''}
+      ${t["72h"] !== undefined ? `<span><strong>72h:</strong> ${t["72h"]}"</span>` : ''}
+      ${t.summitDepth ? `<span><strong>Depth:</strong> ${t.summitDepth}"</span>` : ''}
+    `;
+  } catch(e) {
+    statsOverlay.textContent = "Data Error";
+  }
+}
 
-      const forecast = data;
-      const forecastKeys = Object.keys(forecast)
-        .filter(k => !["12h","24h","48h","72h","summitDepth","updated"].includes(k))
-        .slice(0, 10); // only take 5 days (Day/Night pairs)
+// Load 5-day snowfall forecast from NOAA public API
+async function loadForecast() {
+  try {
+    const res = await fetch('https://api.weather.gov/gridpoints/OTX/141,120/forecast');
+    const data = await res.json();
+    const periods = data.properties.periods.slice(0, 10);
 
-      const dayNamesRow = document.getElementById('dayNames');
-      const dayNightRow = document.getElementById('dayNight');
-      const forecastRow = document.getElementById('forecastValues');
+    function extractSnow(detail) {
+      const match = detail.match(/new snow accumulation of ([^.]+)/i);
+      return match ? match[1] : '';
+    }
 
-      dayNamesRow.innerHTML = "";
-      dayNightRow.innerHTML = "";
-      forecastRow.innerHTML = "";
+    function dayLabel(name) {
+      return name.replace(' Night', '').replace('Tonight', 'Today');
+    }
 
-      for (let i = 0; i < forecastKeys.length; i += 2) {
-        const dayKey = forecastKeys[i];
-        const nightKey = forecastKeys[i+1];
+    const dayNamesRow = document.getElementById('dayNames');
+    const dayNightRow = document.getElementById('dayNight');
+    const forecastRow = document.getElementById('forecastValues');
 
-        const label = dayKey.replace(/Day|Night/, '');
-        dayNamesRow.innerHTML += `<th colspan="2">${label}</th>`;
-        dayNightRow.innerHTML += `<th style="font-size:11px;">Day</th><th style="font-size:11px;">Night</th>`;
+    dayNamesRow.innerHTML = '';
+    dayNightRow.innerHTML = '';
+    forecastRow.innerHTML = '';
 
-        const dayVal = forecast[dayKey] ? `${forecast[dayKey]}"` : "";
-        const nightVal = forecast[nightKey] ? `${forecast[nightKey]}"` : "";
+    for (let i = 0; i + 1 < periods.length; i += 2) {
+      const day = periods[i];
+      const night = periods[i + 1];
 
-        forecastRow.innerHTML += `<td>${dayVal}</td><td>${nightVal}</td>`;
-      }
+      dayNamesRow.innerHTML += `<th colspan="2">${dayLabel(day.name)}</th>`;
+      dayNightRow.innerHTML += `<th style="font-size:11px;">Day</th><th style="font-size:11px;">Night</th>`;
 
-    })
-    .catch(() => { statsOverlay.textContent = "Data Error"; });
+      const daySnow = extractSnow(day.detailedForecast);
+      const nightSnow = extractSnow(night.detailedForecast);
+      forecastRow.innerHTML += `<td>${daySnow}</td><td>${nightSnow}</td>`;
+    }
+  } catch(e) {
+    document.querySelector('#forecastTable tbody').innerHTML = '<tr><td colspan="10">Forecast unavailable</td></tr>';
+  }
 }
 
 loadStats();
+loadForecast();
 </script>
 </body>
 </html>
