@@ -173,6 +173,7 @@ body {
   min-height: 1.2em;
 }
 .weather-temp.hidden { display: none; }
+.snow-label { font-size: 10px; font-weight: 500; color: #64748b; }
 .settings-section {
   margin: 16px 10px 24px;
   padding: 12px 14px;
@@ -484,19 +485,27 @@ async function loadForecast() {
       const totalVal = isToday ? '' : (afterNight || afterDay);
 
       const headerName = isToday ? 'Today' : shortDayName(day.name);
-      const dayTempStr = day && day.temperature != null ? `<span style="font-size:75%">▲</span> ${day.temperature}°` : '';
-      const nightTempStr = night && night.temperature != null ? `<span style="font-size:75%">▼</span> ${night.temperature}°` : '';
+      const dayTempStr = day && day.temperature != null ? `High: ${day.temperature}°` : '';
+      const nightTempStr = night && night.temperature != null ? `Low: ${night.temperature}°` : '';
+      const snow = s => `${s} <span class="snow-label">Snow</span>`;
+
+      const daySnowCell = isToday && !day ? '&nbsp;'
+        : snow(daySnow || faintZero);
+      const nightSnowCell = snow(nightSnow || faintZero);
+      const totalCell = isToday
+        ? '<span style="font-size:10px;font-weight:600;color:#64748b;letter-spacing:0.04em">SNOW TOTALS:</span>'
+        : (totalVal ? `${totalVal} <span class="snow-label">Snow</span>` : '&nbsp;');
 
       const card = document.createElement('div');
       card.className = 'day-card';
       card.innerHTML = `
         <div class="day-header">${headerName}</div>
         <div class="row-temp-day weather-temp${tempHidden}">${dayTempStr || '&nbsp;'}</div>
-        <div class="row-snow-day">${isToday && !day ? '&nbsp;' : (daySnow || faintZero)}</div>
+        <div class="row-snow-day">${daySnowCell}</div>
         <div class="night-label">Night</div>
         <div class="row-temp-night weather-temp${tempHidden}">${nightTempStr || '&nbsp;'}</div>
-        <div class="row-snow-night">${nightSnow || faintZero}</div>
-        <div class="row-total">${isToday ? '<span style="font-size:10px;font-weight:600;color:#64748b;letter-spacing:0.04em">TOTALS:</span>' : (totalVal || '&nbsp;')}</div>`;
+        <div class="row-snow-night">${nightSnowCell}</div>
+        <div class="row-total">${totalCell}</div>`;
       grid.appendChild(card);
     });
   } catch(e) {
