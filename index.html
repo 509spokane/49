@@ -313,7 +313,7 @@ body {
     <div id="currentWeatherOverlay" style="display:none;position:absolute;top:0;left:0;right:0;bottom:0;background:linear-gradient(to bottom,rgba(0,0,0,0.45) 0%,transparent 75%);pointer-events:none;">
       <div class="wx-ov-inner">
         <div>
-          <div class="wx-ov-lbl">Current Weather</div>
+          <div class="wx-ov-lbl">Current Summit Weather</div>
           <div id="wxCondName" class="wx-ov-cond"></div>
           <div id="wxTempLarge" class="wx-ov-temp"></div>
         </div>
@@ -616,7 +616,9 @@ async function loadCurrentWeather() {
     document.getElementById('wxTempLarge').textContent = `${s.temp}°`;
 
     const rows = [];
-    if (s.wind) rows.push(`<div class="wx-ov-lbl">Wind</div><div class="wx-ov-val">${s.wind}</div>`);
+    if (s.wind)          rows.push(`<div class="wx-ov-lbl">Wind</div><div class="wx-ov-val">${s.wind}</div>`);
+    if (s.visibility)    rows.push(`<div class="wx-ov-lbl">Visibility</div><div class="wx-ov-val">${s.visibility}</div>`);
+    if (s.precipitation) rows.push(`<div class="wx-ov-lbl">Precip</div><div class="wx-ov-val">${s.precipitation}</div>`);
     document.getElementById('wxWindInfo').innerHTML = rows.join('');
 
     document.getElementById('currentWeatherOverlay').dataset.loaded = 'true';
