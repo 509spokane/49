@@ -254,7 +254,7 @@ body {
   <div class="top-table">
     <div class="cell logo">
       <a href="https://ski49n.com">
-        <img src="https://www.ski49n.com/images/logo.png" alt="ski" />
+        <img src="49headerTaller.png" alt="49° North" />
       </a>
     </div>
   </div>
@@ -493,7 +493,7 @@ async function loadForecast() {
         : snow(daySnow || faintZero);
       const nightSnowCell = snow(nightSnow || faintZero);
       const totalCell = isToday
-        ? '<span style="font-size:10px;font-weight:600;color:#64748b;letter-spacing:0.04em">SNOW TOTALS:</span>'
+        ? '<span style="font-size:10px;font-weight:600;color:#64748b;letter-spacing:0.04em">TOTALS:</span>'
         : (totalVal ? `${totalVal} <span class="snow-label">Snow</span>` : '&nbsp;');
 
       const card = document.createElement('div');
