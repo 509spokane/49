@@ -342,6 +342,10 @@ body {
   <div id="alertsSection" style="display:none;margin-top:6px;"></div>
   <a id="groomingBanner" href="https://www.ski49n.com/mountain-info/trail-status" target="_blank" style="display:none;font-weight:700;font-size:12px;letter-spacing:0.08em;text-transform:uppercase;color:#888;text-decoration:none;padding:6px 10px 2px;display:none;">Grooming Report ⧉</a>
   <div id="statsOverlay">Loading snow data...</div>
+  <div id="specialNotesSection" style="display:none;margin:0 10px 6px;padding:7px 10px;background:#fefce8;border-radius:6px;border-left:3px solid #eab308;">
+    <div style="font-size:9px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#ca8a04;margin-bottom:3px;">Special Notes</div>
+    <div id="specialNotesText" style="font-size:12px;color:#713f12;line-height:1.5;"></div>
+  </div>
 </div>
 
 <!-- Forecast cards -->
@@ -420,6 +424,13 @@ body {
     <label for="toggleGrooming">Show link to Grooming Report</label>
     <label class="toggle-switch">
       <input type="checkbox" id="toggleGrooming">
+      <span class="toggle-slider"></span>
+    </label>
+  </div>
+  <div class="settings-row">
+    <label for="toggleSpecialNotes">Show Special Notes</label>
+    <label class="toggle-switch">
+      <input type="checkbox" id="toggleSpecialNotes" checked>
       <span class="toggle-slider"></span>
     </label>
   </div>
@@ -666,6 +677,16 @@ async function loadForecast() {
   }
 }
 
+async function loadSpecialNotes() {
+  try {
+    const data = await fetchWorker();
+    if (!data.specialNotes) return;
+    document.getElementById('specialNotesText').textContent = data.specialNotes;
+    document.getElementById('specialNotesSection').dataset.loaded = 'true';
+    applySettings();
+  } catch(e) {}
+}
+
 async function loadCurrentWeather() {
   try {
     const data = await fetchWorker();
@@ -757,6 +778,7 @@ async function loadAlerts() {
 }
 
 loadStats();
+loadSpecialNotes();
 loadForecast();
 loadCurrentWeather();
 loadAlerts();
@@ -775,6 +797,9 @@ function applySettings() {
   const showGrooming = document.getElementById('toggleGrooming').checked;
   const showCurrentWeather = document.getElementById('toggleCurrentWeather').checked;
   const showFacebook = document.getElementById('toggleFacebook').checked;
+  const showSpecialNotes = document.getElementById('toggleSpecialNotes').checked;
+  const notesEl = document.getElementById('specialNotesSection');
+  notesEl.style.display = (showSpecialNotes && notesEl.dataset.loaded) ? '' : 'none';
   conditionsEl.style.display = showConditions ? '' : 'none';
   forecastCaptionEl.style.display = showForecast ? '' : 'none';
   forecastGridEl.style.display = showForecast ? '' : 'none';
@@ -792,6 +817,7 @@ function applySettings() {
   localStorage.setItem('showGrooming', showGrooming);
   localStorage.setItem('showCurrentWeather', showCurrentWeather);
   localStorage.setItem('showFacebook', showFacebook);
+  localStorage.setItem('showSpecialNotes', showSpecialNotes);
   localStorage.setItem('showAlerts', document.getElementById('toggleAlerts').checked);
 }
 
@@ -810,6 +836,8 @@ if (savedGrooming !== null) document.getElementById('toggleGrooming').checked = 
 if (savedCurrentWeather !== null) document.getElementById('toggleCurrentWeather').checked = savedCurrentWeather === 'true';
 if (savedAlerts !== null) document.getElementById('toggleAlerts').checked = savedAlerts !== 'false';
 if (savedFacebook !== null) document.getElementById('toggleFacebook').checked = savedFacebook !== 'false';
+const savedSpecialNotes = localStorage.getItem('showSpecialNotes');
+if (savedSpecialNotes !== null) document.getElementById('toggleSpecialNotes').checked = savedSpecialNotes !== 'false';
 applySettings();
 
 document.getElementById('toggleConditions').addEventListener('change', applySettings);
@@ -819,6 +847,7 @@ document.getElementById('toggleGrooming').addEventListener('change', applySettin
 document.getElementById('toggleCurrentWeather').addEventListener('change', applySettings);
 document.getElementById('toggleAlerts').addEventListener('change', applySettings);
 document.getElementById('toggleFacebook').addEventListener('change', applySettings);
+document.getElementById('toggleSpecialNotes').addEventListener('change', applySettings);
 </script>
 <script data-goatcounter="https://49status.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
 </body>
