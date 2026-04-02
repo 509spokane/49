@@ -174,6 +174,21 @@ body {
 }
 .weather-temp.hidden { display: none; }
 .snow-label { font-size: 10px; font-weight: 500; color: #64748b; }
+/* Current Weather card */
+.wx-card { margin:0 10px 10px; border:1px solid #e2e8f0; border-radius:8px; display:flex; align-items:center; padding:5px 12px; overflow:hidden; }
+.wx-card.snow  { background:#f4f7ff; }
+.wx-card.sunny { background:#fffdf0; }
+.wx-card.cloud { background:#f8fafc; }
+.wx-card.rain  { background:#f4faff; }
+.wx-temp { font-size:44px; font-weight:700; color:#1e293b; line-height:1; flex-shrink:0; padding-right:10px; border-right:1px solid #e2e8f0; }
+.wx-temp sup { font-size:16px; font-weight:500; color:#94a3b8; vertical-align:super; }
+.wx-icon { flex-shrink:0; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:2px 10px; border-right:1px solid #e2e8f0; gap:0; }
+.wx-icon .cond-name { font-size:11px; font-weight:700; color:#475569; text-align:center; white-space:nowrap; }
+.wx-details { flex:1; display:flex; flex-direction:column; gap:2px; padding-left:12px; align-items:flex-end; }
+.wx-row { display:flex; align-items:baseline; gap:5px; }
+.wx-row .lbl { color:#94a3b8; font-weight:600; font-size:10px; text-transform:uppercase; letter-spacing:0.05em; }
+.wx-row .val { font-weight:600; color:#1e293b; font-size:13px; }
+.wx-row .unit { font-size:10px; font-weight:500; color:#64748b; }
 .settings-section {
   margin: 16px 10px 24px;
   padding: 12px 14px;
@@ -274,6 +289,15 @@ body {
   <div id="statsOverlay">Loading snow data...</div>
 </div>
 
+<!-- Current Weather -->
+<div id="currentWeatherSection" style="display:none;">
+  <div class="forecast-caption" style="margin-bottom:4px;">
+    <span><a href="https://forecast.weather.gov/MapClick.php?lon=-117.56499767303468&lat=48.285800530169524" target="_blank" style="color:inherit;text-decoration:none;">Current Weather ⧉</a></span>
+    <span id="wxUpdated" style="text-transform:none;font-weight:normal;letter-spacing:normal;"></span>
+  </div>
+  <div id="wxCard"></div>
+</div>
+
 <!-- Forecast cards -->
 <div class="forecast-caption"><span><a href="https://forecast.weather.gov/MapClick.php?lon=-117.56499767303468&lat=48.285800530169524" target="_blank" style="color:inherit;text-decoration:none;">NOAA Snow Forecast ⧉</a></span><span id="noaaUpdated"></span></div>
 <div class="forecast-grid" id="forecastGrid"></div>
@@ -316,6 +340,13 @@ body {
     <label for="toggleWeather">Show Weather in Forecast</label>
     <label class="toggle-switch">
       <input type="checkbox" id="toggleWeather" checked>
+      <span class="toggle-slider"></span>
+    </label>
+  </div>
+  <div class="settings-row">
+    <label for="toggleCurrentWeather">Show Current Weather</label>
+    <label class="toggle-switch">
+      <input type="checkbox" id="toggleCurrentWeather">
       <span class="toggle-slider"></span>
     </label>
   </div>
@@ -525,8 +556,96 @@ async function loadForecast() {
   }
 }
 
+// SVG icons for current weather
+const WX_SVG = {
+  snow: `<svg width="54" height="48" viewBox="0 0 64 58" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M10 32 Q4 32 4 26 Q4 19 10 18 Q11 11 18 9 Q25 3 34 9 Q41 6 46 12 Q53 12 55 19 Q60 20 60 27 Q60 34 54 35 L18 35 Q10 35 10 32 Z" stroke="#94a3b8" stroke-width="1.5" fill="none" stroke-linejoin="round" stroke-linecap="round"/>
+    <g stroke="#7c8fa8" stroke-width="1.2" stroke-linecap="round" opacity="0.9">
+      <line x1="32" y1="41" x2="32" y2="55"/><line x1="25" y1="44.5" x2="39" y2="51.5"/><line x1="39" y1="44.5" x2="25" y2="51.5"/>
+      <line x1="32" y1="43.5" x2="29.5" y2="46"/><line x1="32" y1="43.5" x2="34.5" y2="46"/>
+      <line x1="32" y1="52.5" x2="29.5" y2="50"/><line x1="32" y1="52.5" x2="34.5" y2="50"/>
+      <line x1="26.4" y1="45.3" x2="25.2" y2="42.5"/><line x1="26.4" y1="45.3" x2="28.8" y2="44.2"/>
+      <line x1="37.6" y1="50.7" x2="38.8" y2="53.5"/><line x1="37.6" y1="50.7" x2="35.2" y2="51.8"/>
+      <line x1="37.6" y1="45.3" x2="38.8" y2="42.5"/><line x1="37.6" y1="45.3" x2="35.2" y2="44.2"/>
+      <line x1="26.4" y1="50.7" x2="25.2" y2="53.5"/><line x1="26.4" y1="50.7" x2="28.8" y2="51.8"/>
+      <circle cx="32" cy="48" r="1.3" fill="#7c8fa8"/>
+    </g></svg>`,
+  sunny: `<svg width="54" height="48" viewBox="0 0 64 58" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="32" cy="30" r="12" stroke="#d97706" stroke-width="1.5" fill="none"/>
+    <circle cx="32" cy="30" r="6" fill="#fbbf24" opacity="0.35"/>
+    <g stroke="#d97706" stroke-width="1.2" stroke-linecap="round">
+      <line x1="32" y1="8" x2="32" y2="15"/><line x1="32" y1="45" x2="32" y2="52"/>
+      <line x1="10" y1="30" x2="17" y2="30"/><line x1="47" y1="30" x2="54" y2="30"/>
+      <line x1="16" y1="14" x2="21" y2="19"/><line x1="43" y1="41" x2="48" y2="46"/>
+      <line x1="48" y1="14" x2="43" y2="19"/><line x1="21" y1="41" x2="16" y2="46"/>
+    </g></svg>`,
+  partly: `<svg width="54" height="48" viewBox="0 0 64 58" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="22" cy="26" r="9" stroke="#d97706" stroke-width="1.2" fill="none" opacity="0.8"/>
+    <circle cx="22" cy="26" r="4.5" fill="#fbbf24" opacity="0.3"/>
+    <g stroke="#d97706" stroke-width="1" stroke-linecap="round" opacity="0.7">
+      <line x1="22" y1="10" x2="22" y2="14"/><line x1="22" y1="38" x2="22" y2="42"/>
+      <line x1="6" y1="26" x2="10" y2="26"/><line x1="34" y1="26" x2="38" y2="26"/>
+      <line x1="10.5" y1="14.5" x2="13.4" y2="17.4"/><line x1="30.6" y1="34.6" x2="33.5" y2="37.5"/>
+      <line x1="33.5" y1="14.5" x2="30.6" y2="17.4"/><line x1="13.4" y1="34.6" x2="10.5" y2="37.5"/>
+    </g>
+    <path d="M18 48 Q12 48 12 43 Q12 37 18 36 Q19 30 25 28 Q31 23 38 28 Q44 26 47 31 Q53 31 53 37 Q53 44 47 45 L24 45 Q18 45 18 48 Z" stroke="#94a3b8" stroke-width="1.5" fill="#f8fafc" fill-opacity="0.95" stroke-linejoin="round" stroke-linecap="round"/>
+    </svg>`,
+  cloud: `<svg width="54" height="48" viewBox="0 0 64 58" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M10 36 Q4 36 4 30 Q4 23 10 22 Q11 15 18 13 Q25 7 34 13 Q41 10 46 16 Q53 16 55 23 Q60 24 60 31 Q60 38 54 39 L18 39 Q10 39 10 36 Z" stroke="#94a3b8" stroke-width="1.5" fill="none" stroke-linejoin="round" stroke-linecap="round"/>
+    </svg>`,
+  rain: `<svg width="54" height="48" viewBox="0 0 64 58" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M10 30 Q4 30 4 24 Q4 17 10 16 Q11 9 18 7 Q25 1 34 7 Q41 4 46 10 Q53 10 55 17 Q60 18 60 25 Q60 32 54 33 L18 33 Q10 33 10 30 Z" stroke="#64748b" stroke-width="1.5" fill="none" stroke-linejoin="round" stroke-linecap="round"/>
+    <g stroke="#60a5fa" stroke-width="1.2" stroke-linecap="round" opacity="0.85">
+      <line x1="18" y1="39" x2="14" y2="50"/><line x1="27" y1="39" x2="23" y2="50"/>
+      <line x1="36" y1="39" x2="32" y2="50"/><line x1="45" y1="39" x2="41" y2="50"/>
+      <line x1="54" y1="39" x2="50" y2="50"/><line x1="22" y1="51" x2="18" y2="58"/>
+      <line x1="31" y1="51" x2="27" y2="58"/><line x1="40" y1="51" x2="36" y2="58"/>
+      <line x1="49" y1="51" x2="45" y2="58"/>
+    </g></svg>`
+};
+
+function wxCondType(shortForecast) {
+  const c = shortForecast.toLowerCase();
+  if (c.includes('snow') || c.includes('blizzard') || c.includes('sleet') || c.includes('flurr')) return 'snow';
+  if (c.includes('rain') || c.includes('drizzle') || c.includes('shower')) return 'rain';
+  if (c.includes('partly') || c.includes('mostly cloudy')) return 'partly';
+  if (c.includes('sunny') || c.includes('clear')) return 'sunny';
+  return 'cloud';
+}
+
+async function loadCurrentWeather() {
+  try {
+    const res = await fetch('https://api.weather.gov/gridpoints/OTX/141,120/forecast/hourly');
+    const data = await res.json();
+    const p = data.properties.periods[0];
+    const type = wxCondType(p.shortForecast);
+
+    const updated = new Date(p.startTime);
+    let hr = updated.getHours(), ampm = hr >= 12 ? 'pm' : 'am';
+    hr = hr % 12 || 12;
+    document.getElementById('wxUpdated').textContent = `As of ${dateLabel(updated, `@ ${hr}${ampm}`)}`;
+
+    const rows = [];
+    if (p.windDirection && p.windSpeed)
+      rows.push(`<div class="wx-row"><span class="lbl">Wind</span> <span class="val">${p.windDirection} ${p.windSpeed}</span></div>`);
+    if (p.windGust)
+      rows.push(`<div class="wx-row"><span class="lbl">Gusts</span> <span class="val">${p.windGust}</span></div>`);
+
+    document.getElementById('wxCard').innerHTML = `
+      <div class="wx-card ${type}">
+        <div class="wx-temp">${p.temperature}<sup>°F</sup></div>
+        <div class="wx-icon">
+          <span class="cond-name">${p.shortForecast}</span>
+          ${WX_SVG[type]}
+        </div>
+        <div class="wx-details">${rows.join('')}</div>
+      </div>`;
+  } catch(e) { /* silently fail */ }
+}
+
 loadStats();
 loadForecast();
+loadCurrentWeather();
 
 // Settings
 const conditionsEl = document.getElementById('statsOverlay');
@@ -540,10 +659,12 @@ function applySettings() {
   const showForecast = document.getElementById('toggleForecast').checked;
   const showWeather = document.getElementById('toggleWeather').checked;
   const showGrooming = document.getElementById('toggleGrooming').checked;
+  const showCurrentWeather = document.getElementById('toggleCurrentWeather').checked;
   conditionsEl.style.display = showConditions ? '' : 'none';
   forecastCaptionEl.style.display = showForecast ? '' : 'none';
   forecastGridEl.style.display = showForecast ? '' : 'none';
   groomingBannerEl.style.display = showGrooming ? '' : 'none';
+  document.getElementById('currentWeatherSection').style.display = showCurrentWeather ? '' : 'none';
   document.querySelectorAll('.weather-temp').forEach(el => {
     el.classList.toggle('hidden', !showWeather);
   });
@@ -551,6 +672,7 @@ function applySettings() {
   localStorage.setItem('showForecast', showForecast);
   localStorage.setItem('showWeather', showWeather);
   localStorage.setItem('showGrooming', showGrooming);
+  localStorage.setItem('showCurrentWeather', showCurrentWeather);
 }
 
 // Load saved prefs
@@ -558,16 +680,19 @@ const savedConditions = localStorage.getItem('showConditions');
 const savedForecast = localStorage.getItem('showForecast');
 const savedWeather = localStorage.getItem('showWeather');
 const savedGrooming = localStorage.getItem('showGrooming');
+const savedCurrentWeather = localStorage.getItem('showCurrentWeather');
 if (savedConditions !== null) document.getElementById('toggleConditions').checked = savedConditions === 'true';
 if (savedForecast !== null) document.getElementById('toggleForecast').checked = savedForecast === 'true';
 if (savedWeather !== null) document.getElementById('toggleWeather').checked = savedWeather !== 'false';
 if (savedGrooming !== null) document.getElementById('toggleGrooming').checked = savedGrooming === 'true';
+if (savedCurrentWeather !== null) document.getElementById('toggleCurrentWeather').checked = savedCurrentWeather === 'true';
 applySettings();
 
 document.getElementById('toggleConditions').addEventListener('change', applySettings);
 document.getElementById('toggleForecast').addEventListener('change', applySettings);
 document.getElementById('toggleWeather').addEventListener('change', applySettings);
 document.getElementById('toggleGrooming').addEventListener('change', applySettings);
+document.getElementById('toggleCurrentWeather').addEventListener('change', applySettings);
 </script>
 <script data-goatcounter="https://49status.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
 </body>
