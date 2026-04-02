@@ -379,11 +379,11 @@ async function loadStats() {
     statsOverlay.innerHTML = `
       <div class="stats-header">
         <a href="https://www.ski49n.com/mountain-info/expanded-conditions" target="_blank" style="font-weight:700;font-size:12px;letter-spacing:0.08em;text-transform:uppercase;color:#888;text-decoration:none;">Latest Snowfall ⧉</a>
-        <span style="color:#888;">Updated: ${formatUpdated(t.updated || '')}</span>
+        <span style="color:#888;">As of ${formatUpdated(t.updated || '')}</span>
       </div>
       <div class="stats-table">
         <div class="stats-row stat-labels">${stats.map(s => `<div>${s.label}</div>`).join('')}</div>
-        <div class="stats-row stat-values">${stats.map(s => `<div>${s.val}"</div>`).join('')}</div>
+        <div class="stats-row stat-values">${stats.map(s => `<div>${s.val}" <span class="snow-label">Snow</span></div>`).join('')}</div>
       </div>
     `;
   } catch(e) {
@@ -451,7 +451,7 @@ async function loadForecast() {
     if (noaaUpdated) {
       let hr = updated.getHours(), ampm = hr >= 12 ? 'pm' : 'am';
       hr = hr % 12 || 12;
-      noaaUpdated.textContent = `Updated: ${dateLabel(updated, `@ ${hr}${ampm}`)}`;
+      noaaUpdated.textContent = `As of ${dateLabel(updated, `@ ${hr}${ampm}`)}`;
     }
 
     const grid = document.getElementById('forecastGrid');
