@@ -174,21 +174,20 @@ body {
 }
 .weather-temp.hidden { display: none; }
 .snow-label { font-size: 10px; font-weight: 500; color: #64748b; }
-/* Current Weather card */
-.wx-card { margin:0 10px 10px; border:1px solid #e2e8f0; border-radius:8px; display:flex; align-items:center; padding:5px 12px; overflow:hidden; }
-.wx-card.snow  { background:#f4f7ff; }
-.wx-card.sunny { background:#fffdf0; }
-.wx-card.cloud { background:#f8fafc; }
-.wx-card.rain  { background:#f4faff; }
-.wx-temp { font-size:44px; font-weight:700; color:#1e293b; line-height:1; flex-shrink:0; padding-right:10px; border-right:1px solid #e2e8f0; }
-.wx-temp sup { font-size:16px; font-weight:500; color:#94a3b8; vertical-align:super; }
-.wx-icon { flex-shrink:0; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:2px 10px; border-right:1px solid #e2e8f0; gap:0; }
-.wx-icon .cond-name { font-size:11px; font-weight:700; color:#475569; text-align:center; white-space:nowrap; }
-.wx-details { flex:1; display:flex; flex-direction:column; gap:2px; padding-left:12px; align-items:flex-end; }
-.wx-row { display:flex; align-items:baseline; gap:5px; }
-.wx-row .lbl { color:#94a3b8; font-weight:600; font-size:10px; text-transform:uppercase; letter-spacing:0.05em; }
-.wx-row .val { font-weight:600; color:#1e293b; font-size:13px; }
-.wx-row .unit { font-size:10px; font-weight:500; color:#64748b; }
+/* Current Weather image overlay */
+.wx-ov-inner { display:flex; justify-content:space-between; align-items:flex-start; padding:8px 12px; color:#fff; }
+.wx-ov-lbl  { font-size:9px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; opacity:0.75; text-shadow:0 1px 3px rgba(0,0,0,0.6); }
+.wx-ov-cond { font-size:12px; font-weight:600; text-shadow:0 1px 3px rgba(0,0,0,0.6); margin-top:1px; }
+.wx-ov-temp { font-size:34px; font-weight:700; line-height:1; text-shadow:0 2px 5px rgba(0,0,0,0.6); margin-top:2px; }
+.wx-ov-right { text-align:right; }
+.wx-ov-val  { font-size:12px; font-weight:600; text-shadow:0 1px 3px rgba(0,0,0,0.6); }
+@media (max-width: 390px) {
+  .wx-ov-inner { padding:5px 9px; }
+  .wx-ov-lbl  { font-size:7px; }
+  .wx-ov-cond { font-size:10px; }
+  .wx-ov-temp { font-size:24px; }
+  .wx-ov-val  { font-size:10px; }
+}
 /* Weather Alerts */
 .alert-card { margin:0 10px 6px; border-radius:8px; overflow:hidden; border:1px solid transparent; display:flex; }
 .alert-bar { width:5px; flex-shrink:0; }
@@ -312,13 +311,13 @@ body {
       <img src="49header.png" alt="49° North" style="width:100%;display:block;" />
     </a>
     <div id="currentWeatherOverlay" style="display:none;position:absolute;top:0;left:0;right:0;bottom:0;background:linear-gradient(to bottom,rgba(0,0,0,0.45) 0%,transparent 75%);pointer-events:none;">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;padding:8px 12px;color:#fff;">
+      <div class="wx-ov-inner">
         <div>
-          <div style="font-size:9px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;opacity:0.75;text-shadow:0 1px 3px rgba(0,0,0,0.6);">Current Weather</div>
-          <div id="wxCondName" style="font-size:12px;font-weight:600;text-shadow:0 1px 3px rgba(0,0,0,0.6);margin-top:1px;"></div>
-          <div id="wxTempLarge" style="font-size:34px;font-weight:700;line-height:1;text-shadow:0 2px 5px rgba(0,0,0,0.6);margin-top:2px;"></div>
+          <div class="wx-ov-lbl">Current Weather</div>
+          <div id="wxCondName" class="wx-ov-cond"></div>
+          <div id="wxTempLarge" class="wx-ov-temp"></div>
         </div>
-        <div id="wxWindInfo" style="text-align:right;text-shadow:0 1px 3px rgba(0,0,0,0.6);"></div>
+        <div id="wxWindInfo" class="wx-ov-right"></div>
       </div>
     </div>
   </div>
@@ -413,11 +412,18 @@ function dateLabel(date, hourStr) {
   return `${mo}/${dy} ${hourStr}`;
 }
 
-// Load ski conditions from Cloudflare Worker (scrapes ski49n.com)
+// Single fetch for all ski49n.com data via Cloudflare Worker
+let _workerData = null;
+async function fetchWorker() {
+  if (_workerData) return _workerData;
+  const res = await fetch('https://49.todd-0ce.workers.dev?t=' + Date.now());
+  _workerData = await res.json();
+  return _workerData;
+}
+
 async function loadStats() {
   try {
-    const res = await fetch('https://49.todd-0ce.workers.dev?t=' + Date.now());
-    const data = await res.json();
+    const data = await fetchWorker();
     const t = data.totals;
     if (!t) { statsOverlay.textContent = "Data Error"; return; }
 
@@ -602,21 +608,15 @@ async function loadForecast() {
 
 async function loadCurrentWeather() {
   try {
-    const res = await fetch('https://api.weather.gov/gridpoints/OTX/141,120/forecast/hourly');
-    const data = await res.json();
-    const p = data.properties.periods[0];
+    const data = await fetchWorker();
+    const s = data.summit;
+    if (!s || !s.temp) return;
 
-    document.getElementById('wxCondName').textContent = p.shortForecast;
-    document.getElementById('wxTempLarge').textContent = `${p.temperature}°`;
+    document.getElementById('wxCondName').textContent = s.conditions || s.precipitation || '';
+    document.getElementById('wxTempLarge').textContent = `${s.temp}°`;
 
-    const shadow = 'text-shadow:0 1px 3px rgba(0,0,0,0.6)';
-    const lbl = `font-size:9px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;opacity:0.75;${shadow}`;
-    const val = `font-size:12px;font-weight:600;${shadow}`;
     const rows = [];
-    if (p.windDirection && p.windSpeed)
-      rows.push(`<div style="${lbl}">Wind</div><div style="${val}">${p.windDirection} ${p.windSpeed}</div>`);
-    if (p.windGust)
-      rows.push(`<div style="${lbl};margin-top:3px;">Gusts</div><div style="${val}">${p.windGust}</div>`);
+    if (s.wind) rows.push(`<div class="wx-ov-lbl">Wind</div><div class="wx-ov-val">${s.wind}</div>`);
     document.getElementById('wxWindInfo').innerHTML = rows.join('');
 
     document.getElementById('currentWeatherOverlay').dataset.loaded = 'true';
