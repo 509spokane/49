@@ -101,7 +101,7 @@ body {
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: #888;
-  margin: 16px 10px 8px;
+  margin: 6px 10px 8px;
 }
 #noaaUpdated {
   text-transform: none;
@@ -181,12 +181,28 @@ body {
   border: 1px solid #e2e8f0;
   border-radius: 8px;
 }
-.settings-section .settings-title {
+.settings-section summary.settings-title {
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: #94a3b8;
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 0;
+}
+.settings-section summary.settings-title::after {
+  content: '▸';
+  font-size: 12px;
+  transition: transform 0.2s;
+}
+.settings-section[open] summary.settings-title::after {
+  transform: rotate(90deg);
+}
+.settings-section[open] summary.settings-title {
   margin-bottom: 10px;
 }
 .settings-row {
@@ -280,8 +296,8 @@ body {
 </div>
 
 <!-- Settings -->
-<div class="settings-section">
-  <div class="settings-title">Settings</div>
+<details class="settings-section">
+  <summary class="settings-title">Settings</summary>
   <div class="settings-row">
     <label for="toggleConditions">Show Snow Conditions</label>
     <label class="toggle-switch">
@@ -310,7 +326,7 @@ body {
       <span class="toggle-slider"></span>
     </label>
   </div>
-</div>
+</details>
 
 </div>
 
