@@ -179,7 +179,7 @@ body {
 .wx-ov-lbl  { font-size:9px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; opacity:0.75; text-shadow:0 1px 3px rgba(0,0,0,0.6); }
 .wx-ov-cond { font-size:12px; font-weight:600; text-shadow:0 1px 3px rgba(0,0,0,0.6); margin-top:1px; }
 .wx-ov-temp { font-size:34px; font-weight:700; line-height:1; text-shadow:0 2px 5px rgba(0,0,0,0.6); margin-top:2px; }
-.wx-ov-right { text-align:right; }
+.wx-ov-right { text-align:right; display:flex; flex-direction:column; gap:5px; }
 .wx-ov-val  { font-size:12px; font-weight:600; text-shadow:0 1px 3px rgba(0,0,0,0.6); }
 @media (max-width: 390px) {
   .wx-ov-inner { padding:5px 9px; }
@@ -616,9 +616,9 @@ async function loadCurrentWeather() {
     document.getElementById('wxTempLarge').textContent = `${s.temp}°`;
 
     const rows = [];
-    if (s.wind)          rows.push(`<div class="wx-ov-lbl">Wind</div><div class="wx-ov-val">${s.wind}</div>`);
-    if (s.visibility)    rows.push(`<div class="wx-ov-lbl">Visibility</div><div class="wx-ov-val">${s.visibility}</div>`);
-    if (s.precipitation) rows.push(`<div class="wx-ov-lbl">Precip</div><div class="wx-ov-val">${s.precipitation}</div>`);
+    if (s.wind)          rows.push(`<div class="wx-ov-item"><div class="wx-ov-lbl">Wind</div><div class="wx-ov-val">${s.wind}</div></div>`);
+    if (s.visibility)    rows.push(`<div class="wx-ov-item"><div class="wx-ov-lbl">Visibility</div><div class="wx-ov-val">${s.visibility}</div></div>`);
+    if (s.precipitation) rows.push(`<div class="wx-ov-item"><div class="wx-ov-lbl">Precip</div><div class="wx-ov-val">${s.precipitation}</div></div>`);
     document.getElementById('wxWindInfo').innerHTML = rows.join('');
 
     document.getElementById('currentWeatherOverlay').dataset.loaded = 'true';
