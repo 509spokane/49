@@ -479,15 +479,16 @@ async function loadStats() {
     function formatUpdated(str) {
       const match = str.match(/(\d+)\/(\d+)\/(\d+)\s+(\d+):(\d+)(am|pm)/i);
       if (!match) return str;
-      const [, mo, dy, yr] = match;
+      const [, mo, dy, yr, hr, min, ampm] = match;
       const updated = new Date(2000 + parseInt(yr), parseInt(mo)-1, parseInt(dy));
       const today = new Date(); today.setHours(0,0,0,0);
       updated.setHours(0,0,0,0);
       const diffDays = Math.round((today - updated) / 86400000);
       const dateStr = `${mo.padStart(2,'0')}/${dy.padStart(2,'0')}`;
-      if (diffDays === 0) return `Today, ${dateStr}`;
-      if (diffDays === 1) return `Yesterday, ${dateStr}`;
-      return `${diffDays} days ago, ${dateStr}`;
+      const timeStr = `@ ${hr}:${min}${ampm}`;
+      if (diffDays === 0) return `Today ${timeStr}`;
+      if (diffDays === 1) return `Yesterday ${timeStr}`;
+      return `${diffDays} days ago, ${dateStr} ${timeStr}`;
     }
 
     const stats = [
@@ -672,6 +673,11 @@ async function loadForecast() {
         <div class="row-total">${totalCell}</div>`;
       grid.appendChild(card);
     });
+
+    // Hide totals row entirely if no snow is forecast
+    if (cumMax === 0) {
+      grid.querySelectorAll('.row-total').forEach(el => el.remove());
+    }
   } catch(e) {
     document.getElementById('forecastGrid').textContent = 'Forecast unavailable';
   }
