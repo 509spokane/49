@@ -257,6 +257,7 @@ body {
       </a>
     </div>
   </div>
+  <a id="groomingBanner" href="https://www.ski49n.com/mountain-info/trail-status" target="_blank" style="display:none;font-weight:700;font-size:12px;letter-spacing:0.08em;text-transform:uppercase;color:#888;text-decoration:none;padding:6px 10px 2px;display:none;">Grooming Report ↗</a>
   <div id="statsOverlay">Loading snow data...</div>
 </div>
 
@@ -302,6 +303,13 @@ body {
     <label for="toggleWeather">Show Weather in Forecast</label>
     <label class="toggle-switch">
       <input type="checkbox" id="toggleWeather" checked>
+      <span class="toggle-slider"></span>
+    </label>
+  </div>
+  <div class="settings-row">
+    <label for="toggleGrooming">Show link to Grooming Report</label>
+    <label class="toggle-switch">
+      <input type="checkbox" id="toggleGrooming">
       <span class="toggle-slider"></span>
     </label>
   </div>
@@ -464,18 +472,16 @@ async function loadForecast() {
       const daySnow = filterSnow(daySnowRaw);
       const nightSnow = filterSnow(nightSnowRaw);
 
-      // Skip today from cumulative totals; accumulate from day 2 onward
-      let totalVal = '';
-      if (!isToday) {
-        const dayRange = parseRange(daySnowRaw);
-        cumMin += dayRange.min; cumMax += dayRange.max;
-        const afterDay = daySnowRaw ? formatCumulative(cumMin, cumMax) : '';
+      // Always accumulate so tonight feeds into Thu total; hide total for Today
+      const dayRange = parseRange(daySnowRaw);
+      cumMin += dayRange.min; cumMax += dayRange.max;
+      const afterDay = daySnowRaw ? formatCumulative(cumMin, cumMax) : '';
 
-        const nightRange = parseRange(nightSnowRaw);
-        cumMin += nightRange.min; cumMax += nightRange.max;
-        const afterNight = nightSnowRaw ? formatCumulative(cumMin, cumMax) : '';
-        totalVal = afterNight || afterDay;
-      }
+      const nightRange = parseRange(nightSnowRaw);
+      cumMin += nightRange.min; cumMax += nightRange.max;
+      const afterNight = nightSnowRaw ? formatCumulative(cumMin, cumMax) : '';
+
+      const totalVal = isToday ? '' : (afterNight || afterDay);
 
       const headerName = isToday ? 'Today' : shortDayName(day.name);
       const dayTempStr = day && day.temperature != null ? `<span style="font-size:75%">▲</span> ${day.temperature}°` : '';
@@ -506,33 +512,41 @@ const conditionsEl = document.getElementById('statsOverlay');
 const forecastCaptionEl = document.querySelector('.forecast-caption');
 const forecastGridEl = document.getElementById('forecastGrid');
 
+const groomingBannerEl = document.getElementById('groomingBanner');
+
 function applySettings() {
   const showConditions = document.getElementById('toggleConditions').checked;
   const showForecast = document.getElementById('toggleForecast').checked;
   const showWeather = document.getElementById('toggleWeather').checked;
+  const showGrooming = document.getElementById('toggleGrooming').checked;
   conditionsEl.style.display = showConditions ? '' : 'none';
   forecastCaptionEl.style.display = showForecast ? '' : 'none';
   forecastGridEl.style.display = showForecast ? '' : 'none';
+  groomingBannerEl.style.display = showGrooming ? '' : 'none';
   document.querySelectorAll('.weather-temp').forEach(el => {
     el.classList.toggle('hidden', !showWeather);
   });
   localStorage.setItem('showConditions', showConditions);
   localStorage.setItem('showForecast', showForecast);
   localStorage.setItem('showWeather', showWeather);
+  localStorage.setItem('showGrooming', showGrooming);
 }
 
 // Load saved prefs
 const savedConditions = localStorage.getItem('showConditions');
 const savedForecast = localStorage.getItem('showForecast');
 const savedWeather = localStorage.getItem('showWeather');
+const savedGrooming = localStorage.getItem('showGrooming');
 if (savedConditions !== null) document.getElementById('toggleConditions').checked = savedConditions === 'true';
 if (savedForecast !== null) document.getElementById('toggleForecast').checked = savedForecast === 'true';
 if (savedWeather !== null) document.getElementById('toggleWeather').checked = savedWeather !== 'false';
+if (savedGrooming !== null) document.getElementById('toggleGrooming').checked = savedGrooming === 'true';
 applySettings();
 
 document.getElementById('toggleConditions').addEventListener('change', applySettings);
 document.getElementById('toggleForecast').addEventListener('change', applySettings);
 document.getElementById('toggleWeather').addEventListener('change', applySettings);
+document.getElementById('toggleGrooming').addEventListener('change', applySettings);
 </script>
 <script data-goatcounter="https://49status.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
 </body>
