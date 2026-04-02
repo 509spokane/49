@@ -307,21 +307,24 @@ body {
 
 <!-- Top bar -->
 <div class="top-bar">
-  <a href="https://ski49n.com">
-    <img src="49header.png" alt="49° North" style="width:100%;display:block;" />
-  </a>
+  <div style="position:relative;">
+    <a href="https://ski49n.com">
+      <img src="49header.png" alt="49° North" style="width:100%;display:block;" />
+    </a>
+    <div id="currentWeatherOverlay" style="display:none;position:absolute;top:0;left:0;right:0;bottom:0;background:linear-gradient(to bottom,rgba(0,0,0,0.45) 0%,transparent 75%);pointer-events:none;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;padding:8px 12px;color:#fff;">
+        <div>
+          <div style="font-size:9px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;opacity:0.75;text-shadow:0 1px 3px rgba(0,0,0,0.6);">Current Weather</div>
+          <div id="wxCondName" style="font-size:12px;font-weight:600;text-shadow:0 1px 3px rgba(0,0,0,0.6);margin-top:1px;"></div>
+          <div id="wxTempLarge" style="font-size:34px;font-weight:700;line-height:1;text-shadow:0 2px 5px rgba(0,0,0,0.6);margin-top:2px;"></div>
+        </div>
+        <div id="wxWindInfo" style="text-align:right;text-shadow:0 1px 3px rgba(0,0,0,0.6);"></div>
+      </div>
+    </div>
+  </div>
   <div id="alertsSection" style="display:none;margin-top:6px;"></div>
   <a id="groomingBanner" href="https://www.ski49n.com/mountain-info/trail-status" target="_blank" style="display:none;font-weight:700;font-size:12px;letter-spacing:0.08em;text-transform:uppercase;color:#888;text-decoration:none;padding:6px 10px 2px;display:none;">Grooming Report ⧉</a>
   <div id="statsOverlay">Loading snow data...</div>
-</div>
-
-<!-- Current Weather -->
-<div id="currentWeatherSection" style="display:none;">
-  <div class="forecast-caption" style="margin-bottom:4px;">
-    <span><a href="https://forecast.weather.gov/MapClick.php?lon=-117.56499767303468&lat=48.285800530169524" target="_blank" style="color:inherit;text-decoration:none;">Current Weather ⧉</a></span>
-    <span id="wxUpdated" style="text-transform:none;font-weight:normal;letter-spacing:normal;"></span>
-  </div>
-  <div id="wxCard"></div>
 </div>
 
 <!-- Forecast cards -->
@@ -370,14 +373,14 @@ body {
     </label>
   </div>
   <div class="settings-row">
-    <label for="toggleAlerts">Show Weather Alerts</label>
+    <label for="toggleAlerts">Show Weather Alerts (when there is one)</label>
     <label class="toggle-switch">
       <input type="checkbox" id="toggleAlerts" checked>
       <span class="toggle-slider"></span>
     </label>
   </div>
   <div class="settings-row">
-    <label for="toggleCurrentWeather">Show Current Weather</label>
+    <label for="toggleCurrentWeather">Show Current Weather (over image)</label>
     <label class="toggle-switch">
       <input type="checkbox" id="toggleCurrentWeather">
       <span class="toggle-slider"></span>
@@ -543,6 +546,12 @@ async function loadForecast() {
         cardDefs.push({ day: periods[i], night: periods[i + 1], isToday: i === 0 });
     }
 
+    // Find warmest high and coldest low for highlighting
+    const allHighs = cardDefs.map(c => c.day && c.day.temperature != null ? c.day.temperature : null).filter(t => t !== null);
+    const allLows  = cardDefs.map(c => c.night && c.night.temperature != null ? c.night.temperature : null).filter(t => t !== null);
+    const maxHigh = allHighs.length ? Math.max(...allHighs) : null;
+    const minLow  = allLows.length  ? Math.min(...allLows)  : null;
+
     cardDefs.forEach(({ day, night, isToday }, idx) => {
       const daySnowRaw = day ? extractSnow(day.detailedForecast) : '';
       const nightSnowRaw = night ? extractSnow(night.detailedForecast) : '';
@@ -563,6 +572,8 @@ async function loadForecast() {
       const headerName = isToday ? 'Today' : shortDayName(day.name);
       const dayTempStr = day && day.temperature != null ? `High: ${day.temperature}°` : '';
       const nightTempStr = night && night.temperature != null ? `Low: ${night.temperature}°` : '';
+      const dayTempStyle = (day && day.temperature === maxHigh) ? ' style="background:#fefacd;"' : '';
+      const nightTempStyle = (night && night.temperature === minLow) ? ' style="background:#dbeafe;"' : '';
       const snow = s => `${s} <span class="snow-label">Snow</span>`;
 
       const daySnowCell = isToday && !day ? '&nbsp;'
@@ -576,10 +587,10 @@ async function loadForecast() {
       card.className = 'day-card';
       card.innerHTML = `
         <div class="day-header">${headerName}</div>
-        <div class="row-temp-day weather-temp${tempHidden}">${dayTempStr || '&nbsp;'}</div>
+        <div class="row-temp-day weather-temp${tempHidden}"${dayTempStyle}>${dayTempStr || '&nbsp;'}</div>
         <div class="row-snow-day">${daySnowCell}</div>
         <div class="night-label">Night</div>
-        <div class="row-temp-night weather-temp${tempHidden}">${nightTempStr || '&nbsp;'}</div>
+        <div class="row-temp-night weather-temp${tempHidden}"${nightTempStyle}>${nightTempStr || '&nbsp;'}</div>
         <div class="row-snow-night">${nightSnowCell}</div>
         <div class="row-total">${totalCell}</div>`;
       grid.appendChild(card);
@@ -589,90 +600,27 @@ async function loadForecast() {
   }
 }
 
-// SVG icons for current weather
-const WX_SVG = {
-  snow: `<svg width="54" height="48" viewBox="0 0 64 58" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <path d="M10 32 Q4 32 4 26 Q4 19 10 18 Q11 11 18 9 Q25 3 34 9 Q41 6 46 12 Q53 12 55 19 Q60 20 60 27 Q60 34 54 35 L18 35 Q10 35 10 32 Z" stroke="#94a3b8" stroke-width="1.5" fill="none" stroke-linejoin="round" stroke-linecap="round"/>
-    <g stroke="#7c8fa8" stroke-width="1.2" stroke-linecap="round" opacity="0.9">
-      <line x1="32" y1="41" x2="32" y2="55"/><line x1="25" y1="44.5" x2="39" y2="51.5"/><line x1="39" y1="44.5" x2="25" y2="51.5"/>
-      <line x1="32" y1="43.5" x2="29.5" y2="46"/><line x1="32" y1="43.5" x2="34.5" y2="46"/>
-      <line x1="32" y1="52.5" x2="29.5" y2="50"/><line x1="32" y1="52.5" x2="34.5" y2="50"/>
-      <line x1="26.4" y1="45.3" x2="25.2" y2="42.5"/><line x1="26.4" y1="45.3" x2="28.8" y2="44.2"/>
-      <line x1="37.6" y1="50.7" x2="38.8" y2="53.5"/><line x1="37.6" y1="50.7" x2="35.2" y2="51.8"/>
-      <line x1="37.6" y1="45.3" x2="38.8" y2="42.5"/><line x1="37.6" y1="45.3" x2="35.2" y2="44.2"/>
-      <line x1="26.4" y1="50.7" x2="25.2" y2="53.5"/><line x1="26.4" y1="50.7" x2="28.8" y2="51.8"/>
-      <circle cx="32" cy="48" r="1.3" fill="#7c8fa8"/>
-    </g></svg>`,
-  sunny: `<svg width="54" height="48" viewBox="0 0 64 58" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <circle cx="32" cy="30" r="12" stroke="#d97706" stroke-width="1.5" fill="none"/>
-    <circle cx="32" cy="30" r="6" fill="#fbbf24" opacity="0.35"/>
-    <g stroke="#d97706" stroke-width="1.2" stroke-linecap="round">
-      <line x1="32" y1="8" x2="32" y2="15"/><line x1="32" y1="45" x2="32" y2="52"/>
-      <line x1="10" y1="30" x2="17" y2="30"/><line x1="47" y1="30" x2="54" y2="30"/>
-      <line x1="16" y1="14" x2="21" y2="19"/><line x1="43" y1="41" x2="48" y2="46"/>
-      <line x1="48" y1="14" x2="43" y2="19"/><line x1="21" y1="41" x2="16" y2="46"/>
-    </g></svg>`,
-  partly: `<svg width="54" height="48" viewBox="0 0 64 58" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <circle cx="22" cy="26" r="9" stroke="#d97706" stroke-width="1.2" fill="none" opacity="0.8"/>
-    <circle cx="22" cy="26" r="4.5" fill="#fbbf24" opacity="0.3"/>
-    <g stroke="#d97706" stroke-width="1" stroke-linecap="round" opacity="0.7">
-      <line x1="22" y1="10" x2="22" y2="14"/><line x1="22" y1="38" x2="22" y2="42"/>
-      <line x1="6" y1="26" x2="10" y2="26"/><line x1="34" y1="26" x2="38" y2="26"/>
-      <line x1="10.5" y1="14.5" x2="13.4" y2="17.4"/><line x1="30.6" y1="34.6" x2="33.5" y2="37.5"/>
-      <line x1="33.5" y1="14.5" x2="30.6" y2="17.4"/><line x1="13.4" y1="34.6" x2="10.5" y2="37.5"/>
-    </g>
-    <path d="M18 48 Q12 48 12 43 Q12 37 18 36 Q19 30 25 28 Q31 23 38 28 Q44 26 47 31 Q53 31 53 37 Q53 44 47 45 L24 45 Q18 45 18 48 Z" stroke="#94a3b8" stroke-width="1.5" fill="#f8fafc" fill-opacity="0.95" stroke-linejoin="round" stroke-linecap="round"/>
-    </svg>`,
-  cloud: `<svg width="54" height="48" viewBox="0 0 64 58" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <path d="M10 36 Q4 36 4 30 Q4 23 10 22 Q11 15 18 13 Q25 7 34 13 Q41 10 46 16 Q53 16 55 23 Q60 24 60 31 Q60 38 54 39 L18 39 Q10 39 10 36 Z" stroke="#94a3b8" stroke-width="1.5" fill="none" stroke-linejoin="round" stroke-linecap="round"/>
-    </svg>`,
-  rain: `<svg width="54" height="48" viewBox="0 0 64 58" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <path d="M10 30 Q4 30 4 24 Q4 17 10 16 Q11 9 18 7 Q25 1 34 7 Q41 4 46 10 Q53 10 55 17 Q60 18 60 25 Q60 32 54 33 L18 33 Q10 33 10 30 Z" stroke="#64748b" stroke-width="1.5" fill="none" stroke-linejoin="round" stroke-linecap="round"/>
-    <g stroke="#60a5fa" stroke-width="1.2" stroke-linecap="round" opacity="0.85">
-      <line x1="18" y1="39" x2="14" y2="50"/><line x1="27" y1="39" x2="23" y2="50"/>
-      <line x1="36" y1="39" x2="32" y2="50"/><line x1="45" y1="39" x2="41" y2="50"/>
-      <line x1="54" y1="39" x2="50" y2="50"/><line x1="22" y1="51" x2="18" y2="58"/>
-      <line x1="31" y1="51" x2="27" y2="58"/><line x1="40" y1="51" x2="36" y2="58"/>
-      <line x1="49" y1="51" x2="45" y2="58"/>
-    </g></svg>`
-};
-
-function wxCondType(shortForecast) {
-  const c = shortForecast.toLowerCase();
-  if (c.includes('snow') || c.includes('blizzard') || c.includes('sleet') || c.includes('flurr')) return 'snow';
-  if (c.includes('rain') || c.includes('drizzle') || c.includes('shower')) return 'rain';
-  if (c.includes('partly') || c.includes('mostly cloudy')) return 'partly';
-  if (c.includes('sunny') || c.includes('clear')) return 'sunny';
-  return 'cloud';
-}
-
 async function loadCurrentWeather() {
   try {
     const res = await fetch('https://api.weather.gov/gridpoints/OTX/141,120/forecast/hourly');
     const data = await res.json();
     const p = data.properties.periods[0];
-    const type = wxCondType(p.shortForecast);
 
-    const updated = new Date(p.startTime);
-    let hr = updated.getHours(), ampm = hr >= 12 ? 'pm' : 'am';
-    hr = hr % 12 || 12;
-    document.getElementById('wxUpdated').textContent = `As of ${dateLabel(updated, `@ ${hr}${ampm}`)}`;
+    document.getElementById('wxCondName').textContent = p.shortForecast;
+    document.getElementById('wxTempLarge').textContent = `${p.temperature}°`;
 
+    const shadow = 'text-shadow:0 1px 3px rgba(0,0,0,0.6)';
+    const lbl = `font-size:9px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;opacity:0.75;${shadow}`;
+    const val = `font-size:12px;font-weight:600;${shadow}`;
     const rows = [];
     if (p.windDirection && p.windSpeed)
-      rows.push(`<div class="wx-row"><span class="lbl">Wind</span> <span class="val">${p.windDirection} ${p.windSpeed}</span></div>`);
+      rows.push(`<div style="${lbl}">Wind</div><div style="${val}">${p.windDirection} ${p.windSpeed}</div>`);
     if (p.windGust)
-      rows.push(`<div class="wx-row"><span class="lbl">Gusts</span> <span class="val">${p.windGust}</span></div>`);
+      rows.push(`<div style="${lbl};margin-top:3px;">Gusts</div><div style="${val}">${p.windGust}</div>`);
+    document.getElementById('wxWindInfo').innerHTML = rows.join('');
 
-    document.getElementById('wxCard').innerHTML = `
-      <div class="wx-card ${type}">
-        <div class="wx-temp">${p.temperature}<sup>°F</sup></div>
-        <div class="wx-icon">
-          <span class="cond-name">${p.shortForecast}</span>
-          ${WX_SVG[type]}
-        </div>
-        <div class="wx-details">${rows.join('')}</div>
-      </div>`;
+    document.getElementById('currentWeatherOverlay').dataset.loaded = 'true';
+    applySettings();
   } catch(e) { /* silently fail */ }
 }
 
@@ -768,7 +716,8 @@ function applySettings() {
   forecastCaptionEl.style.display = showForecast ? '' : 'none';
   forecastGridEl.style.display = showForecast ? '' : 'none';
   groomingBannerEl.style.display = showGrooming ? '' : 'none';
-  document.getElementById('currentWeatherSection').style.display = showCurrentWeather ? '' : 'none';
+  const overlay = document.getElementById('currentWeatherOverlay');
+  overlay.style.display = (showCurrentWeather && overlay.dataset.loaded) ? '' : 'none';
   renderAlerts();
   document.querySelectorAll('.weather-temp').forEach(el => {
     el.classList.toggle('hidden', !showWeather);
