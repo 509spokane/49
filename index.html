@@ -50,7 +50,7 @@ body {
 #statsOverlay {
   background: rgba(255,255,255,0.8);
   color: #000;
-  padding: 6px 8px 6px;
+  padding: 12px 8px 6px;
   font-size: 12px;
   box-sizing: border-box;
 }
@@ -339,9 +339,9 @@ body {
       </div>
     </div>
   </div>
-  <div id="specialNotesSection" style="display:none;padding:7px 10px;background:#fefce8;border-bottom:1px solid #fde047;">
-    <div style="font-size:9px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#ca8a04;margin-bottom:2px;">Special Notes</div>
-    <div id="specialNotesOverlayText" style="font-size:12px;color:#713f12;line-height:1.5;"></div>
+  <div id="specialNotesSection" style="display:none;padding:7px 10px;text-align:center;">
+    <div style="font-size:9px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#94a3b8;margin-bottom:2px;">Special Notes</div>
+    <div id="specialNotesOverlayText" style="font-size:12px;color:#334155;line-height:1.5;"></div>
   </div>
   <div id="alertsSection" style="display:none;margin-top:6px;"></div>
   <a id="groomingBanner" href="https://www.ski49n.com/mountain-info/trail-status" target="_blank" style="display:none;font-weight:700;font-size:12px;letter-spacing:0.08em;text-transform:uppercase;color:#888;text-decoration:none;padding:6px 10px 2px;display:none;">Grooming Report ⧉</a>
@@ -485,7 +485,12 @@ async function loadStats() {
       updated.setHours(0,0,0,0);
       const diffDays = Math.round((today - updated) / 86400000);
       const dateStr = `${mo.padStart(2,'0')}/${dy.padStart(2,'0')}`;
-      const timeStr = `@ ${hr}:${min}${ampm}`;
+      // Round to nearest hour
+      let h = parseInt(hr), isPM = ampm.toLowerCase() === 'pm';
+      if (isPM && h !== 12) h += 12; else if (!isPM && h === 12) h = 0;
+      if (parseInt(min) >= 30) h = (h + 1) % 24;
+      const rAmPm = h >= 12 ? 'pm' : 'am';
+      const timeStr = `@ ${h % 12 || 12}${rAmPm}`;
       if (diffDays === 0) return `Today ${timeStr}`;
       if (diffDays === 1) return `Yesterday ${timeStr}`;
       return `${diffDays} days ago, ${dateStr} ${timeStr}`;
@@ -599,7 +604,7 @@ async function loadForecast() {
 
     const grid = document.getElementById('forecastGrid');
     grid.innerHTML = '';
-    let cumMin = 0, cumMax = 0;
+    let cumMin = 0, cumMax = 0, hasAnyTotal = false;
     const tempHidden = localStorage.getItem('showWeather') !== 'false' ? '' : ' hidden';
 
     // Hide snow amounts under 1" (treat as 0, don't display)
@@ -644,6 +649,7 @@ async function loadForecast() {
       const afterNight = nightSnowRaw ? formatCumulative(cumMin, cumMax) : '';
 
       const totalVal = isToday ? '' : (afterNight || afterDay);
+      if (totalVal) hasAnyTotal = true;
 
       const headerName = isToday ? 'Today' : shortDayName(day.name);
       const dayTempStr = day && day.temperature != null ? `High: ${day.temperature}°` : '';
@@ -674,8 +680,8 @@ async function loadForecast() {
       grid.appendChild(card);
     });
 
-    // Hide totals row entirely if no snow is forecast
-    if (cumMax === 0) {
+    // Hide totals row entirely if no card has a visible cumulative total
+    if (!hasAnyTotal) {
       grid.querySelectorAll('.row-total').forEach(el => el.remove());
     }
   } catch(e) {
