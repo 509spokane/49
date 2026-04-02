@@ -173,7 +173,6 @@ body {
   min-height: 1.2em;
 }
 .weather-temp.hidden { display: none; }
-.first-card { flex: 1.4; }
 .settings-section {
   margin: 16px 10px 24px;
   padding: 12px 14px;
@@ -346,11 +345,15 @@ async function loadStats() {
     function formatUpdated(str) {
       const match = str.match(/(\d+)\/(\d+)\/(\d+)\s+(\d+):(\d+)(am|pm)/i);
       if (!match) return str;
-      const [, mo, dy, yr, h, m, ampm] = match;
-      const date = new Date(2000 + parseInt(yr), parseInt(mo)-1, parseInt(dy));
-      let hour = parseInt(h), period = ampm.toLowerCase();
-      if (parseInt(m) >= 30) { hour++; if (hour===12&&period==='am') period='pm'; if (hour===13) hour=1; }
-      return dateLabel(date, `${hour}${period}`);
+      const [, mo, dy, yr] = match;
+      const updated = new Date(2000 + parseInt(yr), parseInt(mo)-1, parseInt(dy));
+      const today = new Date(); today.setHours(0,0,0,0);
+      updated.setHours(0,0,0,0);
+      const diffDays = Math.round((today - updated) / 86400000);
+      const dateStr = `${mo.padStart(2,'0')}/${dy.padStart(2,'0')}`;
+      if (diffDays === 0) return `Today, ${dateStr}`;
+      if (diffDays === 1) return `Yesterday, ${dateStr}`;
+      return `${diffDays} days ago, ${dateStr}`;
     }
 
     const stats = [
@@ -470,34 +473,33 @@ async function loadForecast() {
       const daySnow = filterSnow(daySnowRaw);
       const nightSnow = filterSnow(nightSnowRaw);
 
-      // Cumulative uses raw parsed values (before display filtering)
-      const dayRange = parseRange(daySnowRaw);
-      cumMin += dayRange.min; cumMax += dayRange.max;
-      const afterDay = daySnowRaw ? formatCumulative(cumMin, cumMax) : '';
+      // Skip today from cumulative totals; accumulate from day 2 onward
+      let totalVal = '';
+      if (!isToday) {
+        const dayRange = parseRange(daySnowRaw);
+        cumMin += dayRange.min; cumMax += dayRange.max;
+        const afterDay = daySnowRaw ? formatCumulative(cumMin, cumMax) : '';
 
-      const nightRange = parseRange(nightSnowRaw);
-      cumMin += nightRange.min; cumMax += nightRange.max;
-      const afterNight = nightSnowRaw ? formatCumulative(cumMin, cumMax) : '';
+        const nightRange = parseRange(nightSnowRaw);
+        cumMin += nightRange.min; cumMax += nightRange.max;
+        const afterNight = nightSnowRaw ? formatCumulative(cumMin, cumMax) : '';
+        totalVal = afterNight || afterDay;
+      }
 
       const headerName = isToday ? 'Today' : shortDayName(day.name);
       const dayTempStr = day && day.temperature != null ? `<span style="font-size:75%">▲</span> ${day.temperature}°` : '';
       const nightTempStr = night && night.temperature != null ? `<span style="font-size:75%">▼</span> ${night.temperature}°` : '';
-      const totalVal = afterNight || afterDay;
-      // First card: prefix total row with "Totals:" label
-      const totalDisplay = idx === 0
-        ? `<span style="font-size:10px;font-weight:600;color:#64748b">Totals: </span>${totalVal || faintZero}`
-        : (totalVal || faintZero);
 
       const card = document.createElement('div');
-      card.className = 'day-card' + (idx === 0 ? ' first-card' : '');
+      card.className = 'day-card';
       card.innerHTML = `
         <div class="day-header">${headerName}</div>
         <div class="row-temp-day weather-temp${tempHidden}">${dayTempStr || '&nbsp;'}</div>
-        <div class="row-snow-day">${daySnow || '&nbsp;'}</div>
+        <div class="row-snow-day">${daySnow || faintZero}</div>
         <div class="night-label">Night</div>
         <div class="row-temp-night weather-temp${tempHidden}">${nightTempStr || '&nbsp;'}</div>
-        <div class="row-snow-night">${nightSnow || '&nbsp;'}</div>
-        <div class="row-total">${totalDisplay}</div>`;
+        <div class="row-snow-night">${nightSnow || faintZero}</div>
+        <div class="row-total">${totalVal || faintZero}</div>`;
       grid.appendChild(card);
     });
   } catch(e) {
