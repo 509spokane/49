@@ -129,7 +129,6 @@ body {
 .day-card {
   flex: 1;
   border-radius: 6px;
-  overflow: hidden;
   font-size: 13px;
   text-align: center;
 }
@@ -139,6 +138,7 @@ body {
   font-weight: 700;
   padding: 7px 4px;
   font-size: 13px;
+  border-radius: 6px 6px 0 0;
 }
 .day-card .row-temp-day {
   background: #fefce8;
@@ -184,9 +184,12 @@ body {
   padding: 7px 4px;
   border-top: 1px solid rgba(0,0,0,0.08);
   min-height: 1.2em;
+  border-radius: 0 0 6px 6px;
 }
 .weather-temp.hidden { display: none; }
 .snow-label { font-size: 10px; font-weight: 500; color: #64748b; }
+.mb-wrap { position: relative; display: inline-block; width: 0; overflow: visible; }
+.mb-gif { position: absolute; top: -14px; left: 2px; width: 32px; height: 32px; object-fit: cover; z-index: 10; }
 /* Current Weather image overlay */
 .wx-ov-inner { display:flex; justify-content:space-between; align-items:flex-start; padding:8px 12px; color:#fff; }
 .wx-ov-lbl  { font-size:9px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; opacity:0.75; text-shadow:0 1px 3px rgba(0,0,0,0.6); }
@@ -480,15 +483,28 @@ async function loadStats() {
   }
 }
 
-// Load 5-day snowfall forecast from NOAA public API
+// Load 5-day snowfall forecast from NWS MapClick (mountain-elevation-aware)
 async function loadForecast() {
   try {
-    const res = await fetch('https://api.weather.gov/gridpoints/OTX/141,120/forecast');
+    const res = await fetch('https://forecast.weather.gov/MapClick.php?lon=-117.56499767303468&lat=48.285800530169524&FcstType=json');
     const data = await res.json();
-    const periods = data.properties.periods.slice(0, 10);
+
+    const names  = data.time.startPeriodName;
+    const labels = data.time.tempLabel;   // "High" or "Low"
+    const temps  = data.data.temperature;
+    const texts  = data.data.text;
+
+    const periods = names.slice(0, 10).map((name, i) => ({
+      name,
+      temperature: parseInt(temps[i]) || null,
+      detailedForecast: texts[i] || '',
+      isDaytime: labels[i] === 'High'
+    }));
 
     function extractSnow(detail) {
-      const match = detail.match(/new snow accumulation of ([^.]+)/i);
+      // MapClick: "Total daytime/nighttime snow accumulation of X"
+      // Gridpoint fallback: "new snow accumulation of X"
+      const match = detail.match(/(?:Total (?:daytime|nighttime) snow accumulation|new snow accumulation) of ([^.]+)/i);
       if (!match) return '';
       let s = match[1].trim().toLowerCase().replace(/\s*possible\s*$/, '').trim();
       if (/less than half an inch/.test(s)) return '< .5"';
@@ -506,8 +522,8 @@ async function loadForecast() {
     }
 
     function shortDayName(name) {
-      const clean = name.replace(/ Night$/, '').replace('Tonight', 'Today');
-      const map = { Monday:'Mon', Tuesday:'Tue', Wednesday:'Wed', Thursday:'Thu', Friday:'Fri', Saturday:'Sat', Sunday:'Sun' };
+      const clean = name.replace(/ Night$/, '').replace('This Afternoon', 'Today').replace('Tonight', 'Today');
+      const map = { Monday:'Mon', Tuesday:'Tue', Wednesday:'Wed', Thursday:'Thu', Friday:'Fri', Saturday:'Sat', Sunday:'Sun', Today:'Today' };
       return map[clean] || clean;
     }
 
@@ -535,12 +551,19 @@ async function loadForecast() {
       return `${fMin}-${fMax}"`;
     }
 
-    const updated = new Date(data.properties.updateTime);
+    function needsMindBlown(formatted) {
+      if (!formatted) return false;
+      return parseRange(formatted).max > 6;
+    }
+
+    const mbGif = '<span class="mb-wrap"><img class="mb-gif" src="mind_blown.gif" alt=""/></span>';
+
     const noaaUpdated = document.getElementById('noaaUpdated');
     if (noaaUpdated) {
-      let hr = updated.getHours(), ampm = hr >= 12 ? 'pm' : 'am';
+      const now = new Date();
+      let hr = now.getHours(), ampm = hr >= 12 ? 'pm' : 'am';
       hr = hr % 12 || 12;
-      noaaUpdated.textContent = `As of ${dateLabel(updated, `@ ${hr}${ampm}`)}`;
+      noaaUpdated.textContent = `As of ${dateLabel(now, `@ ${hr}${ampm}`)}`;
     }
 
     const grid = document.getElementById('forecastGrid');
@@ -548,7 +571,7 @@ async function loadForecast() {
     let cumMin = 0, cumMax = 0;
     const tempHidden = localStorage.getItem('showWeather') !== 'false' ? '' : ' hidden';
 
-    // Hide snow amounts under 1" (round to 0, don't display)
+    // Hide snow amounts under 1" (treat as 0, don't display)
     function filterSnow(s) {
       if (!s) return '';
       return parseRange(s).max < 1 ? '' : s;
@@ -556,7 +579,7 @@ async function loadForecast() {
 
     const faintZero = '<span style="color:#94a3b8;font-weight:400">0</span>';
 
-    // If NOAA's first period is nighttime we're past today's daytime
+    // If first period is nighttime we're past today's daytime
     const isEvening = periods.length > 0 && periods[0].isDaytime === false;
     const cardDefs = [];
     if (isEvening) {
@@ -574,13 +597,13 @@ async function loadForecast() {
     const maxHigh = allHighs.length ? Math.max(...allHighs) : null;
     const minLow  = allLows.length  ? Math.min(...allLows)  : null;
 
-    cardDefs.forEach(({ day, night, isToday }, idx) => {
+    cardDefs.forEach(({ day, night, isToday }) => {
       const daySnowRaw = day ? extractSnow(day.detailedForecast) : '';
       const nightSnowRaw = night ? extractSnow(night.detailedForecast) : '';
       const daySnow = filterSnow(daySnowRaw);
       const nightSnow = filterSnow(nightSnowRaw);
 
-      // Always accumulate so tonight feeds into Thu total; hide total for Today
+      // Always accumulate so tonight feeds into next-day totals; hide total for Today
       const dayRange = parseRange(daySnowRaw);
       cumMin += dayRange.min; cumMax += dayRange.max;
       const afterDay = daySnowRaw ? formatCumulative(cumMin, cumMax) : '';
@@ -596,14 +619,16 @@ async function loadForecast() {
       const nightTempStr = night && night.temperature != null ? `Low: ${night.temperature}°` : '';
       const dayTempStyle = (day && day.temperature === maxHigh) ? ' style="background:#fefacd;"' : '';
       const nightTempStyle = (night && night.temperature === minLow) ? ' style="background:#dbeafe;"' : '';
-      const snow = s => `${s} <span class="snow-label">Snow</span>`;
+
+      const snowCell = (val, snowForGif) =>
+        `${val} <span class="snow-label">Snow</span>${needsMindBlown(snowForGif) ? mbGif : ''}`;
 
       const daySnowCell = isToday && !day ? '&nbsp;'
-        : snow(daySnow || faintZero);
-      const nightSnowCell = snow(nightSnow || faintZero);
+        : snowCell(daySnow || faintZero, daySnow);
+      const nightSnowCell = snowCell(nightSnow || faintZero, nightSnow);
       const totalCell = isToday
         ? '<span style="font-size:10px;font-weight:600;color:#64748b;letter-spacing:0.04em">TOTALS:</span>'
-        : (totalVal ? `${totalVal} <span class="snow-label">Snow</span>` : '&nbsp;');
+        : (totalVal ? snowCell(totalVal, totalVal) : '&nbsp;');
 
       const card = document.createElement('div');
       card.className = 'day-card';
