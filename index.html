@@ -189,6 +189,31 @@ body {
 .wx-row .lbl { color:#94a3b8; font-weight:600; font-size:10px; text-transform:uppercase; letter-spacing:0.05em; }
 .wx-row .val { font-weight:600; color:#1e293b; font-size:13px; }
 .wx-row .unit { font-size:10px; font-weight:500; color:#64748b; }
+/* Weather Alerts */
+.alert-card { margin:0 10px 6px; border-radius:8px; overflow:hidden; border:1px solid transparent; display:flex; }
+.alert-bar { width:5px; flex-shrink:0; }
+.alert-body { flex:1; padding:8px 10px 6px; }
+.alert-header { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:6px; }
+.alert-title { font-weight:700; font-size:13px; }
+.alert-expires { font-size:11px; color:#64748b; font-weight:500; }
+.alert-details { display:flex; flex-direction:column; gap:5px; margin-bottom:6px; }
+.alert-detail-row { display:flex; gap:7px; align-items:baseline; }
+.detail-lbl { font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:#94a3b8; flex-shrink:0; width:52px; }
+.detail-val { font-size:11px; color:#334155; line-height:1.4; }
+.alert-footer { display:flex; justify-content:flex-end; }
+.alert-link { font-size:11px; font-weight:600; text-decoration:none; }
+.alert-card.warning { background:#fff5f5; border-color:#fca5a5; }
+.alert-card.warning .alert-bar { background:#ef4444; }
+.alert-card.warning .alert-title { color:#991b1b; }
+.alert-card.warning .alert-link { color:#dc2626; }
+.alert-card.watch { background:#fff7ed; border-color:#fdba74; }
+.alert-card.watch .alert-bar { background:#f97316; }
+.alert-card.watch .alert-title { color:#9a3412; }
+.alert-card.watch .alert-link { color:#ea580c; }
+.alert-card.advisory { background:#fefce8; border-color:#fde047; }
+.alert-card.advisory .alert-bar { background:#eab308; }
+.alert-card.advisory .alert-title { color:#713f12; }
+.alert-card.advisory .alert-link { color:#ca8a04; }
 .settings-section {
   margin: 16px 10px 24px;
   padding: 12px 14px;
@@ -285,6 +310,7 @@ body {
   <a href="https://ski49n.com">
     <img src="49header.png" alt="49° North" style="width:100%;display:block;" />
   </a>
+  <div id="alertsSection" style="display:none;margin-top:6px;"></div>
   <a id="groomingBanner" href="https://www.ski49n.com/mountain-info/trail-status" target="_blank" style="display:none;font-weight:700;font-size:12px;letter-spacing:0.08em;text-transform:uppercase;color:#888;text-decoration:none;padding:6px 10px 2px;display:none;">Grooming Report ⧉</a>
   <div id="statsOverlay">Loading snow data...</div>
 </div>
@@ -340,6 +366,13 @@ body {
     <label for="toggleWeather">Show Weather in Forecast</label>
     <label class="toggle-switch">
       <input type="checkbox" id="toggleWeather" checked>
+      <span class="toggle-slider"></span>
+    </label>
+  </div>
+  <div class="settings-row">
+    <label for="toggleAlerts">Show Weather Alerts</label>
+    <label class="toggle-switch">
+      <input type="checkbox" id="toggleAlerts" checked>
       <span class="toggle-slider"></span>
     </label>
   </div>
@@ -643,9 +676,80 @@ async function loadCurrentWeather() {
   } catch(e) { /* silently fail */ }
 }
 
+let alertsHtml = '';
+
+function renderAlerts() {
+  const showAlerts = document.getElementById('toggleAlerts').checked;
+  const section = document.getElementById('alertsSection');
+  if (showAlerts && alertsHtml) {
+    section.innerHTML = alertsHtml;
+    section.style.display = '';
+  } else {
+    section.style.display = 'none';
+  }
+}
+
+async function loadAlerts() {
+  try {
+    const res = await fetch('https://api.weather.gov/alerts/active?point=48.2858,-117.565');
+    const data = await res.json();
+    const features = (data.features || []).filter(f => f.properties && f.properties.event);
+    if (!features.length) { renderAlerts(); return; }
+
+    function parseSection(desc, name) {
+      const re = new RegExp('\\*\\s*' + name + '\\.{3}([\\s\\S]*?)(?=\\n\\s*\\*|$)', 'i');
+      const m = desc.match(re);
+      return m ? m[1].trim().replace(/\s+/g, ' ') : '';
+    }
+
+    alertsHtml = features.map(f => {
+      const p = f.properties;
+      const event = p.event || '';
+      const desc = p.description || '';
+      const expires = p.expires ? new Date(p.expires) : null;
+
+      let cls = 'advisory';
+      if (/warning/i.test(event)) cls = 'warning';
+      else if (/watch/i.test(event)) cls = 'watch';
+
+      const what    = parseSection(desc, 'WHAT');
+      const impacts = parseSection(desc, 'IMPACTS');
+      const actions = parseSection(desc, 'PRECAUTIONARY/PREPAREDNESS ACTIONS');
+
+      let expiresStr = '';
+      if (expires) {
+        let hr = expires.getHours(), ampm = hr >= 12 ? 'pm' : 'am';
+        hr = hr % 12 || 12;
+        expiresStr = `Expires ${dateLabel(expires, `@ ${hr}${ampm}`)}`;
+      }
+
+      const rows = [
+        what    ? `<div class="alert-detail-row"><span class="detail-lbl">What</span><span class="detail-val">${what}</span></div>` : '',
+        impacts ? `<div class="alert-detail-row"><span class="detail-lbl">Impacts</span><span class="detail-val">${impacts}</span></div>` : '',
+        actions ? `<div class="alert-detail-row"><span class="detail-lbl">Actions</span><span class="detail-val">${actions}</span></div>` : '',
+      ].filter(Boolean).join('');
+
+      return `<div class="alert-card ${cls}">
+        <div class="alert-bar"></div>
+        <div class="alert-body">
+          <div class="alert-header">
+            <span class="alert-title">${event}</span>
+            <span class="alert-expires">${expiresStr}</span>
+          </div>
+          ${rows ? `<div class="alert-details">${rows}</div>` : ''}
+          <div class="alert-footer"><a class="alert-link" href="https://forecast.weather.gov/MapClick.php?lon=-117.56499767303468&lat=48.285800530169524" target="_blank">Full Details ⧉</a></div>
+        </div>
+      </div>`;
+    }).join('');
+
+    renderAlerts();
+  } catch(e) { /* silently fail */ }
+}
+
 loadStats();
 loadForecast();
 loadCurrentWeather();
+loadAlerts();
 
 // Settings
 const conditionsEl = document.getElementById('statsOverlay');
@@ -665,6 +769,7 @@ function applySettings() {
   forecastGridEl.style.display = showForecast ? '' : 'none';
   groomingBannerEl.style.display = showGrooming ? '' : 'none';
   document.getElementById('currentWeatherSection').style.display = showCurrentWeather ? '' : 'none';
+  renderAlerts();
   document.querySelectorAll('.weather-temp').forEach(el => {
     el.classList.toggle('hidden', !showWeather);
   });
@@ -673,6 +778,7 @@ function applySettings() {
   localStorage.setItem('showWeather', showWeather);
   localStorage.setItem('showGrooming', showGrooming);
   localStorage.setItem('showCurrentWeather', showCurrentWeather);
+  localStorage.setItem('showAlerts', document.getElementById('toggleAlerts').checked);
 }
 
 // Load saved prefs
@@ -681,11 +787,13 @@ const savedForecast = localStorage.getItem('showForecast');
 const savedWeather = localStorage.getItem('showWeather');
 const savedGrooming = localStorage.getItem('showGrooming');
 const savedCurrentWeather = localStorage.getItem('showCurrentWeather');
+const savedAlerts = localStorage.getItem('showAlerts');
 if (savedConditions !== null) document.getElementById('toggleConditions').checked = savedConditions === 'true';
 if (savedForecast !== null) document.getElementById('toggleForecast').checked = savedForecast === 'true';
 if (savedWeather !== null) document.getElementById('toggleWeather').checked = savedWeather !== 'false';
 if (savedGrooming !== null) document.getElementById('toggleGrooming').checked = savedGrooming === 'true';
 if (savedCurrentWeather !== null) document.getElementById('toggleCurrentWeather').checked = savedCurrentWeather === 'true';
+if (savedAlerts !== null) document.getElementById('toggleAlerts').checked = savedAlerts !== 'false';
 applySettings();
 
 document.getElementById('toggleConditions').addEventListener('change', applySettings);
@@ -693,6 +801,7 @@ document.getElementById('toggleForecast').addEventListener('change', applySettin
 document.getElementById('toggleWeather').addEventListener('change', applySettings);
 document.getElementById('toggleGrooming').addEventListener('change', applySettings);
 document.getElementById('toggleCurrentWeather').addEventListener('change', applySettings);
+document.getElementById('toggleAlerts').addEventListener('change', applySettings);
 </script>
 <script data-goatcounter="https://49status.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
 </body>
