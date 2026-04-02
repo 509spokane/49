@@ -318,6 +318,8 @@ body {
 </style>
 </head>
 <body>
+<div id="fb-root"></div>
+<script async defer crossorigin="anonymous" src="https://connect.facebook.net/en_US/sdk.js#xfbml=1&version=v25.0&appId=1384187966848450"></script>
 <div class="container">
 
 <!-- Top bar -->
@@ -366,6 +368,12 @@ body {
   <div class="cam-label">Chair 5</div>
 </div>
 
+<!-- Facebook Feed -->
+<div id="facebookFeed" style="margin:10px 10px 4px;">
+  <div class="forecast-caption" style="margin:6px 0 8px;"><span><a href="https://www.facebook.com/ski49n" target="_blank" style="color:inherit;text-decoration:none;">49° North on Facebook ⧉</a></span></div>
+  <div class="fb-page" data-href="https://www.facebook.com/ski49n" data-tabs="timeline" data-width="500" data-height="500" data-small-header="true" data-adapt-container-width="true" data-hide-cover="true" data-show-facepile="false"><blockquote cite="https://www.facebook.com/ski49n" class="fb-xfbml-parse-ignore"><a href="https://www.facebook.com/ski49n">49 Degrees North</a></blockquote></div>
+</div>
+
 <!-- Settings -->
 <details class="settings-section">
   <summary class="settings-title">Settings</summary>
@@ -408,6 +416,13 @@ body {
     <label for="toggleGrooming">Show link to Grooming Report</label>
     <label class="toggle-switch">
       <input type="checkbox" id="toggleGrooming">
+      <span class="toggle-slider"></span>
+    </label>
+  </div>
+  <div class="settings-row">
+    <label for="toggleFacebook">Show Facebook Feed</label>
+    <label class="toggle-switch">
+      <input type="checkbox" id="toggleFacebook" checked>
       <span class="toggle-slider"></span>
     </label>
   </div>
@@ -755,10 +770,12 @@ function applySettings() {
   const showWeather = document.getElementById('toggleWeather').checked;
   const showGrooming = document.getElementById('toggleGrooming').checked;
   const showCurrentWeather = document.getElementById('toggleCurrentWeather').checked;
+  const showFacebook = document.getElementById('toggleFacebook').checked;
   conditionsEl.style.display = showConditions ? '' : 'none';
   forecastCaptionEl.style.display = showForecast ? '' : 'none';
   forecastGridEl.style.display = showForecast ? '' : 'none';
   groomingBannerEl.style.display = showGrooming ? '' : 'none';
+  document.getElementById('facebookFeed').style.display = showFacebook ? '' : 'none';
   const overlay = document.getElementById('currentWeatherOverlay');
   overlay.style.display = (showCurrentWeather && overlay.dataset.loaded) ? '' : 'none';
   renderAlerts();
@@ -770,6 +787,7 @@ function applySettings() {
   localStorage.setItem('showWeather', showWeather);
   localStorage.setItem('showGrooming', showGrooming);
   localStorage.setItem('showCurrentWeather', showCurrentWeather);
+  localStorage.setItem('showFacebook', showFacebook);
   localStorage.setItem('showAlerts', document.getElementById('toggleAlerts').checked);
 }
 
@@ -780,12 +798,14 @@ const savedWeather = localStorage.getItem('showWeather');
 const savedGrooming = localStorage.getItem('showGrooming');
 const savedCurrentWeather = localStorage.getItem('showCurrentWeather');
 const savedAlerts = localStorage.getItem('showAlerts');
+const savedFacebook = localStorage.getItem('showFacebook');
 if (savedConditions !== null) document.getElementById('toggleConditions').checked = savedConditions === 'true';
 if (savedForecast !== null) document.getElementById('toggleForecast').checked = savedForecast === 'true';
 if (savedWeather !== null) document.getElementById('toggleWeather').checked = savedWeather !== 'false';
 if (savedGrooming !== null) document.getElementById('toggleGrooming').checked = savedGrooming === 'true';
 if (savedCurrentWeather !== null) document.getElementById('toggleCurrentWeather').checked = savedCurrentWeather === 'true';
 if (savedAlerts !== null) document.getElementById('toggleAlerts').checked = savedAlerts !== 'false';
+if (savedFacebook !== null) document.getElementById('toggleFacebook').checked = savedFacebook !== 'false';
 applySettings();
 
 document.getElementById('toggleConditions').addEventListener('change', applySettings);
@@ -794,6 +814,7 @@ document.getElementById('toggleWeather').addEventListener('change', applySetting
 document.getElementById('toggleGrooming').addEventListener('change', applySettings);
 document.getElementById('toggleCurrentWeather').addEventListener('change', applySettings);
 document.getElementById('toggleAlerts').addEventListener('change', applySettings);
+document.getElementById('toggleFacebook').addEventListener('change', applySettings);
 </script>
 <script data-goatcounter="https://49status.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
 </body>
