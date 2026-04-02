@@ -63,7 +63,6 @@ body {
 .stats-table {
   margin-top: 6px;
   border-radius: 6px;
-  overflow: hidden;
   background: #f1f5f9;
 }
 .stats-row {
@@ -81,12 +80,18 @@ body {
   border-bottom: 1px solid #e2e8f0;
   text-transform: uppercase;
   letter-spacing: 0.04em;
+  background: #f1f5f9;
 }
+.stats-row.stat-labels > div:first-child { border-radius: 6px 0 0 0; }
+.stats-row.stat-labels > div:last-child  { border-radius: 0 6px 0 0; }
 .stats-row.stat-values > div {
   font-weight: 600;
   font-size: 13px;
   color: #1e293b;
+  background: #f1f5f9;
 }
+.stats-row.stat-values > div:first-child { border-radius: 0 0 0 6px; }
+.stats-row.stat-values > div:last-child  { border-radius: 0 0 6px 0; }
 .section {
   position: relative;
 }
@@ -511,7 +516,12 @@ async function loadStats() {
       </div>
       <div class="stats-table">
         <div class="stats-row stat-labels">${stats.map(s => `<div>${s.label}</div>`).join('')}</div>
-        <div class="stats-row stat-values">${stats.map(s => `<div>${s.val}" <span class="snow-label">Snow</span></div>`).join('')}</div>
+        <div class="stats-row stat-values">${stats.map(s => {
+          const mb = s.label === '12h' && parseFloat(s.val) > 6
+            ? '<span class="mb-wrap"><img class="mb-gif" src="mind_blown.gif" alt=""/></span>'
+            : '';
+          return `<div>${s.val}" <span class="snow-label">Snow</span>${mb}</div>`;
+        }).join('')}</div>
       </div>
     `;
   } catch(e) {
