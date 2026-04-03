@@ -460,7 +460,7 @@ body {
   <div class="settings-row">
     <label for="toggleGrooming">Grooming Report Link</label>
     <label class="toggle-switch">
-      <input type="checkbox" id="toggleGrooming">
+      <input type="checkbox" id="toggleGrooming" checked>
       <span class="toggle-slider"></span>
     </label>
   </div>
@@ -893,7 +893,7 @@ function applySettings() {
   conditionsEl.style.display = showConditions ? '' : 'none';
   forecastCaptionEl.style.display = showForecast ? '' : 'none';
   forecastGridEl.style.display = showForecast ? '' : 'none';
-  groomingBannerEl.style.display = (showGrooming && groomingBannerEl.dataset.loaded) ? '' : 'none';
+  groomingBannerEl.style.display = showGrooming ? '' : 'none';
   document.getElementById('facebookFeed').style.display = showFacebook ? '' : 'none';
   document.getElementById('webcamSections').style.display = showWebcams ? '' : 'none';
   const overlay = document.getElementById('currentWeatherOverlay');
