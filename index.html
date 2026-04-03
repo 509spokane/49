@@ -473,7 +473,8 @@ body {
 <!-- Settings -->
 <details class="settings-section">
   <summary class="settings-title">Settings</summary>
-  <div class="settings-row">
+  <div id="settingsRows" style="display:flex;flex-direction:column;">
+  <div id="srow-specialNotes" class="settings-row" style="order:1;">
     <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0;">
       <input type="number" id="order-specialNotes" class="order-input" min="1" max="6" value="1" style="display:none;">
       <label for="toggleSpecialNotes" style="cursor:pointer;">Special Notes</label>
@@ -483,7 +484,7 @@ body {
       <span class="toggle-slider"></span>
     </label>
   </div>
-  <div class="settings-row">
+  <div id="srow-snowfall" class="settings-row" style="order:2;">
     <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0;">
       <input type="number" id="order-snowfall" class="order-input" min="1" max="6" value="2" style="display:none;">
       <label for="toggleConditions" style="cursor:pointer;">Snow Conditions</label>
@@ -493,7 +494,7 @@ body {
       <span class="toggle-slider"></span>
     </label>
   </div>
-  <div class="settings-row">
+  <div id="srow-forecast" class="settings-row" style="order:3;">
     <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0;">
       <input type="number" id="order-forecast" class="order-input" min="1" max="6" value="3" style="display:none;">
       <label for="toggleForecast" style="cursor:pointer;">NOAA Snow Forecast</label>
@@ -503,7 +504,7 @@ body {
       <span class="toggle-slider"></span>
     </label>
   </div>
-  <div class="settings-row">
+  <div id="srow-lifts" class="settings-row" style="order:4;">
     <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0;">
       <input type="number" id="order-lifts" class="order-input" min="1" max="6" value="4" style="display:none;">
       <label for="toggleGrooming" style="cursor:pointer;">Lift Status</label>
@@ -513,7 +514,7 @@ body {
       <span class="toggle-slider"></span>
     </label>
   </div>
-  <div class="settings-row">
+  <div id="srow-webcams" class="settings-row" style="order:5;">
     <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0;">
       <input type="number" id="order-webcams" class="order-input" min="1" max="6" value="5" style="display:none;">
       <label for="toggleWebcams" style="cursor:pointer;">Webcams</label>
@@ -523,7 +524,7 @@ body {
       <span class="toggle-slider"></span>
     </label>
   </div>
-  <div class="settings-row">
+  <div id="srow-facebook" class="settings-row" style="order:6;">
     <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0;">
       <input type="number" id="order-facebook" class="order-input" min="1" max="6" value="6" style="display:none;">
       <label for="toggleFacebook" style="cursor:pointer;">Facebook Feed</label>
@@ -533,26 +534,27 @@ body {
       <span class="toggle-slider"></span>
     </label>
   </div>
-  <div class="settings-row">
+  <div class="settings-row" style="order:7;">
     <label for="toggleWeather">Temps in Forecast</label>
     <label class="toggle-switch">
       <input type="checkbox" id="toggleWeather" checked>
       <span class="toggle-slider"></span>
     </label>
   </div>
-  <div class="settings-row">
+  <div class="settings-row" style="order:8;">
     <label for="toggleAlerts">Weather Alerts (when active)</label>
     <label class="toggle-switch">
       <input type="checkbox" id="toggleAlerts" checked>
       <span class="toggle-slider"></span>
     </label>
   </div>
-  <div class="settings-row">
+  <div class="settings-row" style="order:9;">
     <label for="toggleCurrentWeather">Current Weather (over image)</label>
     <label class="toggle-switch">
       <input type="checkbox" id="toggleCurrentWeather">
       <span class="toggle-slider"></span>
     </label>
+  </div>
   </div>
   <div class="settings-row" style="border-top:2px solid #e2e8f0;margin-top:4px;padding-top:11px;">
     <label for="toggleCustomOrder" style="font-style:italic;color:#64748b;">Change Default Order</label>
@@ -1054,19 +1056,21 @@ document.getElementById('specialNotesHeader').addEventListener('click', () => {
 
 // Section ordering
 const SECTION_DEFS = [
-  { key: 'specialNotes', wrapId: 'secw-specialNotes', inputId: 'order-specialNotes', defaultOrder: 1 },
-  { key: 'snowfall',     wrapId: 'secw-snowfall',     inputId: 'order-snowfall',     defaultOrder: 2 },
-  { key: 'forecast',     wrapId: 'secw-forecast',     inputId: 'order-forecast',     defaultOrder: 3 },
-  { key: 'lifts',        wrapId: 'secw-lifts',        inputId: 'order-lifts',        defaultOrder: 4 },
-  { key: 'webcams',      wrapId: 'secw-webcams',      inputId: 'order-webcams',      defaultOrder: 5 },
-  { key: 'facebook',     wrapId: 'secw-facebook',     inputId: 'order-facebook',     defaultOrder: 6 },
+  { key: 'specialNotes', wrapId: 'secw-specialNotes', inputId: 'order-specialNotes', settingRowId: 'srow-specialNotes', defaultOrder: 1 },
+  { key: 'snowfall',     wrapId: 'secw-snowfall',     inputId: 'order-snowfall',     settingRowId: 'srow-snowfall',     defaultOrder: 2 },
+  { key: 'forecast',     wrapId: 'secw-forecast',     inputId: 'order-forecast',     settingRowId: 'srow-forecast',     defaultOrder: 3 },
+  { key: 'lifts',        wrapId: 'secw-lifts',        inputId: 'order-lifts',        settingRowId: 'srow-lifts',        defaultOrder: 4 },
+  { key: 'webcams',      wrapId: 'secw-webcams',      inputId: 'order-webcams',      settingRowId: 'srow-webcams',      defaultOrder: 5 },
+  { key: 'facebook',     wrapId: 'secw-facebook',     inputId: 'order-facebook',     settingRowId: 'srow-facebook',     defaultOrder: 6 },
 ];
 function applyOrder() {
   SECTION_DEFS.forEach(s => {
-    const el = document.getElementById(s.wrapId);
     const input = document.getElementById(s.inputId);
     const order = input ? (parseInt(input.value) || s.defaultOrder) : s.defaultOrder;
+    const el = document.getElementById(s.wrapId);
     if (el) el.style.order = order;
+    const row = document.getElementById(s.settingRowId);
+    if (row) row.style.order = order;
   });
 }
 function saveOrder() {
