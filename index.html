@@ -355,6 +355,20 @@ body {
   .day-card .row-total { font-size: 10px; padding: 5px 2px; }
   .forecast-grid { gap: 3px; }
 }
+.order-input {
+  width: 32px;
+  padding: 2px 4px;
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
+  font-size: 12px;
+  text-align: center;
+  flex-shrink: 0;
+  color: #334155;
+  font-family: inherit;
+  -moz-appearance: textfield;
+}
+.order-input::-webkit-outer-spin-button,
+.order-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 </style>
 </head>
 <body>
@@ -379,6 +393,13 @@ body {
       </div>
     </div>
   </div>
+  <div id="alertsSection" style="display:none;margin-top:6px;"></div>
+</div>
+
+<!-- Reorderable sections -->
+<div id="sectionsContainer" style="display:flex;flex-direction:column;">
+
+<div id="secw-specialNotes">
   <div id="specialNotesSection" style="display:none;padding:6px 10px 7px;">
     <div id="specialNotesHeader" style="display:flex;justify-content:space-between;align-items:center;cursor:pointer;">
       <span style="font-weight:700;font-size:12px;letter-spacing:0.08em;text-transform:uppercase;color:#888;">Special Notes</span>
@@ -388,14 +409,19 @@ body {
       <span id="specialNotesOverlayText" style="font-size:12px;color:#334155;line-height:1.5;"></span> <span onclick="document.getElementById('specialNotesHeader').click()" style="font-size:11px;color:#94a3b8;cursor:pointer;">(Click to hide/reopen)</span>
     </div>
   </div>
-  <div id="alertsSection" style="display:none;margin-top:6px;"></div>
+</div>
+
+<div id="secw-snowfall">
   <div id="statsOverlay">Loading snow data...</div>
 </div>
 
+<div id="secw-forecast">
 <!-- Forecast cards -->
 <div class="forecast-caption"><span><a href="https://forecast.weather.gov/MapClick.php?lon=-117.56499767303468&lat=48.285800530169524" target="_blank" style="color:inherit;text-decoration:none;">NOAA Snow Forecast ⧉</a></span><span id="noaaUpdated"></span></div>
 <div class="forecast-grid" id="forecastGrid"></div>
+</div>
 
+<div id="secw-lifts">
 <!-- Lift Status -->
 <div id="groomingSection" style="display:none;margin:0 10px 10px;">
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
@@ -404,7 +430,9 @@ body {
   </div>
   <div id="liftsGrid" style="display:grid;grid-template-columns:1fr 1fr;grid-template-rows:repeat(4,auto);grid-auto-flow:column;gap:2px 12px;"><span style="font-size:12px;color:#94a3b8;">Loading...</span></div>
 </div>
+</div>
 
+<div id="secw-webcams">
 <!-- Webcam sections -->
 <div id="webcamSections">
 <div class="section">
@@ -426,7 +454,9 @@ body {
   <div class="cam-label">Chair 5</div>
 </div>
 </div>
+</div>
 
+<div id="secw-facebook">
 <!-- Facebook Feed -->
 <div id="facebookFeed" style="margin:10px 10px 4px;">
   <div class="forecast-caption" style="margin:6px 0 8px;"><span><a href="https://www.facebook.com/ski49n" target="_blank" style="color:inherit;text-decoration:none;">49° North on Facebook ⧉</a></span></div>
@@ -436,19 +466,28 @@ body {
     </div>
   </div>
 </div>
+</div>
+
+</div>
 
 <!-- Settings -->
 <details class="settings-section">
   <summary class="settings-title">Settings</summary>
   <div class="settings-row">
-    <label for="toggleConditions">Snow Conditions</label>
+    <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0;">
+      <input type="number" id="order-snowfall" class="order-input" min="1" max="6" value="2" style="display:none;">
+      <label for="toggleConditions" style="cursor:pointer;">Snow Conditions</label>
+    </div>
     <label class="toggle-switch">
       <input type="checkbox" id="toggleConditions" checked>
       <span class="toggle-slider"></span>
     </label>
   </div>
   <div class="settings-row">
-    <label for="toggleForecast">Snow Forecast</label>
+    <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0;">
+      <input type="number" id="order-forecast" class="order-input" min="1" max="6" value="3" style="display:none;">
+      <label for="toggleForecast" style="cursor:pointer;">Snow Forecast</label>
+    </div>
     <label class="toggle-switch">
       <input type="checkbox" id="toggleForecast" checked>
       <span class="toggle-slider"></span>
@@ -476,30 +515,49 @@ body {
     </label>
   </div>
   <div class="settings-row">
-    <label for="toggleSpecialNotes">Special Notes</label>
+    <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0;">
+      <input type="number" id="order-specialNotes" class="order-input" min="1" max="6" value="1" style="display:none;">
+      <label for="toggleSpecialNotes" style="cursor:pointer;">Special Notes</label>
+    </div>
     <label class="toggle-switch">
       <input type="checkbox" id="toggleSpecialNotes" checked>
       <span class="toggle-slider"></span>
     </label>
   </div>
   <div class="settings-row">
-    <label for="toggleGrooming">Lift Status</label>
+    <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0;">
+      <input type="number" id="order-lifts" class="order-input" min="1" max="6" value="4" style="display:none;">
+      <label for="toggleGrooming" style="cursor:pointer;">Lift Status</label>
+    </div>
     <label class="toggle-switch">
       <input type="checkbox" id="toggleGrooming" checked>
       <span class="toggle-slider"></span>
     </label>
   </div>
   <div class="settings-row">
-    <label for="toggleFacebook">Facebook Feed</label>
+    <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0;">
+      <input type="number" id="order-facebook" class="order-input" min="1" max="6" value="6" style="display:none;">
+      <label for="toggleFacebook" style="cursor:pointer;">Facebook Feed</label>
+    </div>
     <label class="toggle-switch">
       <input type="checkbox" id="toggleFacebook" checked>
       <span class="toggle-slider"></span>
     </label>
   </div>
   <div class="settings-row">
-    <label for="toggleWebcams">Webcams</label>
+    <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0;">
+      <input type="number" id="order-webcams" class="order-input" min="1" max="6" value="5" style="display:none;">
+      <label for="toggleWebcams" style="cursor:pointer;">Webcams</label>
+    </div>
     <label class="toggle-switch">
       <input type="checkbox" id="toggleWebcams" checked>
+      <span class="toggle-slider"></span>
+    </label>
+  </div>
+  <div class="settings-row" style="border-top:2px solid #e2e8f0;margin-top:4px;padding-top:11px;">
+    <label for="toggleCustomOrder" style="font-style:italic;color:#64748b;">Change Default Order</label>
+    <label class="toggle-switch">
+      <input type="checkbox" id="toggleCustomOrder">
       <span class="toggle-slider"></span>
     </label>
   </div>
@@ -991,6 +1049,77 @@ document.getElementById('specialNotesHeader').addEventListener('click', () => {
   } else {
     if (text) localStorage.setItem('dismissedSpecialNote', text);
     body.style.display = 'none';
+  }
+});
+
+// Section ordering
+const SECTION_DEFS = [
+  { key: 'specialNotes', wrapId: 'secw-specialNotes', inputId: 'order-specialNotes', defaultOrder: 1 },
+  { key: 'snowfall',     wrapId: 'secw-snowfall',     inputId: 'order-snowfall',     defaultOrder: 2 },
+  { key: 'forecast',     wrapId: 'secw-forecast',     inputId: 'order-forecast',     defaultOrder: 3 },
+  { key: 'lifts',        wrapId: 'secw-lifts',        inputId: 'order-lifts',        defaultOrder: 4 },
+  { key: 'webcams',      wrapId: 'secw-webcams',      inputId: 'order-webcams',      defaultOrder: 5 },
+  { key: 'facebook',     wrapId: 'secw-facebook',     inputId: 'order-facebook',     defaultOrder: 6 },
+];
+function applyOrder() {
+  SECTION_DEFS.forEach(s => {
+    const el = document.getElementById(s.wrapId);
+    const input = document.getElementById(s.inputId);
+    const order = input ? (parseInt(input.value) || s.defaultOrder) : s.defaultOrder;
+    if (el) el.style.order = order;
+  });
+}
+function saveOrder() {
+  const d = {};
+  SECTION_DEFS.forEach(s => {
+    const input = document.getElementById(s.inputId);
+    d[s.key] = input ? (parseInt(input.value) || s.defaultOrder) : s.defaultOrder;
+  });
+  localStorage.setItem('sectionOrder', JSON.stringify(d));
+}
+function isDefaultOrder() {
+  return SECTION_DEFS.every(s => {
+    const input = document.getElementById(s.inputId);
+    return !input || parseInt(input.value) === s.defaultOrder;
+  });
+}
+(function loadSavedOrder() {
+  try {
+    const saved = JSON.parse(localStorage.getItem('sectionOrder'));
+    if (!saved) return;
+    let hasCustom = false;
+    SECTION_DEFS.forEach(s => {
+      if (saved[s.key] !== undefined) {
+        const input = document.getElementById(s.inputId);
+        if (input) input.value = saved[s.key];
+        if (saved[s.key] !== s.defaultOrder) hasCustom = true;
+      }
+    });
+    applyOrder();
+    if (hasCustom) {
+      document.getElementById('toggleCustomOrder').checked = true;
+      document.querySelectorAll('.order-input').forEach(el => el.style.display = '');
+    }
+  } catch(e) {}
+})();
+SECTION_DEFS.forEach(s => {
+  const input = document.getElementById(s.inputId);
+  if (input) input.addEventListener('input', () => { applyOrder(); saveOrder(); });
+});
+document.getElementById('toggleCustomOrder').addEventListener('change', function() {
+  if (this.checked) {
+    document.querySelectorAll('.order-input').forEach(el => el.style.display = '');
+  } else {
+    if (!isDefaultOrder()) {
+      if (!confirm('Reset sections to default order?')) { this.checked = true; return; }
+      SECTION_DEFS.forEach(s => {
+        const input = document.getElementById(s.inputId);
+        if (input) input.value = s.defaultOrder;
+      });
+      applyOrder();
+      localStorage.removeItem('sectionOrder');
+    }
+    document.querySelectorAll('.order-input').forEach(el => el.style.display = 'none');
   }
 });
 </script>
