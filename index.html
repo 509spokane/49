@@ -72,7 +72,9 @@ body {
   flex: 1;
   text-align: center;
   padding: 5px 4px;
+  border-right: 1px solid #e2e8f0;
 }
+.stats-row > div:last-child { border-right: none; }
 .stats-row.stat-labels > div {
   font-weight: 600;
   font-size: 11px;
@@ -347,10 +349,11 @@ body {
   <div id="specialNotesSection" style="display:none;padding:6px 10px 7px;">
     <div id="specialNotesHeader" style="display:flex;justify-content:space-between;align-items:center;cursor:pointer;">
       <span style="font-weight:700;font-size:12px;letter-spacing:0.08em;text-transform:uppercase;color:#888;">Special Notes</span>
-      <span id="specialNotesCaret" style="color:#94a3b8;font-size:11px;">▾</span>
+      <span id="specialNotesAsOf" style="color:#888;font-size:11px;font-weight:normal;letter-spacing:normal;text-transform:none;"></span>
     </div>
     <div id="specialNotesBody" style="margin-top:3px;">
       <div id="specialNotesOverlayText" style="font-size:12px;color:#334155;line-height:1.5;"></div>
+      <span style="font-size:11px;color:#94a3b8;">(Click to hide/reopen)</span>
     </div>
   </div>
   <div id="alertsSection" style="display:none;margin-top:6px;"></div>
@@ -363,6 +366,7 @@ body {
 <div class="forecast-grid" id="forecastGrid"></div>
 
 <!-- Webcam sections -->
+<div id="webcamSections">
 <div class="section">
   <a href="https://www.ski49n.com/webcams/lodge.jpg">
     <img src="https://www.ski49n.com/webcams/lodge.jpg" alt="Lodge Webcam" />
@@ -380,6 +384,7 @@ body {
     <img src="https://www.ski49n.com/webcams/sunrise.jpg" alt="Chair 5 Webcam" />
   </a>
   <div class="cam-label">Chair 5</div>
+</div>
 </div>
 
 <!-- Facebook Feed -->
@@ -448,6 +453,13 @@ body {
     <label for="toggleFacebook">Facebook Feed</label>
     <label class="toggle-switch">
       <input type="checkbox" id="toggleFacebook" checked>
+      <span class="toggle-slider"></span>
+    </label>
+  </div>
+  <div class="settings-row">
+    <label for="toggleWebcams">Webcams</label>
+    <label class="toggle-switch">
+      <input type="checkbox" id="toggleWebcams" checked>
       <span class="toggle-slider"></span>
     </label>
   </div>
@@ -709,6 +721,11 @@ async function loadSpecialNotes() {
     const data = await fetchWorker();
     if (!data.specialNotes) return;
     document.getElementById('specialNotesOverlayText').textContent = data.specialNotes;
+    const now = new Date();
+    let hr = now.getHours(), ampm = hr >= 12 ? 'pm' : 'am';
+    hr = hr % 12 || 12;
+    const asOfEl = document.getElementById('specialNotesAsOf');
+    if (asOfEl) asOfEl.textContent = `As of ${dateLabel(now, `@ ${hr}${ampm}`)}`;
     document.getElementById('specialNotesSection').dataset.loaded = 'true';
     applySettings();
   } catch(e) {}
@@ -824,6 +841,7 @@ function applySettings() {
   const showGrooming = document.getElementById('toggleGrooming').checked;
   const showCurrentWeather = document.getElementById('toggleCurrentWeather').checked;
   const showFacebook = document.getElementById('toggleFacebook').checked;
+  const showWebcams = document.getElementById('toggleWebcams').checked;
   const showSpecialNotes = document.getElementById('toggleSpecialNotes').checked;
   const notesEl = document.getElementById('specialNotesSection');
   notesEl.style.display = (showSpecialNotes && notesEl.dataset.loaded) ? '' : 'none';
@@ -831,13 +849,13 @@ function applySettings() {
     const currentNote = document.getElementById('specialNotesOverlayText').textContent.trim();
     const isDismissed = currentNote && currentNote === localStorage.getItem('dismissedSpecialNote');
     document.getElementById('specialNotesBody').style.display = isDismissed ? 'none' : '';
-    document.getElementById('specialNotesCaret').textContent = isDismissed ? '▸' : '▾';
   }
   conditionsEl.style.display = showConditions ? '' : 'none';
   forecastCaptionEl.style.display = showForecast ? '' : 'none';
   forecastGridEl.style.display = showForecast ? '' : 'none';
   groomingBannerEl.style.display = showGrooming ? '' : 'none';
   document.getElementById('facebookFeed').style.display = showFacebook ? '' : 'none';
+  document.getElementById('webcamSections').style.display = showWebcams ? '' : 'none';
   const overlay = document.getElementById('currentWeatherOverlay');
   overlay.style.display = (showCurrentWeather && overlay.dataset.loaded) ? '' : 'none';
   renderAlerts();
@@ -850,6 +868,7 @@ function applySettings() {
   localStorage.setItem('showGrooming', showGrooming);
   localStorage.setItem('showCurrentWeather', showCurrentWeather);
   localStorage.setItem('showFacebook', showFacebook);
+  localStorage.setItem('showWebcams', showWebcams);
   localStorage.setItem('showSpecialNotes', showSpecialNotes);
   localStorage.setItem('showAlerts', document.getElementById('toggleAlerts').checked);
 }
@@ -862,6 +881,7 @@ const savedGrooming = localStorage.getItem('showGrooming');
 const savedCurrentWeather = localStorage.getItem('showCurrentWeather');
 const savedAlerts = localStorage.getItem('showAlerts');
 const savedFacebook = localStorage.getItem('showFacebook');
+const savedWebcams = localStorage.getItem('showWebcams');
 if (savedConditions !== null) document.getElementById('toggleConditions').checked = savedConditions === 'true';
 if (savedForecast !== null) document.getElementById('toggleForecast').checked = savedForecast === 'true';
 if (savedWeather !== null) document.getElementById('toggleWeather').checked = savedWeather !== 'false';
@@ -869,6 +889,7 @@ if (savedGrooming !== null) document.getElementById('toggleGrooming').checked = 
 if (savedCurrentWeather !== null) document.getElementById('toggleCurrentWeather').checked = savedCurrentWeather === 'true';
 if (savedAlerts !== null) document.getElementById('toggleAlerts').checked = savedAlerts !== 'false';
 if (savedFacebook !== null) document.getElementById('toggleFacebook').checked = savedFacebook !== 'false';
+if (savedWebcams !== null) document.getElementById('toggleWebcams').checked = savedWebcams !== 'false';
 const savedSpecialNotes = localStorage.getItem('showSpecialNotes');
 if (savedSpecialNotes !== null) document.getElementById('toggleSpecialNotes').checked = savedSpecialNotes !== 'false';
 applySettings();
@@ -880,20 +901,18 @@ document.getElementById('toggleGrooming').addEventListener('change', applySettin
 document.getElementById('toggleCurrentWeather').addEventListener('change', applySettings);
 document.getElementById('toggleAlerts').addEventListener('change', applySettings);
 document.getElementById('toggleFacebook').addEventListener('change', applySettings);
+document.getElementById('toggleWebcams').addEventListener('change', applySettings);
 document.getElementById('toggleSpecialNotes').addEventListener('change', applySettings);
 document.getElementById('specialNotesHeader').addEventListener('click', () => {
   const body = document.getElementById('specialNotesBody');
-  const caret = document.getElementById('specialNotesCaret');
   const text = document.getElementById('specialNotesOverlayText').textContent.trim();
   const collapsed = body.style.display === 'none';
   if (collapsed) {
     localStorage.removeItem('dismissedSpecialNote');
     body.style.display = '';
-    caret.textContent = '▾';
   } else {
     if (text) localStorage.setItem('dismissedSpecialNote', text);
     body.style.display = 'none';
-    caret.textContent = '▸';
   }
 });
 </script>
