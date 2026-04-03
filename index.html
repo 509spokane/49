@@ -382,7 +382,7 @@ body {
   <div id="specialNotesSection" style="display:none;padding:6px 10px 7px;">
     <div id="specialNotesHeader" style="display:flex;justify-content:space-between;align-items:center;cursor:pointer;">
       <span style="font-weight:700;font-size:12px;letter-spacing:0.08em;text-transform:uppercase;color:#888;">Special Notes</span>
-      <span id="specialNotesAsOf" style="color:#888;font-size:11px;font-weight:normal;letter-spacing:normal;text-transform:none;"></span>
+      <span id="specialNotesAsOf" style="font-size:11px;font-weight:normal;letter-spacing:normal;text-transform:none;"></span>
     </div>
     <div id="specialNotesBody" style="margin-top:3px;">
       <span id="specialNotesOverlayText" style="font-size:12px;color:#334155;line-height:1.5;"></span> <span onclick="document.getElementById('specialNotesHeader').click()" style="font-size:11px;color:#94a3b8;cursor:pointer;">(Click to hide/reopen)</span>
@@ -399,8 +399,8 @@ body {
 <!-- Lift Status -->
 <div id="groomingSection" style="display:none;margin:0 10px 10px;">
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-    <span style="font-weight:700;font-size:12px;letter-spacing:0.08em;text-transform:uppercase;color:#888;">Lift Status</span>
-    <a href="https://www.ski49n.com/mountain-info/trail-status" target="_blank" style="font-size:11px;color:#94a3b8;text-decoration:none;font-weight:500;">Full report ⧉</a>
+    <a href="https://www.ski49n.com/mountain-info/trail-status" target="_blank" style="font-weight:700;font-size:12px;letter-spacing:0.08em;text-transform:uppercase;color:#888;text-decoration:none;">Lift Status ⧉</a>
+    <span id="liftsAsOf" style="font-size:11px;font-weight:normal;letter-spacing:normal;text-transform:none;"></span>
   </div>
   <div id="liftsGrid" style="display:grid;grid-template-columns:1fr 1fr;grid-template-rows:repeat(4,auto);grid-auto-flow:column;gap:2px 12px;"><span style="font-size:12px;color:#94a3b8;">Loading...</span></div>
 </div>
@@ -522,6 +522,10 @@ function dateLabel(date, hourStr) {
   const dy = date.getDate().toString().padStart(2,'0');
   return `${mo}/${dy} ${hourStr}`;
 }
+function asOfHtml(label) {
+  const isToday = label.startsWith('Today');
+  return `<span style="color:${isToday ? '#888' : '#ef4444'};">As of ${label}</span>`;
+}
 
 // Single fetch for all ski49n.com data via Cloudflare Worker
 let _workerData = null;
@@ -569,7 +573,7 @@ async function loadStats() {
     statsOverlay.innerHTML = `
       <div class="stats-header">
         <a href="https://www.ski49n.com/mountain-info/expanded-conditions" target="_blank" style="font-weight:700;font-size:12px;letter-spacing:0.08em;text-transform:uppercase;color:#888;text-decoration:none;">Latest Snowfall ⧉</a>
-        <span style="color:#888;">As of ${formatUpdated(t.updated || '')}</span>
+        ${asOfHtml(formatUpdated(t.updated || ''))}
       </div>
       <div class="stats-table">
         <div class="stats-row stat-labels">${stats.map(s => {
@@ -666,7 +670,7 @@ async function loadForecast() {
       const now = new Date();
       let hr = now.getHours(), ampm = hr >= 12 ? 'pm' : 'am';
       hr = hr % 12 || 12;
-      noaaUpdated.textContent = `As of ${dateLabel(now, `@ ${hr}${ampm}`)}`;
+      noaaUpdated.innerHTML = asOfHtml(dateLabel(now, `@ ${hr}${ampm}`));
     }
 
     const grid = document.getElementById('forecastGrid');
@@ -765,7 +769,7 @@ async function loadSpecialNotes() {
     let hr = now.getHours(), ampm = hr >= 12 ? 'pm' : 'am';
     hr = hr % 12 || 12;
     const asOfEl = document.getElementById('specialNotesAsOf');
-    if (asOfEl) asOfEl.textContent = `As of ${dateLabel(now, `@ ${hr}${ampm}`)}`;
+    if (asOfEl) asOfEl.innerHTML = asOfHtml(dateLabel(now, `@ ${hr}${ampm}`));
     document.getElementById('specialNotesSection').dataset.loaded = 'true';
     applySettings();
   } catch(e) {}
@@ -785,6 +789,11 @@ async function loadLifts() {
       const nb = parseInt((b.name.match(/#(\d+)/) || [0,0])[1]) || 0;
       return na - nb;
     });
+    const now = new Date();
+    let lhr = now.getHours(), lampm = lhr >= 12 ? 'pm' : 'am';
+    lhr = lhr % 12 || 12;
+    const liftsAsOfEl = document.getElementById('liftsAsOf');
+    if (liftsAsOfEl) liftsAsOfEl.innerHTML = asOfHtml(dateLabel(now, `@ ${lhr}${lampm}`));
     grid.innerHTML = sorted.map(l => {
       const isOpen = /open/i.test(l.status);
       const m = l.name.match(/^(.*?)\s*#(\d+)\s*$/);
