@@ -371,8 +371,7 @@ body {
       <span id="specialNotesAsOf" style="color:#888;font-size:11px;font-weight:normal;letter-spacing:normal;text-transform:none;"></span>
     </div>
     <div id="specialNotesBody" style="margin-top:3px;">
-      <div id="specialNotesOverlayText" style="font-size:12px;color:#334155;line-height:1.5;"></div>
-      <span onclick="document.getElementById('specialNotesHeader').click()" style="font-size:11px;color:#94a3b8;cursor:pointer;">(Click to hide/reopen)</span>
+      <span id="specialNotesOverlayText" style="font-size:12px;color:#334155;line-height:1.5;"></span> <span onclick="document.getElementById('specialNotesHeader').click()" style="font-size:11px;color:#94a3b8;cursor:pointer;">(Click to hide/reopen)</span>
     </div>
   </div>
   <div id="alertsSection" style="display:none;margin-top:6px;"></div>
@@ -458,16 +457,16 @@ body {
     </label>
   </div>
   <div class="settings-row">
-    <label for="toggleGrooming">Grooming Report Link</label>
+    <label for="toggleSpecialNotes">Special Notes</label>
     <label class="toggle-switch">
-      <input type="checkbox" id="toggleGrooming" checked>
+      <input type="checkbox" id="toggleSpecialNotes" checked>
       <span class="toggle-slider"></span>
     </label>
   </div>
   <div class="settings-row">
-    <label for="toggleSpecialNotes">Special Notes</label>
+    <label for="toggleGrooming">Grooming Report Link</label>
     <label class="toggle-switch">
-      <input type="checkbox" id="toggleSpecialNotes" checked>
+      <input type="checkbox" id="toggleGrooming" checked>
       <span class="toggle-slider"></span>
     </label>
   </div>
