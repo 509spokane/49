@@ -475,6 +475,16 @@ body {
   <summary class="settings-title">Settings</summary>
   <div class="settings-row">
     <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0;">
+      <input type="number" id="order-specialNotes" class="order-input" min="1" max="6" value="1" style="display:none;">
+      <label for="toggleSpecialNotes" style="cursor:pointer;">Special Notes</label>
+    </div>
+    <label class="toggle-switch">
+      <input type="checkbox" id="toggleSpecialNotes" checked>
+      <span class="toggle-slider"></span>
+    </label>
+  </div>
+  <div class="settings-row">
+    <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0;">
       <input type="number" id="order-snowfall" class="order-input" min="1" max="6" value="2" style="display:none;">
       <label for="toggleConditions" style="cursor:pointer;">Snow Conditions</label>
     </div>
@@ -486,10 +496,40 @@ body {
   <div class="settings-row">
     <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0;">
       <input type="number" id="order-forecast" class="order-input" min="1" max="6" value="3" style="display:none;">
-      <label for="toggleForecast" style="cursor:pointer;">Snow Forecast</label>
+      <label for="toggleForecast" style="cursor:pointer;">NOAA Snow Forecast</label>
     </div>
     <label class="toggle-switch">
       <input type="checkbox" id="toggleForecast" checked>
+      <span class="toggle-slider"></span>
+    </label>
+  </div>
+  <div class="settings-row">
+    <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0;">
+      <input type="number" id="order-lifts" class="order-input" min="1" max="6" value="4" style="display:none;">
+      <label for="toggleGrooming" style="cursor:pointer;">Lift Status</label>
+    </div>
+    <label class="toggle-switch">
+      <input type="checkbox" id="toggleGrooming" checked>
+      <span class="toggle-slider"></span>
+    </label>
+  </div>
+  <div class="settings-row">
+    <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0;">
+      <input type="number" id="order-webcams" class="order-input" min="1" max="6" value="5" style="display:none;">
+      <label for="toggleWebcams" style="cursor:pointer;">Webcams</label>
+    </div>
+    <label class="toggle-switch">
+      <input type="checkbox" id="toggleWebcams" checked>
+      <span class="toggle-slider"></span>
+    </label>
+  </div>
+  <div class="settings-row">
+    <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0;">
+      <input type="number" id="order-facebook" class="order-input" min="1" max="6" value="6" style="display:none;">
+      <label for="toggleFacebook" style="cursor:pointer;">Facebook Feed</label>
+    </div>
+    <label class="toggle-switch">
+      <input type="checkbox" id="toggleFacebook" checked>
       <span class="toggle-slider"></span>
     </label>
   </div>
@@ -511,46 +551,6 @@ body {
     <label for="toggleCurrentWeather">Current Weather (over image)</label>
     <label class="toggle-switch">
       <input type="checkbox" id="toggleCurrentWeather">
-      <span class="toggle-slider"></span>
-    </label>
-  </div>
-  <div class="settings-row">
-    <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0;">
-      <input type="number" id="order-specialNotes" class="order-input" min="1" max="6" value="1" style="display:none;">
-      <label for="toggleSpecialNotes" style="cursor:pointer;">Special Notes</label>
-    </div>
-    <label class="toggle-switch">
-      <input type="checkbox" id="toggleSpecialNotes" checked>
-      <span class="toggle-slider"></span>
-    </label>
-  </div>
-  <div class="settings-row">
-    <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0;">
-      <input type="number" id="order-lifts" class="order-input" min="1" max="6" value="4" style="display:none;">
-      <label for="toggleGrooming" style="cursor:pointer;">Lift Status</label>
-    </div>
-    <label class="toggle-switch">
-      <input type="checkbox" id="toggleGrooming" checked>
-      <span class="toggle-slider"></span>
-    </label>
-  </div>
-  <div class="settings-row">
-    <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0;">
-      <input type="number" id="order-facebook" class="order-input" min="1" max="6" value="6" style="display:none;">
-      <label for="toggleFacebook" style="cursor:pointer;">Facebook Feed</label>
-    </div>
-    <label class="toggle-switch">
-      <input type="checkbox" id="toggleFacebook" checked>
-      <span class="toggle-slider"></span>
-    </label>
-  </div>
-  <div class="settings-row">
-    <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0;">
-      <input type="number" id="order-webcams" class="order-input" min="1" max="6" value="5" style="display:none;">
-      <label for="toggleWebcams" style="cursor:pointer;">Webcams</label>
-    </div>
-    <label class="toggle-switch">
-      <input type="checkbox" id="toggleWebcams" checked>
       <span class="toggle-slider"></span>
     </label>
   </div>
@@ -1104,7 +1104,22 @@ function isDefaultOrder() {
 })();
 SECTION_DEFS.forEach(s => {
   const input = document.getElementById(s.inputId);
-  if (input) input.addEventListener('input', () => { applyOrder(); saveOrder(); });
+  if (!input) return;
+  input.addEventListener('input', () => {
+    const newVal = parseInt(input.value);
+    if (isNaN(newVal)) return;
+    // Bump all other inputs whose value >= newVal
+    SECTION_DEFS.forEach(other => {
+      if (other.inputId === s.inputId) return;
+      const otherInput = document.getElementById(other.inputId);
+      if (!otherInput) return;
+      if (parseInt(otherInput.value) >= newVal) {
+        otherInput.value = parseInt(otherInput.value) + 1;
+      }
+    });
+    applyOrder();
+    saveOrder();
+  });
 });
 document.getElementById('toggleCustomOrder').addEventListener('change', function() {
   if (this.checked) {
