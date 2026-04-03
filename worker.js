@@ -16,10 +16,16 @@ async function handleRequest(request) {
   }
 
   try {
-    const res = await fetch('https://www.ski49n.com/mountain-info/expanded-conditions', {
-      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; ski49n-proxy/1.0)' }
-    })
+    const [res, trailRes] = await Promise.all([
+      fetch('https://www.ski49n.com/mountain-info/expanded-conditions', {
+        headers: { 'User-Agent': 'Mozilla/5.0 (compatible; ski49n-proxy/1.0)' }
+      }),
+      fetch('https://www.ski49n.com/mountain-info/trail-status', {
+        headers: { 'User-Agent': 'Mozilla/5.0 (compatible; ski49n-proxy/1.0)' }
+      })
+    ])
     const html = await res.text()
+    const trailHtml = await trailRes.text()
 
     // Extract <h4>label</h4><h3>value</h3> from a section of HTML
     function boxVal(section, label) {
@@ -70,7 +76,20 @@ async function handleRequest(request) {
     const snMatch = html.match(/<h4>\s*Special Notes\s*<\/h4>\s*<h5>([^<]*)<\/h5>/i)
     const specialNotes = snMatch ? snMatch[1].trim() : ''
 
-    return new Response(JSON.stringify({ totals, summit, forecast: {}, specialNotes }), { headers })
+    // Lifts from trail-status page
+    const lifts = []
+    const liftsSectionMatch = trailHtml.match(/<h3[^>]*>\s*Lifts\s*<\/h3>([\s\S]*?)(?=<h3|<\/div>)/i)
+    if (liftsSectionMatch) {
+      const liftTags = [...liftsSectionMatch[1].matchAll(/<h4>([\s\S]*?)<\/h4>/gi)]
+      for (const m of liftTags) {
+        const name = m[1].split('-')[0].trim()
+        const statusMatch = m[1].match(/<span[^>]*>\s*([\s\S]*?)\s*<\/span>/i)
+        const status = statusMatch ? statusMatch[1].trim() : ''
+        if (name && status) lifts.push({ name, status })
+      }
+    }
+
+    return new Response(JSON.stringify({ totals, summit, forecast: {}, specialNotes, lifts }), { headers })
   } catch (e) {
     return new Response(JSON.stringify({ error: e.message }), { headers, status: 500 })
   }
