@@ -77,11 +77,12 @@ body {
   font-weight: 600;
   font-size: 11px;
   color: #475569;
-  border-bottom: 1px solid #e2e8f0;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   background: #f1f5f9;
+  border-right: 1px solid #e2e8f0;
 }
+.stats-row.stat-labels > div:last-child { border-right: none; }
 .stats-row.stat-labels > div:first-child { border-radius: 6px 0 0 0; }
 .stats-row.stat-labels > div:last-child  { border-radius: 0 6px 0 0; }
 .stats-row.stat-values > div {
@@ -89,9 +90,20 @@ body {
   font-size: 13px;
   color: #1e293b;
   background: #f1f5f9;
+  border-right: 1px solid #e2e8f0;
 }
+.stats-row.stat-values > div:last-child { border-right: none; }
 .stats-row.stat-values > div:first-child { border-radius: 0 0 0 6px; }
 .stats-row.stat-values > div:last-child  { border-radius: 0 0 6px 0; }
+#specialNotesDismissedHint {
+  display: none;
+  font-size: 11px;
+  color: #94a3b8;
+  font-style: italic;
+  margin-top: 3px;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
 .section {
   position: relative;
 }
@@ -408,6 +420,7 @@ body {
     <div id="specialNotesBody" style="margin-top:3px;">
       <span id="specialNotesOverlayText" style="font-size:12px;color:#334155;line-height:1.5;"></span> <span onclick="document.getElementById('specialNotesHeader').click()" style="font-size:11px;color:#94a3b8;cursor:pointer;">(Click to hide/reopen)</span>
     </div>
+    <div id="specialNotesDismissedHint">If a new special note is published, this section will reopen.</div>
   </div>
 </div>
 
@@ -1041,16 +1054,35 @@ document.getElementById('toggleAlerts').addEventListener('change', applySettings
 document.getElementById('toggleFacebook').addEventListener('change', applySettings);
 document.getElementById('toggleWebcams').addEventListener('change', applySettings);
 document.getElementById('toggleSpecialNotes').addEventListener('change', applySettings);
+let _hintTimer = null;
 document.getElementById('specialNotesHeader').addEventListener('click', () => {
   const body = document.getElementById('specialNotesBody');
+  const hint = document.getElementById('specialNotesDismissedHint');
   const text = document.getElementById('specialNotesOverlayText').textContent.trim();
   const collapsed = body.style.display === 'none';
   if (collapsed) {
+    // Reopen: cancel any hint animation and hide immediately
+    if (_hintTimer) { clearTimeout(_hintTimer); _hintTimer = null; }
+    hint.style.opacity = '0';
+    hint.style.display = 'none';
     localStorage.removeItem('dismissedSpecialNote');
     body.style.display = '';
   } else {
     if (text) localStorage.setItem('dismissedSpecialNote', text);
     body.style.display = 'none';
+    // Fade hint in
+    hint.style.display = 'block';
+    hint.style.opacity = '0';
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      hint.style.opacity = '1';
+      _hintTimer = setTimeout(() => {
+        hint.style.opacity = '0';
+        _hintTimer = setTimeout(() => {
+          hint.style.display = 'none';
+          _hintTimer = null;
+        }, 400);
+      }, 1500);
+    }));
   }
 });
 
