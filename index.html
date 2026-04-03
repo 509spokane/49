@@ -72,9 +72,7 @@ body {
   flex: 1;
   text-align: center;
   padding: 5px 4px;
-  border-right: 1px solid #e2e8f0;
 }
-.stats-row > div:last-child { border-right: none; }
 .stats-row.stat-labels > div {
   font-weight: 600;
   font-size: 11px;
@@ -353,7 +351,7 @@ body {
     </div>
     <div id="specialNotesBody" style="margin-top:3px;">
       <div id="specialNotesOverlayText" style="font-size:12px;color:#334155;line-height:1.5;"></div>
-      <span style="font-size:11px;color:#94a3b8;">(Click to hide/reopen)</span>
+      <span onclick="document.getElementById('specialNotesHeader').click()" style="font-size:11px;color:#94a3b8;cursor:pointer;">(Click to hide/reopen)</span>
     </div>
   </div>
   <div id="alertsSection" style="display:none;margin-top:6px;"></div>
