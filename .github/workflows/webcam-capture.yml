@@ -5,109 +5,62 @@ on:
     - cron: '*/15 * * * *'
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   capture:
     runs-on: ubuntu-latest
     steps:
-      - name: Capture webcam and upload via API
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Capture webcam frame
         run: |
           set -e
-
-          # Get current date and time
           DATE=$(date -u +%Y-%m-%d)
           TIME=$(date -u +%H-%M)
+          mkdir -p "frames/$DATE/lodge"
 
-          echo "Downloading lodge webcam..."
-          curl -s --connect-timeout 10 --max-time 30 -o /tmp/lodge.jpg \
+          echo "Downloading lodge webcam at $DATE $TIME..."
+          curl -s --connect-timeout 10 --max-time 30 \
             -A "Mozilla/5.0" \
+            -o "frames/$DATE/lodge/$TIME.jpg" \
             https://www.ski49n.com/webcams/lodge.jpg
 
-          if [ ! -s /tmp/lodge.jpg ]; then
-            echo "ERROR: Failed to download image"
+          if [ ! -s "frames/$DATE/lodge/$TIME.jpg" ]; then
+            echo "ERROR: Image download failed or empty"
             exit 1
           fi
+          echo "Downloaded: $(wc -c < frames/$DATE/lodge/$TIME.jpg) bytes"
 
-          # Convert image to base64
-          IMAGE_B64=$(base64 -w 0 /tmp/lodge.jpg)
-          IMAGE_SIZE=$(wc -c < /tmp/lodge.jpg)
-          echo "Downloaded image: $IMAGE_SIZE bytes"
+          # Update manifest
+          MANIFEST="frames/$DATE/manifest.json"
+          if [ -f "$MANIFEST" ]; then
+            python3 -c "
+import json, sys
+with open('$MANIFEST') as f: m = json.load(f)
+if '$TIME' not in m.get('lodge', []):
+    m['lodge'].append('$TIME')
+    m['lodge'].sort()
+with open('$MANIFEST', 'w') as f: json.dump(m, f, indent=2)
+print('Added $TIME to manifest')
+"
+          else
+            echo "{\"date\":\"$DATE\",\"lodge\":[\"$TIME\"]}" > "$MANIFEST"
+            echo "Created new manifest"
+          fi
 
-          # Upload image via GitHub API
-          FILE_PATH="frames/$DATE/lodge/$TIME.jpg"
-          curl -s -X PUT \
-            -H "Authorization: token $GITHUB_TOKEN" \
-            -H "Accept: application/vnd.github.v3+json" \
-            -H "Content-Type: application/json" \
-            https://api.github.com/repos/$GITHUB_REPOSITORY/contents/$FILE_PATH \
-            -d @- << EOF
-          {
-            "message": "Capture lodge webcam at $TIME",
-            "content": "$IMAGE_B64",
-            "branch": "main"
-          }
-          EOF
-
-          echo "Image uploaded to: $FILE_PATH"
-
-          # Fetch and update manifest
-          python3 << 'PYTHON_EOF'
-          import json
-          import subprocess
-          import os
-          from datetime import datetime
-
-          date_str = datetime.utcnow().strftime("%Y-%m-%d")
-          time_str = datetime.utcnow().strftime("%H-%M")
-          manifest_path = f"frames/{date_str}/manifest.json"
-
-          # Try to get existing manifest
-          result = subprocess.run([
-              "curl", "-s",
-              "-H", f"Authorization: token {os.environ['GITHUB_TOKEN']}",
-              f"https://api.github.com/repos/{os.environ['GITHUB_REPOSITORY']}/contents/{manifest_path}"
-          ], capture_output=True, text=True)
-
-          try:
-              data = json.loads(result.stdout)
-              if "content" in data:
-                  import base64
-                  manifest = json.loads(base64.b64decode(data["content"]).decode())
-                  sha = data["sha"]
-              else:
-                  manifest = {"date": date_str, "lodge": []}
-                  sha = None
-          except:
-              manifest = {"date": date_str, "lodge": []}
-              sha = None
-
-          # Add new timestamp
-          if time_str not in manifest.get("lodge", []):
-              manifest["lodge"].append(time_str)
-              manifest["lodge"].sort()
-
-          # Upload manifest
-          manifest_json = json.dumps(manifest, indent=2)
-          manifest_b64 = __import__("base64").b64encode(manifest_json.encode()).decode()
-
-          curl_cmd = ["curl", "-s", "-X", "PUT",
-              "-H", f"Authorization: token {os.environ['GITHUB_TOKEN']}",
-              "-H", "Accept: application/vnd.github.v3+json",
-              "-H", "Content-Type: application/json"]
-
-          payload = {
-              "message": f"Update manifest for {date_str}",
-              "content": manifest_b64,
-              "branch": "main"
-          }
-          if sha:
-              payload["sha"] = sha
-
-          curl_cmd.append(f"https://api.github.com/repos/{os.environ['GITHUB_REPOSITORY']}/contents/{manifest_path}")
-
-          result = subprocess.run(curl_cmd + ["-d", json.dumps(payload)],
-              capture_output=True, text=True)
-
-          print(f"Manifest updated: {manifest_path}")
-          PYTHON_EOF
+      - name: Commit and push
+        run: |
+          DATE=$(date -u +%Y-%m-%d)
+          TIME=$(date -u +%H-%M)
+          git config user.email "github-actions@github.com"
+          git config user.name "GitHub Actions"
+          git add "frames/$DATE/"
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Webcam capture $DATE $TIME"
+            git push
+          fi
