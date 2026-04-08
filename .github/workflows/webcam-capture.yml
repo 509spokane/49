@@ -8,43 +8,51 @@ on:
 jobs:
   capture:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Capture webcam and update manifest
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          set -e
-
           # Get current date and time
           DATE=$(date -u +%Y-%m-%d)
           TIME=$(date -u +%H-%M)
+          echo "DATE=$DATE" >> $GITHUB_ENV
+          echo "TIME=$TIME" >> $GITHUB_ENV
 
           # Create directory structure
           mkdir -p "frames/$DATE/lodge"
 
           # Download the webcam image
-          curl -s -f -o "frames/$DATE/lodge/$TIME.jpg" \
+          echo "Downloading lodge webcam image..."
+          curl -s --connect-timeout 10 --max-time 30 -o "frames/$DATE/lodge/$TIME.jpg" \
             -A "Mozilla/5.0" \
             https://www.ski49n.com/webcams/lodge.jpg
 
           # Check if image was downloaded successfully
-          if [ ! -f "frames/$DATE/lodge/$TIME.jpg" ]; then
-            echo "Failed to download webcam image"
+          if [ ! -f "frames/$DATE/lodge/$TIME.jpg" ] || [ ! -s "frames/$DATE/lodge/$TIME.jpg" ]; then
+            echo "ERROR: Failed to download webcam image or file is empty"
             exit 1
           fi
+          echo "Image downloaded: $(ls -lh "frames/$DATE/lodge/$TIME.jpg")"
 
-          # Generate or update manifest using Python with environment variables
-          MANIFEST_FILE="frames/$DATE/manifest.json"
-          python3 << EOF
+          # Update manifest
+          python3 << 'PYTHON_EOF'
           import json
           import os
+          import sys
 
-          date_str = "$DATE"
-          time_str = "$TIME"
+          date_str = os.environ.get('DATE')
+          time_str = os.environ.get('TIME')
+
+          if not date_str or not time_str:
+              print("ERROR: DATE or TIME not set")
+              sys.exit(1)
+
           manifest_file = f"frames/{date_str}/manifest.json"
+          os.makedirs(os.path.dirname(manifest_file), exist_ok=True)
 
           # Load or create manifest
           if os.path.exists(manifest_file):
@@ -57,23 +65,25 @@ jobs:
           if time_str not in manifest.get('lodge', []):
               manifest['lodge'].append(time_str)
               manifest['lodge'].sort()
+              print(f"Added frame: {time_str}")
+          else:
+              print(f"Frame already exists: {time_str}")
 
           # Write manifest
           with open(manifest_file, 'w') as f:
               json.dump(manifest, f, indent=2)
-          EOF
+          print(f"Manifest updated: {manifest_file}")
+          PYTHON_EOF
 
-          # Configure git
-          git config --local user.email "github-actions@github.com"
-          git config --local user.name "GitHub Actions"
+      - name: Commit and push
+        run: |
+          git config user.email "github-actions@github.com"
+          git config user.name "GitHub Actions"
+          git add frames/
 
-          # Commit and push
-          git add "frames/$DATE/"
-
-          # Only commit if there are changes
           if git diff --cached --quiet; then
             echo "No changes to commit"
           else
-            git commit -m "Capture lodge webcam at $TIME"
-            git push
+            git commit -m "Capture lodge webcam at ${{ env.TIME }}"
+            git push origin main
           fi
