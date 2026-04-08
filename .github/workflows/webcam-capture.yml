@@ -1,0 +1,78 @@
+name: Capture Lodge Webcam
+
+on:
+  schedule:
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Capture webcam and update manifest
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -e
+
+          # Get current date and time
+          DATE=$(date -u +%Y-%m-%d)
+          TIME=$(date -u +%H-%M)
+
+          # Create directory structure
+          mkdir -p "frames/$DATE/lodge"
+
+          # Download the webcam image
+          curl -s -f -o "frames/$DATE/lodge/$TIME.jpg" \
+            -A "Mozilla/5.0" \
+            https://www.ski49n.com/webcams/lodge.jpg
+
+          # Check if image was downloaded successfully
+          if [ ! -f "frames/$DATE/lodge/$TIME.jpg" ]; then
+            echo "Failed to download webcam image"
+            exit 1
+          fi
+
+          # Generate or update manifest
+          MANIFEST_FILE="frames/$DATE/manifest.json"
+          if [ ! -f "$MANIFEST_FILE" ]; then
+            echo '{"date":"'$DATE'","lodge":[]}' > "$MANIFEST_FILE"
+          fi
+
+          # Add timestamp to manifest if not already present
+          if ! grep -q "\"$TIME\"" "$MANIFEST_FILE"; then
+            # Insert timestamp into the lodge array
+            python3 << 'EOF'
+          import json
+          import os
+
+          manifest_file = "frames/$DATE/manifest.json"
+          with open(manifest_file, 'r') as f:
+              manifest = json.load(f)
+
+          if "$TIME" not in manifest.get('lodge', []):
+              manifest['lodge'].append("$TIME")
+              manifest['lodge'].sort()
+
+          with open(manifest_file, 'w') as f:
+              json.dump(manifest, f, indent=2)
+          EOF
+          fi
+
+          # Configure git
+          git config --local user.email "github-actions@github.com"
+          git config --local user.name "GitHub Actions"
+
+          # Commit and push
+          git add "frames/$DATE/"
+
+          # Only commit if there are changes
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Capture lodge webcam at $TIME"
+            git push
+          fi
