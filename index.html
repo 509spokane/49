@@ -449,9 +449,19 @@ body {
 <!-- Webcam sections -->
 <div id="webcamSections">
 <div class="section">
-  <a href="https://www.ski49n.com/webcams/lodge.jpg">
-    <img src="https://www.ski49n.com/webcams/lodge.jpg" alt="Lodge Webcam" />
-  </a>
+  <div style="position:relative;display:inline-block;width:100%;">
+    <a id="lodgeLiveLink" href="https://www.ski49n.com/webcams/lodge.jpg">
+      <img id="lodgeLiveImage" src="https://www.ski49n.com/webcams/lodge.jpg" alt="Lodge Webcam" />
+    </a>
+    <button id="lodgePlayButton" style="display:none;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:#ffffff;border:none;border-radius:50%;width:60px;height:60px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.2);font-size:28px;line-height:1;padding:0;z-index:10;">▶</button>
+    <div id="lodgeAnimationContainer" style="display:none;">
+      <img id="lodgeAnimationFrame" src="" alt="Timelapse frame" style="width:100%;display:block;" />
+      <div style="position:absolute;bottom:10px;left:10px;right:10px;background:rgba(0,0,0,0.7);color:white;padding:8px 12px;border-radius:4px;font-size:12px;z-index:11;">
+        <span id="lodgeAnimationTime"></span> <span style="float:right;"><span id="lodgeFrameCount">0</span>/<span id="lodgeFrameTotal">0</span></span>
+      </div>
+      <button id="lodgeBackButton" style="position:absolute;top:10px;right:10px;background:#ffffff;border:none;border-radius:4px;padding:8px 12px;cursor:pointer;font-size:12px;font-weight:600;z-index:11;">Back to Live</button>
+    </div>
+  </div>
   <div class="cam-label">Lodge</div>
 </div>
 <div class="section">
@@ -565,6 +575,13 @@ body {
     <label for="toggleCurrentWeather">Current Weather (over image)</label>
     <label class="toggle-switch">
       <input type="checkbox" id="toggleCurrentWeather">
+      <span class="toggle-slider"></span>
+    </label>
+  </div>
+  <div class="settings-row">
+    <label for="toggleLodgeTimelapse">Try Lodge Timelapse</label>
+    <label class="toggle-switch">
+      <input type="checkbox" id="toggleLodgeTimelapse">
       <span class="toggle-slider"></span>
     </label>
   </div>
@@ -1043,6 +1060,8 @@ if (savedFacebook !== null) document.getElementById('toggleFacebook').checked = 
 if (savedWebcams !== null) document.getElementById('toggleWebcams').checked = savedWebcams !== 'false';
 const savedSpecialNotes = localStorage.getItem('showSpecialNotes');
 if (savedSpecialNotes !== null) document.getElementById('toggleSpecialNotes').checked = savedSpecialNotes !== 'false';
+const savedLodgeTimelapse = localStorage.getItem('lodgeTimelapse');
+if (savedLodgeTimelapse !== null) document.getElementById('toggleLodgeTimelapse').checked = savedLodgeTimelapse === 'true';
 applySettings();
 
 document.getElementById('toggleConditions').addEventListener('change', applySettings);
@@ -1054,6 +1073,89 @@ document.getElementById('toggleAlerts').addEventListener('change', applySettings
 document.getElementById('toggleFacebook').addEventListener('change', applySettings);
 document.getElementById('toggleWebcams').addEventListener('change', applySettings);
 document.getElementById('toggleSpecialNotes').addEventListener('change', applySettings);
+document.getElementById('toggleLodgeTimelapse').addEventListener('change', (e) => {
+  localStorage.setItem('lodgeTimelapse', e.target.checked ? 'true' : 'false');
+  document.getElementById('lodgePlayButton').style.display = e.target.checked ? 'block' : 'none';
+});
+
+// Lodge timelapse animation logic
+let _lodgeAnimationFrames = [];
+let _lodgeAnimationIndex = 0;
+let _lodgeAnimationInterval = null;
+
+document.getElementById('lodgePlayButton').addEventListener('click', async () => {
+  const today = new Date().toISOString().split('T')[0];
+  const manifestUrl = `frames/${today}/manifest.json`;
+
+  try {
+    const response = await fetch(manifestUrl);
+    if (!response.ok) throw new Error('Manifest not found');
+
+    const manifest = await response.json();
+    const frames = manifest.lodge || [];
+
+    if (frames.length === 0) {
+      alert('No frames available yet. The timelapse will collect frames every 15 minutes.');
+      return;
+    }
+
+    _lodgeAnimationFrames = frames;
+    _lodgeAnimationIndex = 0;
+
+    // Hide live view, show animation
+    document.getElementById('lodgeLiveLink').style.display = 'none';
+    document.getElementById('lodgePlayButton').style.display = 'none';
+    document.getElementById('lodgeAnimationContainer').style.display = 'block';
+    document.getElementById('lodgeFrameTotal').textContent = frames.length;
+
+    // Play animation
+    playLodgeAnimation();
+  } catch (err) {
+    alert('Unable to load timelapse data: ' + err.message);
+  }
+});
+
+function playLodgeAnimation() {
+  const frames = _lodgeAnimationFrames;
+  const frameImg = document.getElementById('lodgeAnimationFrame');
+  const timeEl = document.getElementById('lodgeAnimationTime');
+  const countEl = document.getElementById('lodgeFrameCount');
+
+  const updateFrame = () => {
+    if (_lodgeAnimationIndex >= frames.length) {
+      _lodgeAnimationIndex = 0;
+    }
+
+    const frameTime = frames[_lodgeAnimationIndex];
+    const [hh, mm] = frameTime.split('-');
+    const today = new Date().toISOString().split('T')[0];
+
+    frameImg.src = `frames/${today}/lodge/${frameTime}.jpg`;
+    timeEl.textContent = `${hh}:${mm}`;
+    countEl.textContent = _lodgeAnimationIndex + 1;
+    _lodgeAnimationIndex++;
+  };
+
+  updateFrame();
+  if (_lodgeAnimationInterval) clearInterval(_lodgeAnimationInterval);
+  _lodgeAnimationInterval = setInterval(updateFrame, 150);
+}
+
+document.getElementById('lodgeBackButton').addEventListener('click', () => {
+  if (_lodgeAnimationInterval) clearInterval(_lodgeAnimationInterval);
+
+  document.getElementById('lodgeAnimationContainer').style.display = 'none';
+  document.getElementById('lodgeLiveLink').style.display = '';
+  if (document.getElementById('toggleLodgeTimelapse').checked) {
+    document.getElementById('lodgePlayButton').style.display = 'block';
+  }
+});
+
+// Show play button on load if timelapse is enabled
+if (document.getElementById('toggleLodgeTimelapse').checked) {
+  document.getElementById('lodgePlayButton').style.display = 'block';
+}
+
 let _hintTimer = null;
 document.getElementById('specialNotesHeader').addEventListener('click', () => {
   const body = document.getElementById('specialNotesBody');
