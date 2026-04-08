@@ -36,31 +36,32 @@ jobs:
             exit 1
           fi
 
-          # Generate or update manifest
+          # Generate or update manifest using Python with environment variables
           MANIFEST_FILE="frames/$DATE/manifest.json"
-          if [ ! -f "$MANIFEST_FILE" ]; then
-            echo '{"date":"'$DATE'","lodge":[]}' > "$MANIFEST_FILE"
-          fi
-
-          # Add timestamp to manifest if not already present
-          if ! grep -q "\"$TIME\"" "$MANIFEST_FILE"; then
-            # Insert timestamp into the lodge array
-            python3 << 'EOF'
+          python3 << EOF
           import json
           import os
 
-          manifest_file = "frames/$DATE/manifest.json"
-          with open(manifest_file, 'r') as f:
-              manifest = json.load(f)
+          date_str = "$DATE"
+          time_str = "$TIME"
+          manifest_file = f"frames/{date_str}/manifest.json"
 
-          if "$TIME" not in manifest.get('lodge', []):
-              manifest['lodge'].append("$TIME")
+          # Load or create manifest
+          if os.path.exists(manifest_file):
+              with open(manifest_file, 'r') as f:
+                  manifest = json.load(f)
+          else:
+              manifest = {"date": date_str, "lodge": []}
+
+          # Add timestamp if not present
+          if time_str not in manifest.get('lodge', []):
+              manifest['lodge'].append(time_str)
               manifest['lodge'].sort()
 
+          # Write manifest
           with open(manifest_file, 'w') as f:
               json.dump(manifest, f, indent=2)
           EOF
-          fi
 
           # Configure git
           git config --local user.email "github-actions@github.com"
