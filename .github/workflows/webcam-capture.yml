@@ -34,25 +34,13 @@ jobs:
           fi
           echo "Downloaded: $(wc -c < frames/$DATE/lodge/$TIME.jpg) bytes"
 
-          # Update manifest
           MANIFEST="frames/$DATE/manifest.json"
           if [ -f "$MANIFEST" ]; then
-            MANIFEST_PATH="$MANIFEST" FRAME_TIME="$TIME" python3 << 'PYEOF'
-import json, os
-manifest_path = os.environ['MANIFEST_PATH']
-frame_time = os.environ['FRAME_TIME']
-with open(manifest_path) as f:
-    m = json.load(f)
-if frame_time not in m.get('lodge', []):
-    m['lodge'].append(frame_time)
-    m['lodge'].sort()
-with open(manifest_path, 'w') as f:
-    json.dump(m, f, indent=2)
-print(f'Added {frame_time} to manifest')
-PYEOF
+            jq --arg t "$TIME" '.lodge += [$t] | .lodge |= unique | .lodge |= sort' "$MANIFEST" > "$MANIFEST.tmp" && mv "$MANIFEST.tmp" "$MANIFEST"
+            echo "Updated manifest"
           else
             echo "{\"date\":\"$DATE\",\"lodge\":[\"$TIME\"]}" > "$MANIFEST"
-            echo "Created new manifest"
+            echo "Created manifest"
           fi
 
       - name: Commit and push
