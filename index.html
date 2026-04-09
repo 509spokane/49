@@ -1085,7 +1085,9 @@ let _lodgeAnimationFrames = [];
 let _lodgeAnimationIndex = 0;
 let _lodgeAnimationInterval = null;
 
-document.getElementById('lodgePlayButton').addEventListener('click', async () => {
+document.getElementById('lodgePlayButton').addEventListener('click', async (e) => {
+  e.stopPropagation();
+  e.preventDefault();
   const today = new Date().toISOString().split('T')[0];
   const manifestUrl = `frames/${today}/manifest.json`;
 
