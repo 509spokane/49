@@ -461,9 +461,9 @@ body {
       <button id="lodgeBackButton" style="position:absolute;top:8px;right:8px;background:rgba(0,0,0,0.6);color:#fff;border:none;border-radius:20px;padding:4px 10px;cursor:pointer;font-size:10px;font-weight:600;z-index:11;">✕ Live</button>
     </div>
   </div>
-  <div class="cam-label" style="display:flex;align-items:center;justify-content:space-between;">
-    <span>Lodge</span>
-    <button id="lodgePlayButton" style="display:none;background:rgba(0,0,0,0.55);color:#fff;border:none;border-radius:20px;padding:3px 10px;cursor:pointer;font-size:10px;font-weight:600;letter-spacing:0.03em;">▶ Timelapse</button>
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:4px 8px;">
+    <span style="font-size:13px;font-weight:700;color:#334155;">Lodge</span>
+    <button id="lodgePlayButton" type="button" style="display:none;background:#334155;color:#fff;border:none;border-radius:20px;padding:3px 10px;cursor:pointer;font-size:10px;font-weight:600;letter-spacing:0.03em;">▶ Timelapse</button>
   </div>
 </div>
 <div class="section">
@@ -1085,7 +1085,9 @@ let _lodgeAnimationFrames = [];
 let _lodgeAnimationIndex = 0;
 let _lodgeAnimationInterval = null;
 
-document.getElementById('lodgePlayButton').addEventListener('click', async () => {
+document.getElementById('lodgePlayButton').addEventListener('click', async (e) => {
+  e.stopPropagation();
+  e.preventDefault();
   const today = new Date().toISOString().split('T')[0];
   const manifestUrl = `frames/${today}/manifest.json`;
 
