@@ -1145,7 +1145,11 @@ function playLodgeAnimation() {
     const today = new Date().toISOString().split('T')[0];
 
     frameImg.src = `frames/${today}/lodge/${frameTime}.jpg`;
-    timeEl.textContent = `${hh}:${mm}`;
+    let hour = parseInt(hh);
+    const ampm = hour >= 12 ? 'PM' : 'AM';
+    if (hour > 12) hour -= 12;
+    if (hour === 0) hour = 12;
+    timeEl.textContent = `${hour}:${mm} ${ampm}`;
     countEl.textContent = _lodgeAnimationIndex + 1;
     document.getElementById('lodgeProgressBar').style.width = Math.round((_lodgeAnimationIndex + 1) / frames.length * 100) + '%';
     _lodgeAnimationIndex++;
