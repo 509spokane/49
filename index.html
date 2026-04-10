@@ -461,9 +461,9 @@ body {
       <button id="lodgeBackButton" style="position:absolute;top:8px;right:8px;background:rgba(0,0,0,0.6);color:#fff;border:none;border-radius:20px;padding:4px 10px;cursor:pointer;font-size:10px;font-weight:600;z-index:11;">✕ Live</button>
     </div>
   </div>
-  <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 8px;background:#f8fafc;border-top:1px solid #e2e8f0;">
-    <span style="font-size:13px;font-weight:700;color:#334155;">Lodge</span>
-    <button id="lodgePlayButton" type="button" style="display:none;background:#334155;color:#fff;border:none;border-radius:20px;padding:4px 12px;cursor:pointer;font-size:11px;font-weight:600;letter-spacing:0.03em;">▶ Timelapse</button>
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 8px;background:#f8fafc;border-top:1px solid #e2e8f0;width:100%;box-sizing:border-box;">
+    <span style="font-size:13px;font-weight:700;color:#334155;flex:0 0 auto;">Lodge</span>
+    <button id="lodgePlayButton" type="button" style="display:none;background:#334155;color:#fff;border:none;border-radius:20px;padding:4px 12px;cursor:pointer;font-size:11px;font-weight:600;letter-spacing:0.03em;flex:0 0 auto;white-space:nowrap;">▶ Timelapse</button>
   </div>
 </div>
 <div class="section">
@@ -1077,7 +1077,8 @@ document.getElementById('toggleWebcams').addEventListener('change', applySetting
 document.getElementById('toggleSpecialNotes').addEventListener('change', applySettings);
 document.getElementById('toggleLodgeTimelapse').addEventListener('change', (e) => {
   localStorage.setItem('lodgeTimelapse', e.target.checked ? 'true' : 'false');
-  document.getElementById('lodgePlayButton').style.display = e.target.checked ? 'block' : 'none';
+  document.getElementById('lodgePlayButton').style.display = e.target.checked ? 'inline-block' : 'none';
+  document.getElementById('lodgePlayButton').style.visibility = e.target.checked ? 'visible' : 'hidden';
 });
 
 // Lodge timelapse animation logic
@@ -1151,13 +1152,13 @@ document.getElementById('lodgeBackButton').addEventListener('click', () => {
   document.getElementById('lodgeAnimationContainer').style.display = 'none';
   document.getElementById('lodgeLiveLink').style.display = '';
   if (document.getElementById('toggleLodgeTimelapse').checked) {
-    document.getElementById('lodgePlayButton').style.display = 'block';
+    document.getElementById('lodgePlayButton').style.display = 'inline-block';
   }
 });
 
 // Show play button on load if timelapse is enabled
 if (document.getElementById('toggleLodgeTimelapse').checked) {
-  document.getElementById('lodgePlayButton').style.display = 'block';
+  document.getElementById('lodgePlayButton').style.display = 'inline-block';
 }
 
 let _hintTimer = null;
