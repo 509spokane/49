@@ -458,9 +458,12 @@ body {
       <span id="lodgeAnimationTime"></span> <span style="float:right;"><span id="lodgeFrameCount">0</span>/<span id="lodgeFrameTotal">0</span></span>
     </div>
     <button id="lodgeBackButton" style="position:absolute;top:8px;right:8px;background:rgba(0,0,0,0.6);color:#fff;border:none;border-radius:20px;padding:4px 10px;cursor:pointer;font-size:10px;font-weight:600;z-index:11;">✕ Live</button>
+    <div style="position:absolute;bottom:0;left:0;right:0;height:3px;background:rgba(255,255,255,0.2);z-index:12;">
+      <div id="lodgeProgressBar" style="height:100%;width:0%;background:#fff;transition:width 0.4s linear;"></div>
+    </div>
   </div>
   <div id="lodgeCamLabel" class="cam-label">Lodge</div>
-  <button id="lodgePlayButton" type="button" style="display:none;position:absolute;bottom:8px;right:8px;background:rgba(0,0,0,0.6);color:#fff;border:none;border-radius:20px;padding:4px 10px;cursor:pointer;font-size:10px;font-weight:600;z-index:10;">▶ Timelapse</button>
+  <button id="lodgePlayButton" type="button" style="display:none;position:absolute;top:36px;right:10px;background:rgba(0,0,0,0.6);color:#fff;border:none;border-radius:20px;padding:3px 9px;cursor:pointer;font-size:10px;font-weight:600;z-index:10;">▶ Timelapse</button>
 </div>
 <div class="section">
   <a href="https://www.ski49n.com/webcams/summit.jpg">
@@ -1134,6 +1137,7 @@ function playLodgeAnimation() {
     frameImg.src = `frames/${today}/lodge/${frameTime}.jpg`;
     timeEl.textContent = `${hh}:${mm}`;
     countEl.textContent = _lodgeAnimationIndex + 1;
+    document.getElementById('lodgeProgressBar').style.width = Math.round((_lodgeAnimationIndex + 1) / frames.length * 100) + '%';
     _lodgeAnimationIndex++;
   };
 
