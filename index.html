@@ -449,11 +449,11 @@ body {
 <!-- Webcam sections -->
 <div id="webcamSections">
 <div class="section">
-  <div style="position:relative;display:inline-block;width:100%;">
+  <div style="position:relative;display:block;width:100%;">
     <a id="lodgeLiveLink" href="https://www.ski49n.com/webcams/lodge.jpg">
       <img id="lodgeLiveImage" src="https://www.ski49n.com/webcams/lodge.jpg" alt="Lodge Webcam" />
     </a>
-    <div id="lodgeAnimationContainer" style="display:none;">
+    <div id="lodgeAnimationContainer" style="display:none;position:relative;width:100%;">
       <img id="lodgeAnimationFrame" src="" alt="Timelapse frame" style="width:100%;display:block;" />
       <div style="position:absolute;bottom:6px;left:8px;right:8px;background:rgba(0,0,0,0.55);color:white;padding:4px 8px;border-radius:4px;font-size:10px;z-index:11;">
         <span id="lodgeAnimationTime"></span> <span style="float:right;"><span id="lodgeFrameCount">0</span>/<span id="lodgeFrameTotal">0</span></span>
@@ -461,9 +461,9 @@ body {
       <button id="lodgeBackButton" style="position:absolute;top:8px;right:8px;background:rgba(0,0,0,0.6);color:#fff;border:none;border-radius:20px;padding:4px 10px;cursor:pointer;font-size:10px;font-weight:600;z-index:11;">✕ Live</button>
     </div>
   </div>
-  <div style="display:flex;align-items:center;justify-content:space-between;padding:4px 8px;">
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 8px;background:#f8fafc;border-top:1px solid #e2e8f0;">
     <span style="font-size:13px;font-weight:700;color:#334155;">Lodge</span>
-    <button id="lodgePlayButton" type="button" style="display:none;background:#334155;color:#fff;border:none;border-radius:20px;padding:3px 10px;cursor:pointer;font-size:10px;font-weight:600;letter-spacing:0.03em;">▶ Timelapse</button>
+    <button id="lodgePlayButton" type="button" style="display:none;background:#334155;color:#fff;border:none;border-radius:20px;padding:4px 12px;cursor:pointer;font-size:11px;font-weight:600;letter-spacing:0.03em;">▶ Timelapse</button>
   </div>
 </div>
 <div class="section">
