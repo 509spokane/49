@@ -43,6 +43,10 @@ jobs:
             echo "Created manifest"
           fi
 
+          # Keep frames/index.json up to date with all available dates
+          ls frames/ | grep -E '^[0-9]{4}-[0-9]{2}-[0-9]{2}$' | sort | jq -Rs '[split("\n")[] | select(length>0)]' > frames/index.json
+          echo "Updated frames/index.json"
+
       - name: Commit and push
         run: |
           DATE=$(date -u +%Y-%m-%d)

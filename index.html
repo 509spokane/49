@@ -1098,28 +1098,34 @@ document.getElementById('lodgePlayButton').addEventListener('click', async (e) =
     return;
   }
 
-  const today = new Date().toISOString().split('T')[0];
-  const manifestUrl = `frames/${today}/manifest.json`;
-
   try {
-    const response = await fetch(manifestUrl);
-    if (!response.ok) throw new Error('Manifest not found');
+    // Load all available dates from index, then combine all frames
+    const idxRes = await fetch('frames/index.json');
+    if (!idxRes.ok) throw new Error('Frame index not found');
+    const dates = await idxRes.json();
 
-    const manifest = await response.json();
-    const frames = manifest.lodge || [];
+    const allFrames = [];
+    for (const date of dates) {
+      const res = await fetch(`frames/${date}/manifest.json`);
+      if (!res.ok) continue;
+      const manifest = await res.json();
+      for (const time of (manifest.lodge || [])) {
+        allFrames.push({ date, time });
+      }
+    }
 
-    if (frames.length === 0) {
-      alert('No frames available yet. The timelapse will collect frames every 15 minutes.');
+    if (allFrames.length === 0) {
+      alert('No frames available yet. The timelapse will collect frames every 30 minutes.');
       return;
     }
 
-    _lodgeAnimationFrames = frames;
+    _lodgeAnimationFrames = allFrames;
     _lodgeAnimationIndex = 0;
 
     // Show animation, keep Lodge label and play button visible
     document.getElementById('lodgeLiveLink').style.display = 'none';
     document.getElementById('lodgeAnimationContainer').style.display = 'block';
-    document.getElementById('lodgeFrameTotal').textContent = frames.length;
+    document.getElementById('lodgeFrameTotal').textContent = allFrames.length;
     document.getElementById('lodgePlayButton').textContent = '← Back to Live View';
 
     // Play animation
@@ -1140,16 +1146,17 @@ function playLodgeAnimation() {
       _lodgeAnimationIndex = 0;
     }
 
-    const frameTime = frames[_lodgeAnimationIndex];
-    const [hh, mm] = frameTime.split('-');
-    const today = new Date().toISOString().split('T')[0];
+    const { date, time } = frames[_lodgeAnimationIndex];
+    const [hh, mm] = time.split('-');
 
-    frameImg.src = `frames/${today}/lodge/${frameTime}.jpg`;
+    frameImg.src = `frames/${date}/lodge/${time}.jpg`;
     let hour = parseInt(hh);
     const ampm = hour >= 12 ? 'PM' : 'AM';
     if (hour > 12) hour -= 12;
     if (hour === 0) hour = 12;
-    timeEl.textContent = `${hour}:${mm} ${ampm}`;
+    const [y, mo, dy] = date.split('-');
+    const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    timeEl.textContent = `${monthNames[parseInt(mo)-1]} ${parseInt(dy)}  ${hour}:${mm} ${ampm}`;
     countEl.textContent = _lodgeAnimationIndex + 1;
     document.getElementById('lodgeProgressBar').style.width = Math.round((_lodgeAnimationIndex + 1) / frames.length * 100) + '%';
     _lodgeAnimationIndex++;
