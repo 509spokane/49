@@ -1150,13 +1150,13 @@ function playLodgeAnimation() {
     const [hh, mm] = time.split('-');
 
     frameImg.src = `frames/${date}/lodge/${time}.jpg`;
-    let hour = parseInt(hh);
-    const ampm = hour >= 12 ? 'PM' : 'AM';
-    if (hour > 12) hour -= 12;
-    if (hour === 0) hour = 12;
-    const [y, mo, dy] = date.split('-');
-    const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-    timeEl.textContent = `${monthNames[parseInt(mo)-1]} ${parseInt(dy)}  ${hour}:${mm} ${ampm}`;
+    const utcDate = new Date(`${date}T${hh}:${mm}:00Z`);
+    const pacificStr = utcDate.toLocaleString('en-US', {
+      timeZone: 'America/Los_Angeles',
+      month: 'short', day: 'numeric',
+      hour: 'numeric', minute: '2-digit', hour12: true
+    });
+    timeEl.textContent = pacificStr;
     countEl.textContent = _lodgeAnimationIndex + 1;
     document.getElementById('lodgeProgressBar').style.width = Math.round((_lodgeAnimationIndex + 1) / frames.length * 100) + '%';
     _lodgeAnimationIndex++;
