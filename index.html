@@ -814,7 +814,8 @@ async function loadForecast() {
       cumMin += nightRange.min; cumMax += nightRange.max;
       const afterNight = nightSnowRaw ? formatCumulative(cumMin, cumMax) : '';
 
-      const totalVal = isToday ? '' : (afterNight || afterDay);
+      const hasDaySnow = daySnow || nightSnow;
+      const totalVal = isToday ? '' : (hasDaySnow ? (afterNight || afterDay) : '');
       if (totalVal) hasAnyTotal = true;
 
       const headerName = isToday ? 'Today' : shortDayName(day.name);
