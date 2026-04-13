@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Lodge Timelapse – All Frames</title>
+<style>
+  body { margin: 0; background: #111; color: #fff; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; }
+  h2 { margin: 0 0 12px; font-size: 16px; color: #94a3b8; letter-spacing: 0.08em; text-transform: uppercase; }
+  #wrap { position: relative; width: 100%; max-width: 700px; }
+  #frame { width: 100%; display: block; border-radius: 6px; }
+  #info { position: absolute; bottom: 0; left: 0; right: 0; background: rgba(0,0,0,0.6); padding: 6px 12px; border-radius: 0 0 6px 6px; display: flex; justify-content: space-between; font-size: 13px; }
+  #bar-wrap { width: 100%; max-width: 700px; height: 4px; background: rgba(255,255,255,0.15); margin: 6px 0; border-radius: 2px; }
+  #bar { height: 100%; background: #fff; border-radius: 2px; transition: width 0.2s linear; }
+  #controls { display: flex; gap: 10px; align-items: center; margin-top: 10px; }
+  button { background: #334155; color: #fff; border: none; border-radius: 20px; padding: 6px 18px; cursor: pointer; font-size: 13px; font-weight: 600; }
+  button:hover { background: #475569; }
+  label { font-size: 12px; color: #94a3b8; }
+  select { background: #1e293b; color: #fff; border: 1px solid #475569; border-radius: 6px; padding: 4px 8px; font-size: 12px; }
+</style>
+</head>
+<body>
+<h2>Lodge Webcam – All Frames</h2>
+<div id="wrap">
+  <img id="frame" src="" alt="Timelapse frame" />
+  <div id="info">
+    <span id="timestamp">–</span>
+    <span id="counter">0 / 0</span>
+  </div>
+</div>
+<div id="bar-wrap"><div id="bar" style="width:0%"></div></div>
+<div id="controls">
+  <button id="btn">⏸ Pause</button>
+  <label>Speed:
+    <select id="speed">
+      <option value="600">Slow (0.6s)</option>
+      <option value="300" selected>Normal (0.3s)</option>
+      <option value="150">Fast (0.15s)</option>
+      <option value="80">Very Fast (0.08s)</option>
+    </select>
+  </label>
+</div>
+<script>
+// Duplicates removed: Apr 8 10-09–10-12, Apr 9 08-15–09-15, Apr 10 06-15–07-30
+// (those were identical test frames from setup)
+const frames = [
+  { date: "2026-04-08", time: "10-08" },  // 1 unique frame from Apr 8
+  { date: "2026-04-09", time: "08-00" },  // 1 unique frame from Apr 9 morning
+  { date: "2026-04-09", time: "23-52" },
+  { date: "2026-04-10", time: "01-24" },
+  { date: "2026-04-10", time: "04-23" },
+  { date: "2026-04-10", time: "06-00" },  // 1 unique frame from Apr 10 morning block
+  { date: "2026-04-10", time: "06-13" },
+  { date: "2026-04-10", time: "07-59" },
+  { date: "2026-04-10", time: "09-12" },
+  { date: "2026-04-10", time: "10-17" },
+  { date: "2026-04-10", time: "11-15" },
+  { date: "2026-04-10", time: "12-04" },
+  { date: "2026-04-10", time: "13-47" },
+  { date: "2026-04-10", time: "14-42" },
+  { date: "2026-04-10", time: "15-33" },
+  { date: "2026-04-10", time: "16-33" },
+  { date: "2026-04-10", time: "17-32" },
+  { date: "2026-04-10", time: "18-32" },
+  { date: "2026-04-10", time: "19-30" },
+  { date: "2026-04-10", time: "20-07" },
+  { date: "2026-04-10", time: "20-54" },
+  { date: "2026-04-10", time: "21-27" },
+  { date: "2026-04-10", time: "22-02" },
+  { date: "2026-04-10", time: "22-54" },
+  { date: "2026-04-10", time: "23-26" },
+  { date: "2026-04-10", time: "23-57" },
+  { date: "2026-04-11", time: "02-03" },
+  { date: "2026-04-11", time: "04-28" },
+  { date: "2026-04-11", time: "04-53" },
+  { date: "2026-04-11", time: "06-01" },
+  { date: "2026-04-11", time: "07-32" },
+  { date: "2026-04-11", time: "08-43" },
+  { date: "2026-04-11", time: "09-40" },
+  { date: "2026-04-11", time: "10-34" },
+  { date: "2026-04-11", time: "11-30" },
+  { date: "2026-04-11", time: "12-59" },
+  { date: "2026-04-11", time: "13-59" },
+  { date: "2026-04-11", time: "14-48" },
+  { date: "2026-04-11", time: "15-34" },
+  { date: "2026-04-11", time: "16-37" },
+  { date: "2026-04-11", time: "17-31" },
+  { date: "2026-04-11", time: "18-46" },
+  { date: "2026-04-11", time: "19-35" },
+  { date: "2026-04-11", time: "20-34" },
+  { date: "2026-04-11", time: "21-34" },
+  { date: "2026-04-11", time: "22-33" },
+  { date: "2026-04-11", time: "23-35" },
+  { date: "2026-04-12", time: "02-37" },
+  { date: "2026-04-12", time: "05-24" },
+  { date: "2026-04-12", time: "06-53" },
+  { date: "2026-04-12", time: "08-03" },
+  { date: "2026-04-12", time: "09-12" },
+  { date: "2026-04-12", time: "10-07" },
+  { date: "2026-04-12", time: "11-06" },
+  { date: "2026-04-12", time: "11-56" },
+  { date: "2026-04-12", time: "13-11" },
+  { date: "2026-04-12", time: "14-09" },
+  { date: "2026-04-12", time: "15-05" },
+  { date: "2026-04-12", time: "16-00" },
+  { date: "2026-04-12", time: "16-53" },
+  { date: "2026-04-12", time: "17-35" },
+  { date: "2026-04-12", time: "18-51" },
+  { date: "2026-04-12", time: "19-39" },
+  { date: "2026-04-12", time: "20-37" },
+  { date: "2026-04-12", time: "21-35" },
+  { date: "2026-04-12", time: "22-35" },
+  { date: "2026-04-12", time: "23-35" },
+  { date: "2026-04-13", time: "02-42" },
+  { date: "2026-04-13", time: "05-42" },
+  { date: "2026-04-13", time: "05-54" },
+];
+
+function fmtTime(t) {
+  const [hh, mm] = t.split('-');
+  let h = parseInt(hh);
+  const ap = h >= 12 ? 'PM' : 'AM';
+  if (h > 12) h -= 12;
+  if (h === 0) h = 12;
+  return `${h}:${mm} ${ap}`;
+}
+
+function fmtDate(d) {
+  const [y, m, day] = d.split('-');
+  const names = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return `${names[parseInt(m)-1]} ${parseInt(day)}`;
+}
+
+let idx = 0, interval = null, playing = true;
+const img = document.getElementById('frame');
+const ts = document.getElementById('timestamp');
+const ctr = document.getElementById('counter');
+const bar = document.getElementById('bar');
+const btn = document.getElementById('btn');
+const speedSel = document.getElementById('speed');
+
+function show(i) {
+  const f = frames[i];
+  img.src = `frames/${f.date}/lodge/${f.time}.jpg`;
+  ts.textContent = `${fmtDate(f.date)}  ${fmtTime(f.time)} UTC`;
+  ctr.textContent = `${i + 1} / ${frames.length}`;
+  bar.style.width = Math.round((i + 1) / frames.length * 100) + '%';
+}
+
+function start() {
+  interval = setInterval(() => {
+    idx = (idx + 1) % frames.length;
+    show(idx);
+  }, parseInt(speedSel.value));
+}
+
+show(0);
+start();
+
+btn.addEventListener('click', () => {
+  if (playing) {
+    clearInterval(interval);
+    btn.textContent = '▶ Play';
+  } else {
+    start();
+    btn.textContent = '⏸ Pause';
+  }
+  playing = !playing;
+});
+
+speedSel.addEventListener('change', () => {
+  if (playing) { clearInterval(interval); start(); }
+});
+</script>
+</body>
+</html>
