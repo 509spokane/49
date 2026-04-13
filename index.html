@@ -1100,7 +1100,8 @@ document.getElementById('lodgePlayButton').addEventListener('click', async (e) =
 
   try {
     // Load all available dates from index, then combine frames from last 24h
-    const idxRes = await fetch('frames/index.json');
+    const cacheBust = '?t=' + Date.now();
+    const idxRes = await fetch('frames/index.json' + cacheBust);
     if (!idxRes.ok) throw new Error('Frame index not found');
     const dates = await idxRes.json();
 
@@ -1109,7 +1110,7 @@ document.getElementById('lodgePlayButton').addEventListener('click', async (e) =
 
     const allFrames = [];
     for (const date of dates) {
-      const res = await fetch(`frames/${date}/manifest.json`);
+      const res = await fetch(`frames/${date}/manifest.json` + cacheBust);
       if (!res.ok) continue;
       const manifest = await res.json();
       for (const time of (manifest.lodge || [])) {
