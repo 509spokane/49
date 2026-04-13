@@ -1099,10 +1099,13 @@ document.getElementById('lodgePlayButton').addEventListener('click', async (e) =
   }
 
   try {
-    // Load all available dates from index, then combine all frames
+    // Load all available dates from index, then combine frames from last 24h
     const idxRes = await fetch('frames/index.json');
     if (!idxRes.ok) throw new Error('Frame index not found');
     const dates = await idxRes.json();
+
+    const now = Date.now();
+    const cutoff = now - 24 * 60 * 60 * 1000;
 
     const allFrames = [];
     for (const date of dates) {
@@ -1110,12 +1113,16 @@ document.getElementById('lodgePlayButton').addEventListener('click', async (e) =
       if (!res.ok) continue;
       const manifest = await res.json();
       for (const time of (manifest.lodge || [])) {
-        allFrames.push({ date, time });
+        const [hh, mm] = time.split('-');
+        const frameUTC = new Date(`${date}T${hh}:${mm}:00Z`).getTime();
+        if (frameUTC >= cutoff) {
+          allFrames.push({ date, time });
+        }
       }
     }
 
     if (allFrames.length === 0) {
-      alert('No frames available yet. The timelapse will collect frames every 30 minutes.');
+      alert('No frames available yet. The timelapse captures frames roughly every 10–30 minutes.');
       return;
     }
 
