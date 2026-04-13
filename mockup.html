@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Mind Blown Mockup</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+body { margin: 0; font-family: 'DM Sans', sans-serif; background: #fff; color: #111; }
+
+.forecast-grid {
+  display: flex;
+  gap: 6px;
+  margin: 10px 10px;
+}
+.day-card {
+  flex: 1;
+  border-radius: 6px;
+  font-size: 13px;
+  text-align: center;
+}
+.day-card .day-header {
+  background: #94a3b8; color: #fff; font-weight: 700; padding: 7px 4px; font-size: 13px;
+}
+.day-card .row-temp-day {
+  background: #fefce8; color: #92400e; font-weight: 600; padding: 7px 4px; font-size: 13px;
+}
+.day-card .row-snow-day {
+  background: #fffef5; padding: 6px 4px; border-top: 1px solid rgba(0,0,0,0.05); min-height: 1.2em;
+}
+.day-card .night-label {
+  background: #e2e8f0; color: #334155; font-size: 10px; font-weight: 600;
+  padding: 4px 2px; text-transform: uppercase; border-top: 1px solid rgba(0,0,0,0.08);
+}
+.day-card .row-temp-night {
+  background: #f1f5f9; color: #334155; font-weight: 600; padding: 7px 4px; font-size: 13px;
+}
+.day-card .row-snow-night {
+  background: #f8fafc; padding: 6px 4px; border-top: 1px solid rgba(0,0,0,0.05); min-height: 1.2em;
+}
+.day-card .row-total {
+  background: #dde4ed; color: #1e293b; font-weight: 700; font-size: 12px;
+  padding: 7px 4px; border-top: 1px solid rgba(0,0,0,0.08); min-height: 1.2em;
+}
+.snow-label { font-size: 10px; font-weight: 500; color: #64748b; }
+.snow-cell { display: inline-flex; align-items: center; gap: 3px; justify-content: center; position: relative; }
+.mb-wrap { position: relative; display: inline-block; width: 0; overflow: visible; }
+.mb-gif { position: absolute; top: -14px; left: 2px; width: 32px; height: 32px; object-fit: cover; z-index: 10; }
+</style>
+</head>
+<body>
+
+<div class="forecast-grid">
+
+  <!-- Today -->
+  <div class="day-card">
+    <div class="day-header">Today</div>
+    <div class="row-temp-day">High: 22°</div>
+    <div class="row-snow-day">
+      <span class="snow-cell">1-3" <span class="snow-label">Snow</span></span>
+    </div>
+    <div class="night-label">Night</div>
+    <div class="row-temp-night">Low: 18°</div>
+    <div class="row-snow-night">
+      <span class="snow-cell">4-7" <span class="snow-label">Snow</span> <span class="mb-wrap"><img class="mb-gif" src="mind_blown.gif" alt=""/></span></span>
+    </div>
+    <div class="row-total">TOTALS:</div>
+  </div>
+
+  <!-- Thu -->
+  <div class="day-card">
+    <div class="day-header">Thu</div>
+    <div class="row-temp-day">High: 24°</div>
+    <div class="row-snow-day">
+      <span class="snow-cell">8-12" <span class="snow-label">Snow</span> <span class="mb-wrap"><img class="mb-gif" src="mind_blown.gif" alt=""/></span></span>
+    </div>
+    <div class="night-label">Night</div>
+    <div class="row-temp-night">Low: 19°</div>
+    <div class="row-snow-night">
+      <span class="snow-cell">3-5" <span class="snow-label">Snow</span></span>
+    </div>
+    <div class="row-total">12-17" <span class="snow-label">Snow</span> <span class="mb-wrap"><img class="mb-gif" src="mind_blown.gif" alt=""/></span></div>
+  </div>
+
+  <!-- Fri -->
+  <div class="day-card">
+    <div class="day-header">Fri</div>
+    <div class="row-temp-day">High: 28°</div>
+    <div class="row-snow-day">
+      <span class="snow-cell">2-4" <span class="snow-label">Snow</span></span>
+    </div>
+    <div class="night-label">Night</div>
+    <div class="row-temp-night">Low: 21°</div>
+    <div class="row-snow-night">
+      <span class="snow-cell">0 <span class="snow-label">Snow</span></span>
+    </div>
+    <div class="row-total">14-21" <span class="snow-label">Snow</span> <span class="mb-wrap"><img class="mb-gif" src="mind_blown.gif" alt=""/></span></div>
+  </div>
+
+  <!-- Sat -->
+  <div class="day-card">
+    <div class="day-header">Sat</div>
+    <div class="row-temp-day">High: 30°</div>
+    <div class="row-snow-day">
+      <span class="snow-cell">0 <span class="snow-label">Snow</span></span>
+    </div>
+    <div class="night-label">Night</div>
+    <div class="row-temp-night">Low: 25°</div>
+    <div class="row-snow-night">
+      <span class="snow-cell">0 <span class="snow-label">Snow</span></span>
+    </div>
+    <div class="row-total">&nbsp;</div>
+  </div>
+
+  <!-- Sun -->
+  <div class="day-card">
+    <div class="day-header">Sun</div>
+    <div class="row-temp-day">High: 33°</div>
+    <div class="row-snow-day">
+      <span class="snow-cell">0 <span class="snow-label">Snow</span></span>
+    </div>
+    <div class="night-label">Night</div>
+    <div class="row-temp-night">Low: 27°</div>
+    <div class="row-snow-night">
+      <span class="snow-cell">0 <span class="snow-label">Snow</span></span>
+    </div>
+    <div class="row-total">&nbsp;</div>
+  </div>
+
+</div>
+</body>
+</html>

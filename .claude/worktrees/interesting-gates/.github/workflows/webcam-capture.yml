@@ -1,0 +1,58 @@
+name: Capture Lodge Webcam
+
+on:
+  schedule:
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Capture webcam frame
+        run: |
+          set -e
+          DATE=$(date -u +%Y-%m-%d)
+          TIME=$(date -u +%H-%M)
+          mkdir -p "frames/$DATE/lodge"
+
+          echo "Downloading lodge webcam at $DATE $TIME..."
+          curl -s --connect-timeout 10 --max-time 30 \
+            -A "Mozilla/5.0" \
+            -o "frames/$DATE/lodge/$TIME.jpg" \
+            https://www.ski49n.com/webcams/lodge.jpg
+
+          if [ ! -s "frames/$DATE/lodge/$TIME.jpg" ]; then
+            echo "ERROR: Image download failed or empty"
+            exit 1
+          fi
+          echo "Downloaded: $(wc -c < frames/$DATE/lodge/$TIME.jpg) bytes"
+
+          MANIFEST="frames/$DATE/manifest.json"
+          if [ -f "$MANIFEST" ]; then
+            jq --arg t "$TIME" '.lodge += [$t] | .lodge |= unique | .lodge |= sort' "$MANIFEST" > "$MANIFEST.tmp" && mv "$MANIFEST.tmp" "$MANIFEST"
+            echo "Updated manifest"
+          else
+            echo "{\"date\":\"$DATE\",\"lodge\":[\"$TIME\"]}" > "$MANIFEST"
+            echo "Created manifest"
+          fi
+
+      - name: Commit and push
+        run: |
+          DATE=$(date -u +%Y-%m-%d)
+          TIME=$(date -u +%H-%M)
+          git config user.email "github-actions@github.com"
+          git config user.name "GitHub Actions"
+          git add "frames/$DATE/"
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Webcam capture $DATE $TIME"
+            git push
+          fi
