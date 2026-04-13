@@ -1170,15 +1170,29 @@ function showLodgeFrame() {
 }
 
 let _lodgePaused = false;
+let _lodgePlayCount = 0;
 
 function playLodgeAnimation() {
   _lodgePaused = false;
+  _lodgePlayCount = 0;
   showLodgeFrame();
   if (_lodgeAnimationInterval) clearInterval(_lodgeAnimationInterval);
   _lodgeAnimationInterval = setInterval(() => {
     _lodgeAnimationIndex++;
+    if (_lodgeAnimationIndex >= _lodgeAnimationFrames.length) {
+      _lodgePlayCount++;
+      if (_lodgePlayCount >= 2) {
+        clearInterval(_lodgeAnimationInterval);
+        _lodgeAnimationInterval = null;
+        _lodgePaused = false;
+        document.getElementById('lodgeAnimationContainer').style.display = 'none';
+        document.getElementById('lodgeLiveLink').style.display = '';
+        document.getElementById('lodgePlayButton').textContent = '▶ Timelapse';
+        return;
+      }
+    }
     showLodgeFrame();
-  }, 500);
+  }, 1000);
 }
 
 // Tap zones: left 30% = back 1 frame, middle 40% = pause/play, right 30% = forward 1 frame
