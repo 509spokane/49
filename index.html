@@ -615,6 +615,11 @@ body {
 <script>
 const statsOverlay = document.getElementById('statsOverlay');
 
+const _snowGifs = ['angel.gif','dog.gif','mind_blown.gif','peanuts.gif','whoa.gif'];
+function randomSnowGif() {
+  return 'snow_gifs/' + _snowGifs[Math.floor(Math.random() * _snowGifs.length)];
+}
+
 function sameDay(a, b) {
   return a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate();
 }
@@ -683,7 +688,7 @@ async function loadStats() {
       <div class="stats-table">
         <div class="stats-row stat-labels">${stats.map(s => {
           const mb = s.label === '12h' && parseFloat(s.val) > 6
-            ? '<span class="mb-wrap"><img class="mb-gif" src="mind_blown.gif" alt=""/></span>'
+            ? `<span class="mb-wrap"><img class="mb-gif" src="${randomSnowGif()}" alt=""/></span>`
             : '';
           return `<div>${s.label}${mb}</div>`;
         }).join('')}</div>
@@ -768,7 +773,7 @@ async function loadForecast() {
       return parseRange(formatted).max > 6;
     }
 
-    const mbGif = '<span class="mb-wrap"><img class="mb-gif" src="mind_blown.gif" alt=""/></span>';
+    const mbGif = `<span class="mb-wrap"><img class="mb-gif" src="${randomSnowGif()}" alt=""/></span>`;
 
     const noaaUpdated = document.getElementById('noaaUpdated');
     if (noaaUpdated) {
