@@ -454,6 +454,7 @@ body {
   </a>
   <div id="lodgeAnimationContainer" style="display:none;position:relative;">
     <img id="lodgeAnimationFrame" src="" alt="Timelapse frame" style="width:100%;display:block;" />
+    <img id="lodgeAnimationFrameB" src="" alt="" style="width:100%;display:block;position:absolute;top:0;left:0;opacity:0;transition:opacity 0.6s ease;" />
     <!-- Tap zones: back (left 30%), pause/play (middle 40%), forward (right 30%) -->
     <div id="lodgeTapBack" style="position:absolute;top:0;left:0;width:30%;height:100%;z-index:13;cursor:pointer;"></div>
     <div id="lodgeTapPause" style="position:absolute;top:0;left:30%;width:40%;height:100%;z-index:13;cursor:pointer;"></div>
@@ -1188,7 +1189,8 @@ document.getElementById('lodgePlayButton').addEventListener('click', async (e) =
   }
 });
 
-function showLodgeFrame() {
+let _lodgeFrameFlip = false;
+function showLodgeFrame(instant) {
   const frames = _lodgeAnimationFrames;
   if (frames.length === 0) return;
   if (_lodgeAnimationIndex >= frames.length) _lodgeAnimationIndex = 0;
@@ -1196,8 +1198,29 @@ function showLodgeFrame() {
 
   const { date, time } = frames[_lodgeAnimationIndex];
   const [hh, mm] = time.split('-');
+  const src = `frames/${date}/lodge/${time}.jpg`;
 
-  document.getElementById('lodgeAnimationFrame').src = `frames/${date}/lodge/${time}.jpg`;
+  const imgA = document.getElementById('lodgeAnimationFrame');
+  const imgB = document.getElementById('lodgeAnimationFrameB');
+
+  if (instant) {
+    imgA.src = src;
+    imgB.style.transition = 'none';
+    imgB.style.opacity = '0';
+  } else {
+    // Load into the hidden layer, then fade it in
+    imgB.onload = () => {
+      imgB.style.transition = 'opacity 0.6s ease';
+      imgB.style.opacity = '1';
+      setTimeout(() => {
+        imgA.src = src;
+        imgB.style.transition = 'none';
+        imgB.style.opacity = '0';
+      }, 620);
+    };
+    imgB.src = src;
+  }
+
   const utcDate = new Date(`${date}T${hh}:${mm}:00Z`);
   const pacificStr = utcDate.toLocaleString('en-US', {
     timeZone: 'America/Los_Angeles',
@@ -1217,7 +1240,7 @@ function playLodgeAnimation() {
   _lodgePlayCount = 0;
   const duration = Math.round(parseFloat(document.getElementById('timelapseDuration').value) * 1000) || 1000;
   const repeatCount = parseInt(document.getElementById('timelapseRepeat').value) || 2;
-  showLodgeFrame();
+  showLodgeFrame(true);
   if (_lodgeAnimationInterval) clearInterval(_lodgeAnimationInterval);
   _lodgeAnimationInterval = setInterval(() => {
     _lodgeAnimationIndex++;
@@ -1243,7 +1266,7 @@ document.getElementById('lodgeTapBack').addEventListener('click', (e) => {
   if (_lodgeAnimationInterval) { clearInterval(_lodgeAnimationInterval); _lodgeAnimationInterval = null; }
   _lodgePaused = true;
   _lodgeAnimationIndex--;
-  showLodgeFrame();
+  showLodgeFrame(true);
 });
 
 document.getElementById('lodgeTapFwd').addEventListener('click', (e) => {
@@ -1251,7 +1274,7 @@ document.getElementById('lodgeTapFwd').addEventListener('click', (e) => {
   if (_lodgeAnimationInterval) { clearInterval(_lodgeAnimationInterval); _lodgeAnimationInterval = null; }
   _lodgePaused = true;
   _lodgeAnimationIndex++;
-  showLodgeFrame();
+  showLodgeFrame(true);
 });
 
 document.getElementById('lodgeTapPause').addEventListener('click', (e) => {
