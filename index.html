@@ -462,7 +462,6 @@ body {
     <div style="position:absolute;bottom:6px;left:8px;right:8px;background:rgba(0,0,0,0.55);color:white;padding:4px 8px;border-radius:4px;font-size:10px;z-index:15;">
       <span id="lodgeAnimationTime"></span> <span style="float:right;"><span id="lodgeFrameCount">0</span>/<span id="lodgeFrameTotal">0</span></span>
     </div>
-    <button id="lodgeBackButton" style="position:absolute;top:8px;right:8px;background:rgba(0,0,0,0.6);color:#fff;border:none;border-radius:20px;padding:4px 10px;cursor:pointer;font-size:10px;font-weight:600;z-index:20;">✕ Live</button>
     <div style="position:absolute;bottom:0;left:0;right:0;height:3px;background:rgba(255,255,255,0.2);z-index:15;">
       <div id="lodgeProgressBar" style="height:100%;width:0%;background:#fff;transition:width 0.4s linear;"></div>
     </div>
@@ -1224,9 +1223,9 @@ function showLodgeFrame(instant) {
   const utcDate = new Date(`${date}T${hh}:${mm}:00Z`);
   const pacificStr = utcDate.toLocaleString('en-US', {
     timeZone: 'America/Los_Angeles',
-    month: 'short', day: 'numeric',
+    weekday: 'short', month: 'short', day: 'numeric',
     hour: 'numeric', minute: '2-digit', hour12: true
-  });
+  }).replace(/^(\w+) /, '$1, ');
   document.getElementById('lodgeAnimationTime').textContent = pacificStr;
   document.getElementById('lodgeFrameCount').textContent = _lodgeAnimationIndex + 1;
   document.getElementById('lodgeProgressBar').style.width = Math.round((_lodgeAnimationIndex + 1) / frames.length * 100) + '%';
@@ -1287,14 +1286,6 @@ document.getElementById('lodgeTapPause').addEventListener('click', (e) => {
   }
 });
 
-document.getElementById('lodgeBackButton').addEventListener('click', () => {
-  if (_lodgeAnimationInterval) clearInterval(_lodgeAnimationInterval);
-  _lodgeAnimationInterval = null;
-  _lodgePaused = false;
-  document.getElementById('lodgeAnimationContainer').style.display = 'none';
-  document.getElementById('lodgeLiveLink').style.display = '';
-  document.getElementById('lodgePlayButton').textContent = '▶ Timelapse';
-});
 
 // Show play button on load if timelapse is enabled
 if (document.getElementById('toggleLodgeTimelapse').checked) {
