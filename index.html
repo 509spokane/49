@@ -932,7 +932,10 @@ async function loadCurrentWeather() {
     document.getElementById('wxTempLarge').textContent = `${s.temp}°`;
 
     const rows = [];
-    if (s.wind)          rows.push(`<div class="wx-ov-item"><div class="wx-ov-lbl">Wind</div><div class="wx-ov-val">${s.wind}</div></div>`);
+    if (s.wind) {
+      const windVal = /\d\s*mph$/i.test(s.wind) ? s.wind : s.wind.replace(/\s*mph$/i, '').trim();
+      rows.push(`<div class="wx-ov-item"><div class="wx-ov-lbl">Wind</div><div class="wx-ov-val">${windVal}</div></div>`);
+    }
     if (s.visibility)    rows.push(`<div class="wx-ov-item"><div class="wx-ov-lbl">Visibility</div><div class="wx-ov-val">${s.visibility}</div></div>`);
     if (s.precipitation) rows.push(`<div class="wx-ov-item"><div class="wx-ov-lbl">Precip</div><div class="wx-ov-val">${s.precipitation}</div></div>`);
     document.getElementById('wxWindInfo').innerHTML = rows.join('');
