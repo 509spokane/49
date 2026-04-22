@@ -607,6 +607,30 @@ body {
       <label for="timelapseRepeat" style="color:#475569;">Repeat</label>
       <input type="number" id="timelapseRepeat" min="1" max="10" step="1" value="2" style="width:64px;padding:3px 6px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px;text-align:center;">
     </div>
+    <div class="settings-row" style="padding-left:4px;">
+      <label for="timelapseDateRange" style="color:#475569;">Date Range</label>
+      <select id="timelapseDateRange" style="padding:3px 6px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px;color:#334155;background:#fff;">
+        <option value="24h">Last 24 Hours</option>
+        <option value="custom">Custom Dates</option>
+      </select>
+    </div>
+    <div id="timelapseCustomDates" style="display:none;">
+      <div class="settings-row" style="padding-left:4px;">
+        <label for="timelapseStartDate" style="color:#475569;">Start Date</label>
+        <select id="timelapseStartDate" style="padding:3px 6px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px;color:#334155;background:#fff;"></select>
+      </div>
+      <div class="settings-row" style="padding-left:4px;">
+        <label for="timelapseEndDate" style="color:#475569;">End Date</label>
+        <select id="timelapseEndDate" style="padding:3px 6px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px;color:#334155;background:#fff;"></select>
+      </div>
+      <div class="settings-row" style="padding-left:4px;">
+        <label for="timelapseImages" style="color:#475569;">Images</label>
+        <select id="timelapseImages" style="padding:3px 6px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px;color:#334155;background:#fff;">
+          <option value="all">All available</option>
+          <option value="one">One image / day</option>
+        </select>
+      </div>
+    </div>
   </div>
 </details>
 
@@ -1127,6 +1151,90 @@ document.getElementById('timelapseRepeat').addEventListener('change', (e) => {
   localStorage.setItem('timelapseRepeat', v);
 });
 
+// Timelapse date range settings
+let _availableDates = [];
+
+function formatDateLabel(dateStr) {
+  // dateStr = "YYYY-MM-DD", display as "Mon, Apr 7"
+  const d = new Date(dateStr + 'T12:00:00Z');
+  return d.toLocaleDateString('en-US', { timeZone: 'America/Los_Angeles', weekday: 'short', month: 'short', day: 'numeric' });
+}
+
+async function loadAvailableDates() {
+  try {
+    const res = await fetch('frames/index.json?t=' + Date.now());
+    if (!res.ok) return;
+    _availableDates = await res.json();
+    if (!_availableDates.length) return;
+
+    const startSel = document.getElementById('timelapseStartDate');
+    const endSel = document.getElementById('timelapseEndDate');
+    startSel.innerHTML = '';
+    endSel.innerHTML = '';
+
+    _availableDates.forEach(d => {
+      startSel.appendChild(new Option(formatDateLabel(d), d));
+      endSel.appendChild(new Option(formatDateLabel(d), d));
+    });
+
+    // Default start = earliest, end = most recent
+    const savedStart = localStorage.getItem('timelapseStartDate');
+    const savedEnd = localStorage.getItem('timelapseEndDate');
+    startSel.value = (savedStart && _availableDates.includes(savedStart)) ? savedStart : _availableDates[0];
+    endSel.value = (savedEnd && _availableDates.includes(savedEnd)) ? savedEnd : _availableDates[_availableDates.length - 1];
+
+    syncDateDropdowns();
+  } catch(e) {}
+}
+
+function syncDateDropdowns() {
+  // Ensure end date options only include dates >= start date
+  const startSel = document.getElementById('timelapseStartDate');
+  const endSel = document.getElementById('timelapseEndDate');
+  const startVal = startSel.value;
+  const endVal = endSel.value;
+  endSel.innerHTML = '';
+  const validEnd = _availableDates.filter(d => d >= startVal);
+  validEnd.forEach(d => endSel.appendChild(new Option(formatDateLabel(d), d)));
+  endSel.value = (endVal >= startVal && validEnd.includes(endVal)) ? endVal : validEnd[validEnd.length - 1];
+}
+
+const savedDateRange = localStorage.getItem('timelapseDateRange') || '24h';
+document.getElementById('timelapseDateRange').value = savedDateRange;
+document.getElementById('timelapseCustomDates').style.display = savedDateRange === 'custom' ? '' : 'none';
+const savedImages = localStorage.getItem('timelapseImages') || 'all';
+document.getElementById('timelapseImages').value = savedImages;
+
+document.getElementById('timelapseDateRange').addEventListener('change', (e) => {
+  const isCustom = e.target.value === 'custom';
+  document.getElementById('timelapseCustomDates').style.display = isCustom ? '' : 'none';
+  localStorage.setItem('timelapseDateRange', e.target.value);
+  if (isCustom && !_availableDates.length) loadAvailableDates();
+});
+
+document.getElementById('timelapseStartDate').addEventListener('change', (e) => {
+  localStorage.setItem('timelapseStartDate', e.target.value);
+  syncDateDropdowns();
+  localStorage.setItem('timelapseEndDate', document.getElementById('timelapseEndDate').value);
+});
+
+document.getElementById('timelapseEndDate').addEventListener('change', (e) => {
+  localStorage.setItem('timelapseEndDate', e.target.value);
+});
+
+document.getElementById('timelapseImages').addEventListener('change', (e) => {
+  localStorage.setItem('timelapseImages', e.target.value);
+});
+
+// Pre-load dates if custom mode is already selected, otherwise load on settings open
+if (savedDateRange === 'custom') {
+  loadAvailableDates();
+} else {
+  document.querySelector('.settings-section').addEventListener('toggle', function onOpen() {
+    if (this.open) { loadAvailableDates(); this.removeEventListener('toggle', onOpen); }
+  });
+}
+
 // Lodge timelapse animation logic
 let _lodgeAnimationFrames = [];
 let _lodgeAnimationIndex = 0;
@@ -1147,31 +1255,58 @@ document.getElementById('lodgePlayButton').addEventListener('click', async (e) =
   }
 
   try {
-    // Load all available dates from index, then combine frames from last 24h
     const cacheBust = '?t=' + Date.now();
     const idxRes = await fetch('frames/index.json' + cacheBust);
     if (!idxRes.ok) throw new Error('Frame index not found');
     const dates = await idxRes.json();
 
-    const now = Date.now();
-    const cutoff = now - 24 * 60 * 60 * 1000;
+    const dateRange = document.getElementById('timelapseDateRange').value;
+    const imagesMode = document.getElementById('timelapseImages').value;
+
+    let datesToLoad = [];
+    if (dateRange === '24h') {
+      const cutoff = Date.now() - 24 * 60 * 60 * 1000;
+      datesToLoad = dates.filter(d => new Date(d + 'T23:59:00Z').getTime() >= cutoff);
+    } else {
+      const startDate = document.getElementById('timelapseStartDate').value;
+      const endDate = document.getElementById('timelapseEndDate').value;
+      datesToLoad = dates.filter(d => d >= startDate && d <= endDate);
+    }
 
     const allFrames = [];
-    for (const date of dates) {
+    for (const date of datesToLoad) {
       const res = await fetch(`frames/${date}/manifest.json` + cacheBust);
       if (!res.ok) continue;
       const manifest = await res.json();
-      for (const time of (manifest.lodge || [])) {
-        const [hh, mm] = time.split('-');
-        const frameUTC = new Date(`${date}T${hh}:${mm}:00Z`).getTime();
-        if (frameUTC >= cutoff) {
-          allFrames.push({ date, time });
+      const lodgeTimes = manifest.lodge || [];
+
+      if (dateRange === '24h') {
+        const cutoff = Date.now() - 24 * 60 * 60 * 1000;
+        for (const time of lodgeTimes) {
+          const [hh, mm] = time.split('-');
+          if (new Date(`${date}T${hh}:${mm}:00Z`).getTime() >= cutoff) {
+            allFrames.push({ date, time });
+          }
         }
+      } else if (imagesMode === 'one') {
+        // Pick image closest to noon Pacific (noon PT = 20:00 UTC, or 19:00 UTC during PDT)
+        // Use 20:00 UTC as a reasonable noon Pacific approximation
+        const noonUTC = 20 * 60; // minutes since midnight UTC
+        let best = null, bestDiff = Infinity;
+        for (const time of lodgeTimes) {
+          const [hh, mm] = time.split('-');
+          const minsUTC = parseInt(hh) * 60 + parseInt(mm);
+          const diff = Math.abs(minsUTC - noonUTC);
+          if (diff < bestDiff) { bestDiff = diff; best = time; }
+        }
+        if (best) allFrames.push({ date, time: best });
+      } else {
+        for (const time of lodgeTimes) allFrames.push({ date, time });
       }
     }
 
     if (allFrames.length === 0) {
-      alert('No frames available yet. The timelapse captures frames roughly every 10–30 minutes.');
+      alert('No frames available for the selected date range.');
       return;
     }
 
