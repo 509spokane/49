@@ -450,7 +450,7 @@ body {
 <div id="webcamSections">
 <div class="section">
   <a id="lodgeLiveLink" href="https://www.ski49n.com/webcams/lodge.jpg">
-    <img id="lodgeLiveImage" src="https://www.ski49n.com/webcams/lodge.jpg" alt="Lodge Webcam" />
+    <img id="lodgeLiveImage" src="https://www.ski49n.com/webcams/lodge.jpg" alt="Lodge Webcam" width="1600" height="900" />
   </a>
   <div id="lodgeAnimationContainer" style="display:none;position:relative;">
     <img id="lodgeAnimationFrame" src="" alt="Timelapse frame" style="width:100%;display:block;" />
@@ -473,13 +473,13 @@ body {
 </div>
 <div class="section">
   <a href="https://www.ski49n.com/webcams/summit.jpg">
-    <img src="https://www.ski49n.com/webcams/summit.jpg" alt="Summit Webcam" />
+    <img src="https://www.ski49n.com/webcams/summit.jpg" alt="Summit Webcam" width="1600" height="900" />
   </a>
   <div class="cam-label">Summit</div>
 </div>
 <div class="section">
   <a href="https://www.ski49n.com/webcams/sunrise.jpg">
-    <img src="https://www.ski49n.com/webcams/sunrise.jpg" alt="Chair 5 Webcam" />
+    <img src="https://www.ski49n.com/webcams/sunrise.jpg" alt="Chair 5 Webcam" width="1600" height="900" />
   </a>
   <div class="cam-label">Chair 5</div>
 </div>
@@ -1101,8 +1101,6 @@ const savedSpecialNotes = localStorage.getItem('showSpecialNotes');
 if (savedSpecialNotes !== null) document.getElementById('toggleSpecialNotes').checked = savedSpecialNotes !== 'false';
 const savedTimelapseDuration = localStorage.getItem('timelapseDuration');
 if (savedTimelapseDuration !== null) document.getElementById('timelapseDuration').value = savedTimelapseDuration;
-const savedTimelapseRepeat = localStorage.getItem('timelapseRepeat');
-if (savedTimelapseRepeat !== null) document.getElementById('timelapseRepeat').value = savedTimelapseRepeat;
 applySettings();
 
 document.getElementById('toggleConditions').addEventListener('change', applySettings);
