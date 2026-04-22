@@ -1462,6 +1462,19 @@ document.getElementById('specialNotesHeader').addEventListener('click', () => {
   }
 });
 
+// Refresh live Lodge image every 5 minutes to ensure it's always fresh
+// (even though captures happen every 30 min, users see the most current image available)
+function refreshLodgeLiveImage() {
+  const img = document.getElementById('lodgeLiveImage');
+  if (img && !document.getElementById('lodgeAnimationContainer').style.display) {
+    // Only refresh if not in timelapse mode
+    img.src = 'https://www.ski49n.com/webcams/lodge.jpg?t=' + Date.now();
+  }
+}
+// Initial refresh and then every 5 minutes
+refreshLodgeLiveImage();
+setInterval(refreshLodgeLiveImage, 5 * 60 * 1000);
+
 // Section ordering
 const SECTION_DEFS = [
   { key: 'specialNotes', wrapId: 'secw-specialNotes', inputId: 'order-specialNotes', settingRowId: 'srow-specialNotes', defaultOrder: 1 },
