@@ -21,6 +21,7 @@ jobs:
           DATE=$(date -u +%Y-%m-%d)
           TIME=$(date -u +%H-%M)
           mkdir -p "frames/$DATE/lodge"
+          CORRUPTED=false
 
           echo "Downloading lodge webcam at $DATE $TIME..."
           curl -s --connect-timeout 10 --max-time 30 \
@@ -36,32 +37,50 @@ jobs:
           # Validate it's a real JPEG (first 2 bytes must be FF D8)
           HEADER=$(xxd -l 2 -p "frames/$DATE/lodge/$TIME.jpg")
           if [ "$HEADER" != "ffd8" ]; then
-            echo "ERROR: Downloaded file is not a valid JPEG (header: $HEADER)"
-            rm "frames/$DATE/lodge/$TIME.jpg"
-            exit 1
+            echo "WARNING: Not a valid JPEG (header: $HEADER) — quarantining"
+            CORRUPTED=true
           fi
 
           # Deep-validate: fully decode the JPEG to catch partial/corrupted transfers
-          sudo apt-get install -y -q jpeginfo
-          if ! jpeginfo -c "frames/$DATE/lodge/$TIME.jpg" | grep -q "OK"; then
-            echo "ERROR: JPEG failed integrity check (corrupted image data)"
-            rm "frames/$DATE/lodge/$TIME.jpg"
-            exit 1
+          # (vertical stripes, grey halves, etc. that pass the header check)
+          if [ "$CORRUPTED" = "false" ]; then
+            sudo apt-get install -y -q jpeginfo
+            if ! jpeginfo -c "frames/$DATE/lodge/$TIME.jpg" | grep -q "OK"; then
+              echo "WARNING: JPEG failed integrity check — quarantining"
+              CORRUPTED=true
+            fi
           fi
-          echo "Downloaded: $(wc -c < frames/$DATE/lodge/$TIME.jpg) bytes (valid JPEG)"
 
-          MANIFEST="frames/$DATE/manifest.json"
-          if [ -f "$MANIFEST" ]; then
-            jq --arg t "$TIME" '.lodge += [$t] | .lodge |= unique | .lodge |= sort' "$MANIFEST" > "$MANIFEST.tmp" && mv "$MANIFEST.tmp" "$MANIFEST"
-            echo "Updated manifest"
+          if [ "$CORRUPTED" = "true" ]; then
+            # File stays in place — log it to quarantine index for admin review
+            mkdir -p frames/quarantine
+            QINDEX="frames/quarantine/index.json"
+            TIMESTAMP=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+            if [ -f "$QINDEX" ]; then
+              jq --arg date "$DATE" --arg time "$TIME" --arg ts "$TIMESTAMP" \
+                '. += [{"date":$date,"time":$time,"reason":"JPEG integrity check failed","quarantined_at":$ts}]' \
+                "$QINDEX" > "$QINDEX.tmp" && mv "$QINDEX.tmp" "$QINDEX"
+            else
+              printf '[{"date":"%s","time":"%s","reason":"JPEG integrity check failed","quarantined_at":"%s"}]\n' \
+                "$DATE" "$TIME" "$TIMESTAMP" > "$QINDEX"
+            fi
+            echo "Quarantined: frames/$DATE/lodge/$TIME.jpg added to $QINDEX"
           else
-            echo "{\"date\":\"$DATE\",\"lodge\":[\"$TIME\"]}" > "$MANIFEST"
-            echo "Created manifest"
-          fi
+            echo "Downloaded: $(wc -c < frames/$DATE/lodge/$TIME.jpg) bytes (valid JPEG)"
 
-          # Keep frames/index.json up to date with all available dates
-          ls frames/ | grep -E '^[0-9]{4}-[0-9]{2}-[0-9]{2}$' | sort | jq -Rs '[split("\n")[] | select(length>0)]' > frames/index.json
-          echo "Updated frames/index.json"
+            MANIFEST="frames/$DATE/manifest.json"
+            if [ -f "$MANIFEST" ]; then
+              jq --arg t "$TIME" '.lodge += [$t] | .lodge |= unique | .lodge |= sort' "$MANIFEST" > "$MANIFEST.tmp" && mv "$MANIFEST.tmp" "$MANIFEST"
+              echo "Updated manifest"
+            else
+              echo "{\"date\":\"$DATE\",\"lodge\":[\"$TIME\"]}" > "$MANIFEST"
+              echo "Created manifest"
+            fi
+
+            # Keep frames/index.json up to date with all available dates
+            ls frames/ | grep -E '^[0-9]{4}-[0-9]{2}-[0-9]{2}$' | sort | jq -Rs '[split("\n")[] | select(length>0)]' > frames/index.json
+            echo "Updated frames/index.json"
+          fi
 
       - name: Commit and push
         run: |
@@ -70,6 +89,7 @@ jobs:
           git config user.email "github-actions@github.com"
           git config user.name "GitHub Actions"
           git add "frames/$DATE/" frames/index.json
+          [ -d frames/quarantine ] && git add frames/quarantine/ || true
           if git diff --cached --quiet; then
             echo "No changes to commit"
           else
