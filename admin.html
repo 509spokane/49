@@ -41,6 +41,23 @@ header h1 { margin: 0; font-size: 16px; font-weight: 700; }
 .thumb.marked .thumb-mark { display: block; }
 .thumb-utc { font-size: 10px; color: #94a3b8; }
 
+.qthumb { background: #fff; border: 2px solid #fbbf24; border-radius: 8px; overflow: hidden; }
+.qthumb img { width: 100%; display: block; aspect-ratio: 16/9; object-fit: cover; background: #e2e8f0; }
+.qthumb-footer { padding: 5px 8px 3px; }
+.qthumb-date { font-size: 11px; font-weight: 600; color: #92400e; display: block; }
+.qthumb-time { font-size: 11px; color: #475569; display: block; }
+.qthumb-reason { font-size: 10px; color: #f59e0b; display: block; margin-top: 2px; }
+.qactions { display: flex; gap: 6px; padding: 6px 8px 8px; }
+.qactions button { flex: 1; padding: 5px 8px; border: none; border-radius: 5px; font-size: 12px; font-weight: 600; cursor: pointer; }
+.qactions button:disabled { opacity: 0.5; cursor: default; }
+.restore-btn { background: #dcfce7; color: #166534; }
+.restore-btn:hover:not(:disabled) { background: #bbf7d0; }
+.delete-btn { background: #fee2e2; color: #991b1b; }
+.delete-btn:hover:not(:disabled) { background: #fecaca; }
+
+.quarantine-btn { border-left-color: #f59e0b !important; }
+.quarantine-btn.active { background: #fffbeb; color: #92400e; border-left-color: #f59e0b; font-weight: 600; }
+
 .empty { text-align: center; padding: 60px 20px; color: #94a3b8; font-size: 14px; }
 .spinner { display: inline-block; width: 20px; height: 20px; border: 2px solid #e2e8f0; border-top-color: #64748b; border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle; margin-right: 6px; }
 @keyframes spin { to { transform: rotate(360deg); } }
@@ -65,7 +82,9 @@ header h1 { margin: 0; font-size: 16px; font-weight: 700; }
 
 <div class="layout">
   <div class="sidebar">
-    <div class="sidebar-title">Dates</div>
+    <div class="sidebar-title">Quarantine</div>
+    <button class="date-btn quarantine-btn" id="quarantineBtn" onclick="loadQuarantine()">⚠ Possibly Corrupted</button>
+    <div class="sidebar-title" style="margin-top: 10px;">Dates</div>
     <div id="datesList"><div class="empty" style="padding:20px 12px;font-size:12px;">Loading…</div></div>
   </div>
   <div class="main">
@@ -297,6 +316,137 @@ async function deleteMarked() {
 
   const remaining = document.querySelectorAll('.thumb').length;
   document.getElementById('statusMsg').textContent = `${remaining} image${remaining !== 1 ? 's' : ''} — click to mark for deletion`;
+}
+
+// — Quarantine —
+async function loadQuarantine() {
+  _currentDate = null;
+  _markedTimes.clear();
+  updateDeleteBtn();
+
+  document.querySelectorAll('.date-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('quarantineBtn').classList.add('active');
+
+  document.getElementById('pageTitle').textContent = '⚠ Possibly Corrupted Images';
+  document.getElementById('statusMsg').innerHTML = '<span class="spinner"></span>Loading…';
+  document.getElementById('imageGrid').innerHTML = '';
+
+  try {
+    const res = await fetch('frames/quarantine/index.json?t=' + Date.now());
+    if (!res.ok) {
+      document.getElementById('statusMsg').textContent = '';
+      document.getElementById('imageGrid').innerHTML = '<div class="empty">No possibly corrupted images found.</div>';
+      return;
+    }
+    const items = await res.json();
+    document.getElementById('statusMsg').textContent = `${items.length} possibly corrupted image${items.length !== 1 ? 's' : ''}`;
+
+    if (items.length === 0) {
+      document.getElementById('imageGrid').innerHTML = '<div class="empty">No possibly corrupted images.</div>';
+      return;
+    }
+
+    const grid = document.getElementById('imageGrid');
+    items.forEach(item => {
+      const { date, time, reason, quarantined_at } = item;
+      const [hh, mm] = time.split('-');
+      const utc = new Date(`${date}T${hh}:${mm}:00Z`);
+      const ptLabel = utc.toLocaleString('en-US', { timeZone: 'America/Los_Angeles', weekday: 'short', hour: 'numeric', minute: '2-digit', hour12: true });
+      const qDate = quarantined_at ? new Date(quarantined_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '';
+
+      const div = document.createElement('div');
+      div.className = 'qthumb';
+      div.innerHTML = `
+        <img src="frames/${date}/lodge/${time}.jpg" loading="lazy" alt="${time}" />
+        <div class="qthumb-footer">
+          <span class="qthumb-date">${date}</span>
+          <span class="qthumb-time">${ptLabel}</span>
+          <span class="qthumb-reason">⚠ ${reason || 'Integrity check failed'}${qDate ? ' · ' + qDate : ''}</span>
+        </div>
+        <div class="qactions">
+          <button class="restore-btn" onclick="restoreImage('${date}','${time}',this)">✓ Restore</button>
+          <button class="delete-btn" onclick="deleteQuarantined('${date}','${time}',this)">🗑 Delete</button>
+        </div>
+      `;
+      grid.appendChild(div);
+    });
+  } catch(e) {
+    document.getElementById('statusMsg').textContent = '';
+    document.getElementById('imageGrid').innerHTML = `<div class="empty" style="color:#ef4444;">Error: ${e.message}</div>`;
+  }
+}
+
+async function restoreImage(date, time, btn) {
+  if (!getPat()) { alert('Please enter and save your GitHub Personal Access Token first.'); return; }
+  if (!confirm(`Restore ${date} ${time} back to the normal timelapse?`)) return;
+
+  btn.disabled = true;
+  btn.closest('.qthumb').querySelector('.delete-btn').disabled = true;
+  btn.textContent = '…';
+
+  try {
+    // Remove from quarantine index
+    const qData = await ghGet('frames/quarantine/index.json');
+    const qList = JSON.parse(atob(qData.content.replace(/\n/g, '')));
+    const newQList = qList.filter(item => !(item.date === date && item.time === time));
+    await ghPut('frames/quarantine/index.json', JSON.stringify(newQList, null, 2), qData.sha,
+      `Restore ${date} ${time} from quarantine`);
+
+    // Add back to date manifest
+    const mData = await ghGet(`frames/${date}/manifest.json`);
+    const manifest = JSON.parse(atob(mData.content.replace(/\n/g, '')));
+    if (!manifest.lodge.includes(time)) {
+      manifest.lodge.push(time);
+      manifest.lodge.sort();
+    }
+    await ghPut(`frames/${date}/manifest.json`, JSON.stringify(manifest, null, 2), mData.sha,
+      `Restore ${time} to manifest for ${date}`);
+
+    btn.closest('.qthumb').remove();
+    const remaining = document.querySelectorAll('.qthumb').length;
+    document.getElementById('statusMsg').textContent = `${remaining} possibly corrupted image${remaining !== 1 ? 's' : ''}`;
+    toast(`✓ Restored ${date} ${time} to timelapse`);
+  } catch(e) {
+    btn.disabled = false;
+    btn.closest('.qthumb').querySelector('.delete-btn').disabled = false;
+    btn.textContent = '✓ Restore';
+    alert(`Restore failed: ${e.message}`);
+  }
+}
+
+async function deleteQuarantined(date, time, btn) {
+  if (!getPat()) { alert('Please enter and save your GitHub Personal Access Token first.'); return; }
+  if (!confirm(`Permanently delete ${date} ${time}?`)) return;
+
+  btn.disabled = true;
+  btn.closest('.qthumb').querySelector('.restore-btn').disabled = true;
+  btn.textContent = '…';
+
+  try {
+    // Get SHA via directory listing (avoids 1MB API limit)
+    const dirListing = await ghGet(`frames/${date}/lodge`);
+    const fileEntry = Array.isArray(dirListing) ? dirListing.find(f => f.name === `${time}.jpg`) : null;
+    if (!fileEntry) throw new Error('File not found in directory listing');
+    await ghDelete(`frames/${date}/lodge/${time}.jpg`, fileEntry.sha,
+      `Delete quarantined frame ${date} ${time}`);
+
+    // Remove from quarantine index
+    const qData = await ghGet('frames/quarantine/index.json');
+    const qList = JSON.parse(atob(qData.content.replace(/\n/g, '')));
+    const newQList = qList.filter(item => !(item.date === date && item.time === time));
+    await ghPut('frames/quarantine/index.json', JSON.stringify(newQList, null, 2), qData.sha,
+      `Remove deleted image ${date} ${time} from quarantine index`);
+
+    btn.closest('.qthumb').remove();
+    const remaining = document.querySelectorAll('.qthumb').length;
+    document.getElementById('statusMsg').textContent = `${remaining} possibly corrupted image${remaining !== 1 ? 's' : ''}`;
+    toast(`✓ Permanently deleted ${date} ${time}`);
+  } catch(e) {
+    btn.disabled = false;
+    btn.closest('.qthumb').querySelector('.restore-btn').disabled = false;
+    btn.textContent = '🗑 Delete';
+    alert(`Delete failed: ${e.message}`);
+  }
 }
 
 // — Init —
