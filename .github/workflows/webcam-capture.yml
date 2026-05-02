@@ -32,7 +32,15 @@ jobs:
             echo "ERROR: Image download failed or empty"
             exit 1
           fi
-          echo "Downloaded: $(wc -c < frames/$DATE/lodge/$TIME.jpg) bytes"
+
+          # Validate it's a real JPEG (first 2 bytes must be FF D8)
+          HEADER=$(xxd -l 2 -p "frames/$DATE/lodge/$TIME.jpg")
+          if [ "$HEADER" != "ffd8" ]; then
+            echo "ERROR: Downloaded file is not a valid JPEG (header: $HEADER)"
+            rm "frames/$DATE/lodge/$TIME.jpg"
+            exit 1
+          fi
+          echo "Downloaded: $(wc -c < frames/$DATE/lodge/$TIME.jpg) bytes (valid JPEG)"
 
           MANIFEST="frames/$DATE/manifest.json"
           if [ -f "$MANIFEST" ]; then
