@@ -242,11 +242,23 @@ async function deleteMarked() {
 
   let deleted = 0, errors = [];
 
+  // Fetch directory listing once to get all SHAs (avoids 1MB API limit on file content fetch)
+  let dirListing = null;
+  try {
+    dirListing = await ghGet(`frames/${_currentDate}/lodge`);
+  } catch(e) {
+    document.getElementById('statusMsg').textContent = '';
+    document.getElementById('deleteMarkedBtn').disabled = false;
+    alert(`Could not read directory listing: ${e.message}`);
+    return;
+  }
+
   for (const time of list) {
     try {
       const filePath = `frames/${_currentDate}/lodge/${time}.jpg`;
-      const fileData = await ghGet(filePath);
-      await ghDelete(filePath, fileData.sha, `Remove corrupted frame ${_currentDate} ${time}`);
+      const fileEntry = Array.isArray(dirListing) ? dirListing.find(f => f.name === `${time}.jpg`) : null;
+      if (!fileEntry) throw new Error(`File not found in directory listing`);
+      await ghDelete(filePath, fileEntry.sha, `Remove corrupted frame ${_currentDate} ${time}`);
       deleted++;
     } catch(e) {
       errors.push(`${time}: ${e.message}`);
