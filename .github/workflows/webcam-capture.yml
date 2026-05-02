@@ -40,6 +40,14 @@ jobs:
             rm "frames/$DATE/lodge/$TIME.jpg"
             exit 1
           fi
+
+          # Deep-validate: fully decode the JPEG to catch partial/corrupted transfers
+          sudo apt-get install -y -q jpeginfo
+          if ! jpeginfo -c "frames/$DATE/lodge/$TIME.jpg" | grep -q "OK"; then
+            echo "ERROR: JPEG failed integrity check (corrupted image data)"
+            rm "frames/$DATE/lodge/$TIME.jpg"
+            exit 1
+          fi
           echo "Downloaded: $(wc -c < frames/$DATE/lodge/$TIME.jpg) bytes (valid JPEG)"
 
           MANIFEST="frames/$DATE/manifest.json"
