@@ -19,49 +19,53 @@ jobs:
         env:
           # Project ref from the pause email (not a secret — it's in the URL).
           SUPABASE_URL: https://oximxoedgrhlveeycatb.supabase.co
-          # Optional: add these in repo Settings → Secrets/Variables to upgrade
-          # the ping to a real database query (guarantees DB activity).
-          #   Secret   SUPABASE_ANON_KEY  — your project's anon/public API key
-          #   Variable SUPABASE_TABLE     — any existing table name
+          # The project's public API key — works with either the legacy `anon`
+          # JWT or a new `sb_publishable_...` key. Sent as the `apikey` header.
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          # Optional: set this repo Variable to ALSO run a real table SELECT each
+          # time (guarantees the Postgres database itself sees a query).
           SUPABASE_TABLE: ${{ vars.SUPABASE_TABLE }}
         run: |
           set -u
 
-          # This project's gateway rejects keyless requests (401 before they
-          # reach anything), so the anon key is required for the ping to count
-          # as real activity. Fail loudly if it hasn't been configured yet.
+          # This project's gateway rejects keyless requests, so the public API
+          # key is required for the ping to count as real activity. Fail loudly
+          # if it hasn't been configured yet.
           if [ -z "${SUPABASE_ANON_KEY:-}" ]; then
             echo "ERROR: SUPABASE_ANON_KEY is not set."
             echo "Add it under repo Settings -> Secrets and variables -> Actions"
             echo "  -> New repository secret -> name: SUPABASE_ANON_KEY"
-            echo "Find the value in the Supabase dashboard: Project Settings -> API"
-            echo "  -> Project API keys -> 'anon public'."
+            echo "Value: Supabase dashboard -> Project Settings -> API -> the"
+            echo "  'anon public' or 'publishable' key."
             exit 1
           fi
 
-          # Prefer a real table SELECT (touches Postgres directly). Falls back to
-          # the REST API root, which still reaches PostgREST with the key.
-          if [ -n "${SUPABASE_TABLE:-}" ]; then
-            endpoint="$SUPABASE_URL/rest/v1/$SUPABASE_TABLE?select=*&limit=1"
-          else
-            endpoint="$SUPABASE_URL/rest/v1/"
-          fi
-
+          # Primary keep-alive: an authenticated request to the Auth service.
+          # Returns 200 with the public key and counts as project API activity.
           code=$(curl -s -o /dev/null -w '%{http_code}' --connect-timeout 15 --max-time 30 \
             -H "apikey: $SUPABASE_ANON_KEY" \
-            -H "Authorization: Bearer $SUPABASE_ANON_KEY" \
-            "$endpoint" || echo 000)
-          echo "GET ${endpoint%%\?*} -> $code"
+            "$SUPABASE_URL/auth/v1/health" || echo 000)
+          echo "GET /auth/v1/health -> $code"
 
           case "$code" in
             000)
               echo "ERROR: no HTTP response — could not reach the project."
               exit 1 ;;
-            401|403)
-              echo "ERROR: reached the project but the anon key was rejected ($code)."
-              echo "Double-check SUPABASE_ANON_KEY is the current 'anon public' key."
-              exit 1 ;;
-            *)
+            2*)
               echo "Keep-alive ping succeeded (HTTP $code)." ;;
+            *)
+              echo "ERROR: reached the project but got HTTP $code."
+              echo "Check that SUPABASE_ANON_KEY is the current public/anon key."
+              exit 1 ;;
           esac
+
+          # Optional: if a table is configured, also do a real SELECT so the
+          # database registers a query. Logged but non-fatal (RLS may return
+          # 401/empty depending on your policies — the health ping above is
+          # what keeps the project active).
+          if [ -n "${SUPABASE_TABLE:-}" ]; then
+            tcode=$(curl -s -o /dev/null -w '%{http_code}' --connect-timeout 15 --max-time 30 \
+              -H "apikey: $SUPABASE_ANON_KEY" \
+              "$SUPABASE_URL/rest/v1/$SUPABASE_TABLE?select=*&limit=1" || echo 000)
+            echo "GET /rest/v1/$SUPABASE_TABLE -> $tcode"
+          fi
