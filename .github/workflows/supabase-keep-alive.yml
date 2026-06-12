@@ -25,25 +25,29 @@ jobs:
           # Optional: set this repo Variable to ALSO run a real table SELECT each
           # time (guarantees the Postgres database itself sees a query).
           SUPABASE_TABLE: ${{ vars.SUPABASE_TABLE }}
+        shell: bash
         run: |
+          # GitHub's default bash uses `set -e`, which would abort on curl's
+          # non-zero exit before we can inspect it. Handle errors manually.
+          set +e
           set -u
 
-          # This project's gateway rejects keyless requests, so the public API
-          # key is required for the ping to count as real activity. Fail loudly
-          # if it hasn't been configured yet.
+          # The public API key is required (the gateway rejects keyless requests).
           if [ -z "${SUPABASE_ANON_KEY:-}" ]; then
             echo "ERROR: SUPABASE_ANON_KEY is not set."
-            echo "Add it under repo Settings -> Secrets and variables -> Actions"
-            echo "  -> New repository secret -> name: SUPABASE_ANON_KEY"
-            echo "Value: Supabase dashboard -> Project Settings -> API -> the"
-            echo "  'anon public' or 'publishable' key."
+            echo "Add it under repo Settings -> Secrets and variables -> Actions."
             exit 1
           fi
+
+          host=$(printf '%s' "$SUPABASE_URL" | sed -E 's#^https?://([^/]+).*#\1#')
+          echo "Resolving $host ..."
+          getent hosts "$host" || echo "(no DNS record via getent)"
 
           # Primary keep-alive: an authenticated request to the Auth service.
           # Returns 200 with the public key and counts as project API activity.
           # A browser-ish User-Agent avoids Cloudflare resetting datacenter IPs.
           code=$(curl -sS -o /dev/null -w '%{http_code}' --connect-timeout 15 --max-time 30 \
+            --retry 3 --retry-connrefused --retry-delay 5 \
             -A "Mozilla/5.0 (compatible; supabase-keepalive/1.0)" \
             -H "apikey: $SUPABASE_ANON_KEY" \
             "$SUPABASE_URL/auth/v1/health" 2>/tmp/curlerr.txt)
@@ -51,25 +55,18 @@ jobs:
           echo "GET /auth/v1/health -> http=$code curl_exit=$rc"
           [ "$rc" -ne 0 ] && { echo "curl stderr:"; cat /tmp/curlerr.txt; }
 
-          case "$code" in
-            2*)
-              echo "Keep-alive ping succeeded (HTTP $code)." ;;
-            000|"")
-              echo "ERROR: no HTTP response — could not reach the project (curl exit $rc)."
-              exit 1 ;;
-            *)
-              echo "ERROR: reached the project but got HTTP $code."
-              echo "Check that SUPABASE_ANON_KEY is the current public/anon key."
-              exit 1 ;;
-          esac
-
           # Optional: if a table is configured, also do a real SELECT so the
-          # database registers a query. Logged but non-fatal (RLS may return
-          # 401/empty depending on your policies — the health ping above is
-          # what keeps the project active).
+          # database itself registers a query (non-fatal — RLS may vary).
           if [ -n "${SUPABASE_TABLE:-}" ]; then
-            tcode=$(curl -s -o /dev/null -w '%{http_code}' --connect-timeout 15 --max-time 30 \
+            tcode=$(curl -sS -o /dev/null -w '%{http_code}' --connect-timeout 15 --max-time 30 \
+              -A "Mozilla/5.0 (compatible; supabase-keepalive/1.0)" \
               -H "apikey: $SUPABASE_ANON_KEY" \
-              "$SUPABASE_URL/rest/v1/$SUPABASE_TABLE?select=*&limit=1" || echo 000)
-            echo "GET /rest/v1/$SUPABASE_TABLE -> $tcode"
+              "$SUPABASE_URL/rest/v1/$SUPABASE_TABLE?select=*&limit=1")
+            echo "GET /rest/v1/$SUPABASE_TABLE -> http=$tcode"
           fi
+
+          case "$code" in
+            2*) echo "Keep-alive ping succeeded (HTTP $code)."; exit 0 ;;
+          esac
+          echo "ERROR: keep-alive ping failed (http=$code, curl_exit=$rc)."
+          exit 1
