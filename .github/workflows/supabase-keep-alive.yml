@@ -42,17 +42,21 @@ jobs:
 
           # Primary keep-alive: an authenticated request to the Auth service.
           # Returns 200 with the public key and counts as project API activity.
-          code=$(curl -s -o /dev/null -w '%{http_code}' --connect-timeout 15 --max-time 30 \
+          # A browser-ish User-Agent avoids Cloudflare resetting datacenter IPs.
+          code=$(curl -sS -o /dev/null -w '%{http_code}' --connect-timeout 15 --max-time 30 \
+            -A "Mozilla/5.0 (compatible; supabase-keepalive/1.0)" \
             -H "apikey: $SUPABASE_ANON_KEY" \
-            "$SUPABASE_URL/auth/v1/health" || echo 000)
-          echo "GET /auth/v1/health -> $code"
+            "$SUPABASE_URL/auth/v1/health" 2>/tmp/curlerr.txt)
+          rc=$?
+          echo "GET /auth/v1/health -> http=$code curl_exit=$rc"
+          [ "$rc" -ne 0 ] && { echo "curl stderr:"; cat /tmp/curlerr.txt; }
 
           case "$code" in
-            000)
-              echo "ERROR: no HTTP response — could not reach the project."
-              exit 1 ;;
             2*)
               echo "Keep-alive ping succeeded (HTTP $code)." ;;
+            000|"")
+              echo "ERROR: no HTTP response — could not reach the project (curl exit $rc)."
+              exit 1 ;;
             *)
               echo "ERROR: reached the project but got HTTP $code."
               echo "Check that SUPABASE_ANON_KEY is the current public/anon key."
