@@ -1242,11 +1242,17 @@ async function loadTimelapseFrames(mode) {
     imagesMode = document.getElementById('timelapseImages').value;
   }
 
+  const manifests = await Promise.all(datesToLoad.map(async date => {
+    try {
+      const res = await fetch(`frames/${date}/manifest.json` + cacheBust);
+      return res.ok ? { date, manifest: await res.json() } : null;
+    } catch { return null; }
+  }));
+
   const allFrames = [];
-  for (const date of datesToLoad) {
-    const res = await fetch(`frames/${date}/manifest.json` + cacheBust);
-    if (!res.ok) continue;
-    const manifest = await res.json();
+  for (const entry of manifests) {
+    if (!entry) continue;
+    const { date, manifest } = entry;
     const lodgeTimes = manifest.lodge || [];
 
     if (mode === 'recent') {
