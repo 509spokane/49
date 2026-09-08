@@ -471,7 +471,10 @@ body {
   <button id="lodgeRecentButton" type="button" style="position:absolute;top:36px;right:10px;background:rgba(0,0,0,0.6);color:#fff;border:none;border-radius:20px;padding:3px 9px;cursor:pointer;font-size:10px;font-weight:600;z-index:10;">▶ Recent Timelapse</button>
   <button id="lodgeDailyButton" type="button" style="position:absolute;top:60px;right:10px;background:rgba(0,0,0,0.6);color:#fff;border:none;border-radius:20px;padding:3px 9px;cursor:pointer;font-size:10px;font-weight:600;z-index:10;">▶ Daily Timelapse</button>
   <button id="lodgeBackButton" type="button" style="display:none;position:absolute;top:36px;right:10px;background:rgba(0,0,0,0.6);color:#fff;border:none;border-radius:20px;padding:3px 9px;cursor:pointer;font-size:10px;font-weight:600;z-index:10;">← Back to Live View</button>
-  <div id="lodgeDailyToast" style="display:none;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,0.75);color:#fff;border-radius:10px;padding:14px 20px;font-size:13px;line-height:1.5;text-align:center;z-index:20;max-width:80%;pointer-events:none;"></div>
+  <div id="lodgeDailyToast" style="display:none;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,0.75);color:#fff;border-radius:10px;padding:14px 20px;font-size:13px;line-height:1.5;text-align:center;z-index:20;max-width:80%;">
+    <div id="lodgeDailyToastText"></div>
+    <button id="lodgeDailyGoButton" type="button" style="margin-top:10px;background:#fff;color:#111;border:none;border-radius:20px;padding:6px 16px;cursor:pointer;font-size:12px;font-weight:600;">Let's see it</button>
+  </div>
 </div>
 <div class="section">
   <a href="https://www.ski49n.com/webcams/summit.jpg">
@@ -1206,6 +1209,7 @@ function lodgeShowTimelapse(frames) {
   document.getElementById('lodgeRecentButton').style.display = 'none';
   document.getElementById('lodgeDailyButton').style.display = 'none';
   document.getElementById('lodgeBackButton').style.display = '';
+  document.getElementById('lodgeDailyToast').style.display = 'none';
   playLodgeAnimation();
 }
 
@@ -1285,14 +1289,21 @@ document.getElementById('lodgeDailyButton').addEventListener('click', async (e) 
     const startFormatted = startVal
       ? new Date(startVal + 'T12:00:00Z').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
       : startVal;
-    const toast = document.getElementById('lodgeDailyToast');
-    toast.textContent = `This will play a time lapse, one image per day, starting on the earliest date of ${startFormatted}.`;
-    toast.style.display = 'block';
+    document.getElementById('lodgeDailyToastText').textContent =
+      `This will play a time lapse, one image per day, starting on the earliest date of ${startFormatted}.`;
+    document.getElementById('lodgeDailyToast').style.display = 'block';
+  } catch (err) { alert('Unable to load timelapse: ' + err.message); }
+});
+
+document.getElementById('lodgeDailyGoButton').addEventListener('click', async (e) => {
+  e.stopPropagation(); e.preventDefault();
+  const toast = document.getElementById('lodgeDailyToast');
+  try {
     const frames = await loadTimelapseFrames('daily');
     toast.style.display = 'none';
     if (!frames.length) { alert('No frames available for the selected date range.'); return; }
     lodgeShowTimelapse(frames);
-  } catch (err) { alert('Unable to load timelapse: ' + err.message); }
+  } catch (err) { toast.style.display = 'none'; alert('Unable to load timelapse: ' + err.message); }
 });
 
 document.getElementById('lodgeBackButton').addEventListener('click', (e) => {
