@@ -100,5 +100,9 @@ jobs:
             echo "No changes to commit"
           else
             git commit -m "Webcam capture $DATE $TIME"
-            git push
+            for i in 1 2 3 4 5; do
+              git pull --rebase -q && git push && exit 0
+              sleep $((i * 5))
+            done
+            exit 1
           fi
