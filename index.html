@@ -512,6 +512,20 @@ body {
     <label style="color:#334155;font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:0.05em;">Show These Sections</label>
   </div>
   <div id="settingsRows" style="display:flex;flex-direction:column;">
+  <div class="settings-row" style="order:-2;">
+    <label for="toggleCurrentWeather">Current Weather (over image)</label>
+    <label class="toggle-switch">
+      <input type="checkbox" id="toggleCurrentWeather" checked>
+      <span class="toggle-slider"></span>
+    </label>
+  </div>
+  <div class="settings-row" style="order:-1;">
+    <label for="toggleAlerts">Weather Alerts (when active)</label>
+    <label class="toggle-switch">
+      <input type="checkbox" id="toggleAlerts" checked>
+      <span class="toggle-slider"></span>
+    </label>
+  </div>
   <div id="srow-specialNotes" class="settings-row" style="order:1;">
     <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0;">
       <input type="number" id="order-specialNotes" class="order-input" min="1" max="6" value="1" style="display:none;">
@@ -542,6 +556,13 @@ body {
       <span class="toggle-slider"></span>
     </label>
   </div>
+  <div id="srow-forecastTemps" class="settings-row" style="order:3;padding-left:16px;">
+    <label for="toggleWeather">Temps in Forecast</label>
+    <label class="toggle-switch">
+      <input type="checkbox" id="toggleWeather" checked>
+      <span class="toggle-slider"></span>
+    </label>
+  </div>
   <div id="srow-lifts" class="settings-row" style="order:4;">
     <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0;">
       <input type="number" id="order-lifts" class="order-input" min="1" max="6" value="4" style="display:none;">
@@ -569,27 +590,6 @@ body {
     </div>
     <label class="toggle-switch">
       <input type="checkbox" id="toggleFacebook" checked>
-      <span class="toggle-slider"></span>
-    </label>
-  </div>
-  <div class="settings-row" style="order:7;">
-    <label for="toggleWeather">Temps in Forecast</label>
-    <label class="toggle-switch">
-      <input type="checkbox" id="toggleWeather" checked>
-      <span class="toggle-slider"></span>
-    </label>
-  </div>
-  <div class="settings-row" style="order:8;">
-    <label for="toggleAlerts">Weather Alerts (when active)</label>
-    <label class="toggle-switch">
-      <input type="checkbox" id="toggleAlerts" checked>
-      <span class="toggle-slider"></span>
-    </label>
-  </div>
-  <div class="settings-row" style="order:9;">
-    <label for="toggleCurrentWeather">Current Weather (over image)</label>
-    <label class="toggle-switch">
-      <input type="checkbox" id="toggleCurrentWeather" checked>
       <span class="toggle-slider"></span>
     </label>
   </div>
@@ -1471,6 +1471,7 @@ function applyOrder() {
     if (el) el.style.order = order;
     const row = document.getElementById(s.settingRowId);
     if (row) row.style.order = order;
+    if (s.key === 'forecast') document.getElementById('srow-forecastTemps').style.order = order;
   });
 }
 function saveOrder() {
