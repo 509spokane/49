@@ -227,6 +227,8 @@ function sourceLabel(url) {
   return `<a href="${url}" target="_blank" rel="noopener">${name}</a>`;
 }
 
+const onePerSite = urls => urls.filter((u, i) => urls.findIndex(v => new URL(v).hostname === new URL(u).hostname) === i);
+
 function renderTable() {
   document.getElementById('seasons').innerHTML =
     '<tr><th>Season</th><th>Opening day</th><th>Confidence</th><th>Source</th></tr>' +
@@ -234,7 +236,7 @@ function renderTable() {
       <td class="nowrap">${shortSeason(s)}</td>
       <td class="nowrap ${s.start ? '' : 'missing'}">${s.label || '—'}</td>
       <td class="nowrap ${s.start ? '' : 'missing'}">${s.conf === 'Window' ? 'Date range' : s.conf}</td>
-      <td class="src">${s.src.length ? s.src.map(sourceLabel).join(', ') : '<span class="missing">—</span>'}</td>
+      <td class="src">${s.src.length ? onePerSite(s.src).map(sourceLabel).join(', ') : '<span class="missing">—</span>'}</td>
     </tr>`).join('');
 }
 
