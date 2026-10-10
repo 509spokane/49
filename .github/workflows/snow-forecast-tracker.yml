@@ -18,6 +18,8 @@ jobs:
 
       - name: Snapshot forecasts and mountain report
         run: python3 .github/scripts/snowtrack.py
+        env:
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
 
       - name: Commit and push
         run: |
