@@ -125,6 +125,7 @@ const SEASONS = [
 const DAY = 86400000;
 const AXIS_DAYS = 61; // Nov 1 → Jan 1
 const yearOf = s => parseInt(s.season);
+const shortSeason = s => `’${s.season.slice(2, 4)}–’${s.season.slice(5)}`;
 const offset = iso => (Date.parse(iso + 'T00:00:00Z') - Date.UTC(parseInt(iso), 10, 1)) / DAY;
 const mid = s => s.end ? (offset(s.start) + offset(s.end)) / 2 : offset(s.start);
 const offsetLabel = d => new Date(Date.UTC(2001, 10, 1) + Math.round(d) * DAY).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
@@ -145,8 +146,8 @@ function renderTiles() {
   const tiles = [
     ['Typical opening', offsetLabel(median(all)), 'median, all seasons'],
     ['Average opening', offsetLabel(mean(all)), `${dated.length} seasons with a date`],
-    ['Earliest', offsetLabel(mid(earliest)), earliest.season],
-    ['Latest', offsetLabel(mid(latest)), latest.season],
+    ['Earliest', offsetLabel(mid(earliest)), shortSeason(earliest)],
+    ['Latest', offsetLabel(mid(latest)), shortSeason(latest)],
     ['Last 11 seasons', offsetLabel(recent.avg), 'average, 2015–2025'],
   ];
   document.getElementById('tiles').innerHTML = tiles.map(([k, v, s]) =>
@@ -174,7 +175,7 @@ function renderChart() {
   out += `<line x1="${x(med)}" y1="${top - 4}" x2="${x(med)}" y2="${H - bottom}" stroke="var(--text-secondary)" stroke-width="1.5" stroke-dasharray="3 3"/>`;
   rows.forEach((s, i) => {
     const cy = top + i * rowH + rowH / 2;
-    out += `<text x="0" y="${cy + 4}" font-size="11" fill="var(--text-secondary)">${s.season}</text>`;
+    out += `<text x="0" y="${cy + 4}" font-size="11" fill="var(--text-secondary)">${shortSeason(s)}</text>`;
     if (!s.start) {
       out += `<text x="${x(1)}" y="${cy + 4}" font-size="11" fill="var(--text-muted)" font-style="italic">not found</text>`;
     } else if (s.end) {
@@ -195,7 +196,7 @@ function renderChart() {
     const r = rect.getBoundingClientRect(), w = wrap.getBoundingClientRect();
     const scale = r.width / W;
     const markX = s.start ? x(mid(s)) * scale : x(8) * scale;
-    tip.innerHTML = `<b>${s.season}</b> · ${s.label || 'Opening day not found'}${s.start ? ' · ' + s.conf : ''}`;
+    tip.innerHTML = `<b>${shortSeason(s)}</b> · ${s.label || 'Opening day not found'}${s.start ? ' · ' + s.conf : ''}`;
     tip.hidden = false;
     const tw = tip.offsetWidth / 2;
     tip.style.left = Math.min(Math.max(r.left - w.left + markX, tw + 4), w.width - tw - 4) + 'px';
@@ -235,7 +236,7 @@ function renderTable() {
   document.getElementById('seasons').innerHTML =
     '<tr><th>Season</th><th>Opening day</th><th>Confidence</th><th>Source</th></tr>' +
     [...SEASONS].reverse().map(s => `<tr>
-      <td class="nowrap">${s.season}</td>
+      <td class="nowrap">${shortSeason(s)}</td>
       <td class="nowrap ${s.start ? '' : 'missing'}">${s.label || '—'}</td>
       <td><span class="chip ${cls[s.conf]}">${s.conf === 'Window' ? 'Date range' : s.conf}</span></td>
       <td class="src">${s.src.length ? s.src.map(u => `<div>${sourceLabel(u)}</div>`).join('') : '<span class="missing">—</span>'}</td>
