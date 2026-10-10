@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>49° North Opening Day History</title>
+<link rel="icon" href="favicon.ico" />
+<link rel="apple-touch-icon" href="apple-touch-icon.png" />
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+:root {
+  color-scheme: light;
+  --surface: #ffffff;
+  --panel: #f8fafc;
+  --border: #e2e8f0;
+  --grid: #eef2f6;
+  --text-primary: #111111;
+  --text-secondary: #475569;
+  --text-muted: #94a3b8;
+  --series-1: #2a78d6;
+}
+* { box-sizing: border-box; }
+body { margin: 0; font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--surface); color: var(--text-primary); }
+.top img { width: 100%; display: block; }
+main { max-width: 860px; margin: 0 auto; padding: 14px 12px 40px; }
+.back { font-size: 13px; color: var(--text-secondary); text-decoration: none; }
+.back:hover { text-decoration: underline; }
+h1 { font-size: 22px; margin: 10px 0 2px; }
+.lede { margin: 0 0 16px; color: var(--text-secondary); font-size: 14px; }
+.caption { font-weight: 700; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: #888; margin: 22px 0 8px; }
+
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px; }
+.tile { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; }
+.tile .k { font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); font-weight: 600; }
+.tile .v { font-size: 22px; font-weight: 700; margin-top: 2px; font-variant-numeric: tabular-nums; }
+.tile .s { font-size: 12px; color: var(--text-muted); }
+
+.chart-wrap { position: relative; border: 1px solid var(--border); border-radius: 8px; padding: 10px 8px 4px; }
+.legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 12px; color: var(--text-secondary); padding: 0 4px 6px; align-items: center; }
+.legend svg { vertical-align: middle; margin-right: 4px; }
+#chart { width: 100%; height: auto; display: block; }
+#chart text { font-family: inherit; }
+.tip { position: absolute; pointer-events: none; background: #1e293b; color: #fff; font-size: 12px; line-height: 1.4; padding: 6px 9px; border-radius: 6px; white-space: nowrap; transform: translate(-50%, calc(-100% - 10px)); }
+.tip b { font-weight: 600; }
+
+.scroll { overflow-x: auto; border: 1px solid var(--border); border-radius: 8px; }
+table { border-collapse: collapse; width: 100%; font-size: 13px; }
+th, td { padding: 7px 10px; text-align: left; border-bottom: 1px solid var(--border); vertical-align: top; }
+tr:last-child td { border-bottom: none; }
+th { background: var(--panel); font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); font-weight: 600; white-space: nowrap; }
+td.nowrap { white-space: nowrap; }
+td.num { font-variant-numeric: tabular-nums; }
+#averages td:first-child { white-space: nowrap; }
+.missing { color: var(--text-muted); }
+.chip { display: inline-block; font-size: 11px; font-weight: 600; padding: 1px 8px; border-radius: 10px; border: 1px solid var(--border); color: var(--text-secondary); background: var(--panel); white-space: nowrap; }
+.chip.confirmed { color: var(--text-primary); border-color: #cbd5e1; }
+.chip.notfound { color: var(--text-muted); }
+.src a { color: var(--series-1); text-decoration: none; }
+.src a:hover { text-decoration: underline; }
+.src div + div { margin-top: 2px; }
+.private { color: var(--text-secondary); }
+.note { font-size: 12px; color: var(--text-muted); margin: 8px 2px 0; line-height: 1.5; }
+</style>
+</head>
+<body>
+<div class="top"><a href="./"><img src="49header.png" alt="49° North" /></a></div>
+<main>
+  <a class="back" href="./">← Back to live conditions</a>
+  <h1>Opening Day History</h1>
+  <p class="lede">When 49° North has opened for the ski season, 2000–01 through 2025–26.</p>
+
+  <div class="tiles" id="tiles"></div>
+
+  <div class="caption">Opening day by season</div>
+  <div class="chart-wrap" id="chartWrap">
+    <div class="legend">
+      <span><svg width="12" height="12"><circle cx="6" cy="6" r="5" fill="var(--series-1)"/></svg>Confirmed</span>
+      <span><svg width="12" height="12"><circle cx="6" cy="6" r="4.5" fill="#fff" stroke="var(--series-1)" stroke-width="2"/></svg>Likely</span>
+      <span><svg width="22" height="12"><rect x="1" y="2" width="20" height="8" rx="4" fill="var(--series-1)" opacity="0.45"/></svg>Date range</span>
+      <span><svg width="18" height="12"><line x1="9" y1="0" x2="9" y2="12" stroke="var(--text-secondary)" stroke-width="1.5" stroke-dasharray="3 3"/></svg>Median</span>
+    </div>
+    <svg id="chart" role="img" aria-label="Opening day of each season plotted between November 1 and January 1"></svg>
+    <div class="tip" id="tip" hidden></div>
+  </div>
+
+  <div class="caption">Averages</div>
+  <div class="scroll"><table id="averages"></table></div>
+  <p class="note">"Likely" dates count as given. Seasons with a date range count as the middle of the range.</p>
+
+  <div class="caption">All seasons</div>
+  <div class="scroll"><table id="seasons"></table></div>
+</main>
+
+<script>
+const SEASONS = [
+  { season: '2000–01', label: 'Sun Nov 26, 2000', start: '2000-11-26', conf: 'Confirmed', src: ['https://www.spokesman.com/stories/2000/nov/25/lookout-leads-way-for-skiers-thursday-night-snow/'] },
+  { season: '2001–02', conf: 'Not found', src: [] },
+  { season: '2002–03', conf: 'Not found', src: ['https://web.archive.org/web/20021128163953/http://www.ski49n.com/'] },
+  { season: '2003–04', conf: 'Not found', src: ['https://web.archive.org/web/20031125222529/http://www.ski49n.com/', 'https://web.archive.org/web/20031229033144/http://www.ski49n.com/'] },
+  { season: '2004–05', label: 'Fri Dec 10, 2004', start: '2004-12-10', conf: 'Confirmed', src: ['https://web.archive.org/web/20041207085321/http://www.ski49n.com/'] },
+  { season: '2005–06', label: 'Fri Nov 11, 2005', start: '2005-11-11', conf: 'Confirmed', src: ['https://www.spokesman.com/stories/2005/nov/08/ski-resorts-open-with-early-snow/', 'https://www.spokesman.com/stories/2005/nov/11/early-snow-has-ski-slopes-scrambling-to-draw/'] },
+  { season: '2006–07', label: 'Fri Nov 24, 2006', start: '2006-11-24', conf: 'Likely', src: ['https://www.spokesman.com/stories/2006/nov/24/all-area-ski-resorts-opening-today/', 'https://www.spokesman.com/stories/2006/nov/16/49-degrees-north-plans-friday-opening/'] },
+  { season: '2007–08', label: 'Dec 2–6, 2007', start: '2007-12-02', end: '2007-12-06', conf: 'Window', src: ['https://web.archive.org/web/20071201210513/http://www.ski49n.com:80/', 'https://web.archive.org/web/20071207174157/http://www.ski49n.com/'] },
+  { season: '2008–09', label: 'Sun Dec 14, 2008', start: '2008-12-14', conf: 'Confirmed', src: ['https://web.archive.org/web/20081216032609/http://www.ski49n.com/index.asp'] },
+  { season: '2009–10', label: 'Sat Nov 21, 2009', start: '2009-11-21', conf: 'Confirmed', src: ['https://web.archive.org/web/20131021165629/http://ski49n.com/news.php'] },
+  { season: '2010–11', label: 'Sat Nov 20, 2010', start: '2010-11-20', conf: 'Confirmed', src: ['https://web.archive.org/web/20131021165629/http://ski49n.com/news.php'] },
+  { season: '2011–12', label: '~Sat Nov 19, 2011', start: '2011-11-19', conf: 'Likely', src: ['https://web.archive.org/web/20131021165629/http://ski49n.com/news.php'] },
+  { season: '2012–13', conf: 'Not found', src: ['https://web.archive.org/web/20121227081657/http://www.ski49n.com/snow_report.php'] },
+  { season: '2013–14', label: 'Sun Nov 17, 2013', start: '2013-11-17', conf: 'Confirmed', src: ['https://www.krem.com/article/news/49-degrees-north-and-lookout-pass-open-for-ski-season/293-168321108', 'https://www.facebook.com/search/posts/?q=49%20Degrees%20North%20opening%20day%202013'] },
+  { season: '2014–15', label: 'Mon Dec 22, 2014', start: '2014-12-22', conf: 'Confirmed', src: ['https://x.com/search?q=from%3A49DegreesNorth%20since%3A2014-11-20%20until%3A2014-12-23&f=live'] },
+  { season: '2015–16', label: 'Sun Dec 6, 2015', start: '2015-12-06', conf: 'Confirmed', src: ['https://x.com/search?q=from%3A49DegreesNorth%20since%3A2015-12-04%20until%3A2015-12-07&f=live'] },
+  { season: '2016–17', label: 'Sat Nov 26, 2016', start: '2016-11-26', conf: 'Confirmed', src: ['email:Opening Day 2016-2017'] },
+  { season: '2017–18', label: 'Fri Nov 10, 2017', start: '2017-11-10', conf: 'Confirmed', src: ['https://x.com/search?q=from%3A49DegreesNorth%20since%3A2017-11-07%20until%3A2017-11-11&f=live'] },
+  { season: '2018–19', label: 'Nov 23 or 24, 2018', start: '2018-11-23', end: '2018-11-24', conf: 'Likely', src: ['https://x.com/search?q=from%3A49DegreesNorth%20since%3A2018-11-20%20until%3A2018-11-26&f=live'] },
+  { season: '2019–20', label: 'Sat Dec 14, 2019', start: '2019-12-14', conf: 'Confirmed', src: ['https://x.com/search?q=from%3A49DegreesNorth%20since%3A2019-12-13%20until%3A2019-12-16&f=live'] },
+  { season: '2020–21', label: '~Fri Dec 4, 2020', start: '2020-12-04', conf: 'Likely', src: ['https://x.com/search?q=from%3A49DegreesNorth%20since%3A2020-11-20%20until%3A2020-12-06&src=typed_query'] },
+  { season: '2021–22', label: 'Fri Dec 17, 2021', start: '2021-12-17', conf: 'Confirmed', src: ['https://x.com/search?q=from%3A49DegreesNorth%20since%3A2021-12-14%20until%3A2021-12-16&f=live'] },
+  { season: '2022–23', label: 'Fri Nov 11, 2022', start: '2022-11-11', conf: 'Confirmed', src: ['https://www.instagram.com/p/CkuCIk6v2WY/', 'https://www.instagram.com/p/Ck076VLph57/'] },
+  { season: '2023–24', label: 'Sat Dec 2, 2023', start: '2023-12-02', conf: 'Confirmed', src: ['email:Celebrate the Opening Together'] },
+  { season: '2024–25', label: 'Fri Nov 22, 2024', start: '2024-11-22', conf: 'Confirmed', src: ['email:Officially Official'] },
+  { season: '2025–26', label: 'Sun Dec 28, 2025', start: '2025-12-28', conf: 'Confirmed', src: ['https://www.instagram.com/p/DSx-Q_Nkq7M/', 'https://www.kxly.com/news/49-degrees-north-opens-for-ski-season-after-second-latest-start-on-record/article_bf33bb54-b7e8-49da-bd8a-61a44e86c427.html'] },
+];
+
+const DAY = 86400000;
+const AXIS_DAYS = 61; // Nov 1 → Jan 1
+const yearOf = s => parseInt(s.season);
+const offset = iso => (Date.parse(iso + 'T00:00:00Z') - Date.UTC(parseInt(iso), 10, 1)) / DAY;
+const mid = s => s.end ? (offset(s.start) + offset(s.end)) / 2 : offset(s.start);
+const offsetLabel = d => new Date(Date.UTC(2001, 10, 1) + Math.round(d) * DAY).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
+const median = xs => { const a = [...xs].sort((x, y) => x - y), m = a.length >> 1; return a.length % 2 ? a[m] : (a[m - 1] + a[m]) / 2; };
+const mean = xs => xs.reduce((a, b) => a + b, 0) / xs.length;
+const dated = SEASONS.filter(s => s.start);
+
+function rangeStats(lo, hi) {
+  const xs = dated.filter(s => yearOf(s) >= lo && yearOf(s) <= hi).map(mid);
+  return { n: xs.length, avg: mean(xs), med: median(xs) };
+}
+
+function renderTiles() {
+  const all = dated.map(mid);
+  const earliest = dated.reduce((a, b) => mid(b) < mid(a) ? b : a);
+  const latest = dated.reduce((a, b) => mid(b) > mid(a) ? b : a);
+  const recent = rangeStats(2015, 2025);
+  const tiles = [
+    ['Typical opening', offsetLabel(median(all)), 'median, all seasons'],
+    ['Average opening', offsetLabel(mean(all)), `${dated.length} seasons with a date`],
+    ['Earliest', offsetLabel(mid(earliest)), earliest.season],
+    ['Latest', offsetLabel(mid(latest)), latest.season],
+    ['Last 11 seasons', offsetLabel(recent.avg), 'average, 2015–2025'],
+  ];
+  document.getElementById('tiles').innerHTML = tiles.map(([k, v, s]) =>
+    `<div class="tile"><div class="k">${k}</div><div class="v">${v}</div><div class="s">${s}</div></div>`).join('');
+}
+
+function renderChart() {
+  const rows = [...SEASONS].reverse();
+  const W = Math.max(320, Math.round(document.getElementById('chartWrap').clientWidth - 16));
+  const labelW = W < 500 ? 54 : 64, padR = 14, rowH = 18, top = 24, bottom = 8;
+  const H = top + rows.length * rowH + bottom;
+  const x = d => labelW + (d / AXIS_DAYS) * (W - labelW - padR);
+  const svg = document.getElementById('chart');
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  const ticks = [[0, 'Nov 1'], [14, 'Nov 15'], [30, 'Dec 1'], [44, 'Dec 15'], [61, 'Jan 1']];
+  let out = '';
+  for (const [d, t] of ticks) {
+    out += `<line x1="${x(d)}" y1="${top - 4}" x2="${x(d)}" y2="${H - bottom}" stroke="var(--grid)" stroke-width="1"/>`;
+    out += `<text x="${x(d)}" y="${top - 10}" font-size="11" fill="var(--text-secondary)" text-anchor="${d === 0 ? 'start' : d === 61 ? 'end' : 'middle'}">${t}</text>`;
+  }
+  const med = median(dated.map(mid));
+  out += `<line x1="${x(med)}" y1="${top - 4}" x2="${x(med)}" y2="${H - bottom}" stroke="var(--text-secondary)" stroke-width="1.5" stroke-dasharray="3 3"/>`;
+  rows.forEach((s, i) => {
+    const cy = top + i * rowH + rowH / 2;
+    out += `<text x="0" y="${cy + 4}" font-size="11" fill="var(--text-secondary)">${s.season}</text>`;
+    if (!s.start) {
+      out += `<text x="${x(1)}" y="${cy + 4}" font-size="11" fill="var(--text-muted)" font-style="italic">not found</text>`;
+    } else if (s.end) {
+      const x0 = x(offset(s.start)) - 4, x1 = x(offset(s.end)) + 4;
+      out += `<rect x="${x0}" y="${cy - 4}" width="${x1 - x0}" height="8" rx="4" fill="var(--series-1)" opacity="0.45"/>`;
+    } else if (s.conf === 'Likely') {
+      out += `<circle cx="${x(offset(s.start))}" cy="${cy}" r="4.5" fill="#fff" stroke="var(--series-1)" stroke-width="2"/>`;
+    } else {
+      out += `<circle cx="${x(offset(s.start))}" cy="${cy}" r="5" fill="var(--series-1)" stroke="#fff" stroke-width="2"/>`;
+    }
+    out += `<rect class="hit" data-i="${SEASONS.length - 1 - i}" x="0" y="${cy - rowH / 2}" width="${W}" height="${rowH}" fill="transparent"/>`;
+  });
+  svg.innerHTML = out;
+
+  const wrap = document.getElementById('chartWrap'), tip = document.getElementById('tip');
+  const show = (e, rect) => {
+    const s = SEASONS[rect.dataset.i];
+    const r = rect.getBoundingClientRect(), w = wrap.getBoundingClientRect();
+    const scale = r.width / W;
+    const markX = s.start ? x(mid(s)) * scale : x(8) * scale;
+    tip.innerHTML = `<b>${s.season}</b> · ${s.label || 'Opening day not found'}${s.start ? ' · ' + s.conf : ''}`;
+    tip.hidden = false;
+    const tw = tip.offsetWidth / 2;
+    tip.style.left = Math.min(Math.max(r.left - w.left + markX, tw + 4), w.width - tw - 4) + 'px';
+    tip.style.top = (r.top - w.top + r.height / 2 - 4) + 'px';
+  };
+  svg.querySelectorAll('.hit').forEach(rect => {
+    rect.addEventListener('mouseenter', e => show(e, rect));
+    rect.addEventListener('click', e => show(e, rect));
+  });
+  svg.onmouseleave = () => { tip.hidden = true; };
+}
+
+function renderAverages() {
+  const ranges = [['All years, 2000–2025', 2000, 2025], ['2004–2024', 2004, 2024], ['2015–2025', 2015, 2025]];
+  document.getElementById('averages').innerHTML =
+    '<tr><th>Range</th><th>Seasons with a date</th><th>Average</th><th>Median</th></tr>' +
+    ranges.map(([name, lo, hi]) => {
+      const r = rangeStats(lo, hi);
+      return `<tr><td>${name}</td><td class="num">${r.n}</td><td class="num">${offsetLabel(r.avg)}</td><td class="num">${offsetLabel(r.med)}</td></tr>`;
+    }).join('');
+}
+
+function sourceLabel(url) {
+  if (url.startsWith('email:')) return `<span class="private">49° email: “${url.slice(6)}”</span>`;
+  const u = new URL(url);
+  let name = u.hostname.replace(/^www\./, '');
+  if (name === 'web.archive.org') {
+    const m = u.pathname.match(/^\/web\/(\d{4})(\d{2})(\d{2})/);
+    name = m ? `ski49n.com archive, ${new Date(Date.UTC(+m[1], +m[2] - 1, +m[3])).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' })}` : 'Wayback Machine';
+  } else {
+    name = { 'spokesman.com': 'Spokesman-Review', 'krem.com': 'KREM', 'kxly.com': 'KXLY', 'x.com': 'X (Twitter) search', 'instagram.com': 'Instagram post', 'facebook.com': 'Facebook search' }[name] || name;
+  }
+  return `<a href="${url}" target="_blank" rel="noopener">${name} ⧉</a>`;
+}
+
+function renderTable() {
+  const cls = { 'Confirmed': 'confirmed', 'Likely': '', 'Window': '', 'Not found': 'notfound' };
+  document.getElementById('seasons').innerHTML =
+    '<tr><th>Season</th><th>Opening day</th><th>Confidence</th><th>Source</th></tr>' +
+    [...SEASONS].reverse().map(s => `<tr>
+      <td class="nowrap">${s.season}</td>
+      <td class="nowrap ${s.start ? '' : 'missing'}">${s.label || '—'}</td>
+      <td><span class="chip ${cls[s.conf]}">${s.conf === 'Window' ? 'Date range' : s.conf}</span></td>
+      <td class="src">${s.src.length ? s.src.map(u => `<div>${sourceLabel(u)}</div>`).join('') : '<span class="missing">—</span>'}</td>
+    </tr>`).join('');
+}
+
+renderTiles();
+renderChart();
+let _resizeTimer;
+window.addEventListener('resize', () => { clearTimeout(_resizeTimer); _resizeTimer = setTimeout(renderChart, 150); });
+renderAverages();
+renderTable();
+</script>
+</body>
+</html>
