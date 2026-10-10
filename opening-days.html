@@ -32,8 +32,8 @@ h1 { font-size: 22px; margin: 10px 0 2px; }
 
 .tiles { display: flex; flex-direction: column; gap: 6px; }
 .tile { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-.tile .k { font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); font-weight: 600; }
-.tile .v { font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.tile .k { font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-primary); font-weight: 800; }
+.tile .v { font-size: 16px; font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .tile .s { font-size: 12px; color: var(--text-muted); }
 
 .chart-wrap { position: relative; border: 1px solid var(--border); border-radius: 8px; padding: 10px 8px 4px; }
@@ -54,12 +54,8 @@ td.nowrap { white-space: nowrap; }
 td.num { font-variant-numeric: tabular-nums; }
 #averages td:first-child { white-space: nowrap; }
 .missing { color: var(--text-muted); }
-.chip { display: inline-block; font-size: 11px; font-weight: 600; padding: 1px 8px; border-radius: 10px; border: 1px solid var(--border); color: var(--text-secondary); background: var(--panel); white-space: nowrap; }
-.chip.confirmed { color: var(--text-primary); border-color: #cbd5e1; }
-.chip.notfound { color: var(--text-muted); }
 .src a { color: var(--series-1); text-decoration: none; }
 .src a:hover { text-decoration: underline; }
-.src div + div { margin-top: 2px; }
 .note { font-size: 12px; color: var(--text-muted); margin: 8px 2px 0; line-height: 1.5; }
 </style>
 </head>
@@ -94,32 +90,32 @@ td.num { font-variant-numeric: tabular-nums; }
 
 <script>
 const SEASONS = [
-  { season: '2000–01', label: 'Sun Nov 26, 2000', start: '2000-11-26', conf: 'Confirmed', src: ['https://www.spokesman.com/stories/2000/nov/25/lookout-leads-way-for-skiers-thursday-night-snow/'] },
+  { season: '2000–01', label: 'Nov 26, 2000', start: '2000-11-26', conf: 'Confirmed', src: ['https://www.spokesman.com/stories/2000/nov/25/lookout-leads-way-for-skiers-thursday-night-snow/'] },
   { season: '2001–02', conf: 'Not found', src: [] },
   { season: '2002–03', conf: 'Not found', src: ['https://web.archive.org/web/20021128163953/http://www.ski49n.com/'] },
   { season: '2003–04', conf: 'Not found', src: ['https://web.archive.org/web/20031125222529/http://www.ski49n.com/', 'https://web.archive.org/web/20031229033144/http://www.ski49n.com/'] },
-  { season: '2004–05', label: 'Fri Dec 10, 2004', start: '2004-12-10', conf: 'Confirmed', src: ['https://web.archive.org/web/20041207085321/http://www.ski49n.com/'] },
-  { season: '2005–06', label: 'Fri Nov 11, 2005', start: '2005-11-11', conf: 'Confirmed', src: ['https://www.spokesman.com/stories/2005/nov/08/ski-resorts-open-with-early-snow/', 'https://www.spokesman.com/stories/2005/nov/11/early-snow-has-ski-slopes-scrambling-to-draw/'] },
-  { season: '2006–07', label: 'Fri Nov 24, 2006', start: '2006-11-24', conf: 'Likely', src: ['https://www.spokesman.com/stories/2006/nov/24/all-area-ski-resorts-opening-today/', 'https://www.spokesman.com/stories/2006/nov/16/49-degrees-north-plans-friday-opening/'] },
+  { season: '2004–05', label: 'Dec 10, 2004', start: '2004-12-10', conf: 'Confirmed', src: ['https://web.archive.org/web/20041207085321/http://www.ski49n.com/'] },
+  { season: '2005–06', label: 'Nov 11, 2005', start: '2005-11-11', conf: 'Confirmed', src: ['https://www.spokesman.com/stories/2005/nov/08/ski-resorts-open-with-early-snow/', 'https://www.spokesman.com/stories/2005/nov/11/early-snow-has-ski-slopes-scrambling-to-draw/'] },
+  { season: '2006–07', label: 'Nov 24, 2006', start: '2006-11-24', conf: 'Likely', src: ['https://www.spokesman.com/stories/2006/nov/24/all-area-ski-resorts-opening-today/', 'https://www.spokesman.com/stories/2006/nov/16/49-degrees-north-plans-friday-opening/'] },
   { season: '2007–08', label: 'Dec 2–6, 2007', start: '2007-12-02', end: '2007-12-06', conf: 'Window', src: ['https://web.archive.org/web/20071201210513/http://www.ski49n.com:80/', 'https://web.archive.org/web/20071207174157/http://www.ski49n.com/'] },
-  { season: '2008–09', label: 'Sun Dec 14, 2008', start: '2008-12-14', conf: 'Confirmed', src: ['https://web.archive.org/web/20081216032609/http://www.ski49n.com/index.asp'] },
-  { season: '2009–10', label: 'Sat Nov 21, 2009', start: '2009-11-21', conf: 'Confirmed', src: ['https://web.archive.org/web/20131021165629/http://ski49n.com/news.php'] },
-  { season: '2010–11', label: 'Sat Nov 20, 2010', start: '2010-11-20', conf: 'Confirmed', src: ['https://web.archive.org/web/20131021165629/http://ski49n.com/news.php'] },
-  { season: '2011–12', label: '~Sat Nov 19, 2011', start: '2011-11-19', conf: 'Likely', src: ['https://web.archive.org/web/20131021165629/http://ski49n.com/news.php'] },
-  { season: '2012–13', label: 'Fri Nov 23, 2012', start: '2012-11-23', conf: 'Confirmed', src: ['https://www.skicentral.com/49degreesnorth.html', 'https://web.archive.org/web/20121227081657/http://www.ski49n.com/snow_report.php'] },
-  { season: '2013–14', label: 'Sun Nov 17, 2013', start: '2013-11-17', conf: 'Confirmed', src: ['https://www.krem.com/article/news/49-degrees-north-and-lookout-pass-open-for-ski-season/293-168321108', 'https://www.facebook.com/search/posts/?q=49%20Degrees%20North%20opening%20day%202013'] },
-  { season: '2014–15', label: 'Mon Dec 22, 2014', start: '2014-12-22', conf: 'Confirmed', src: ['https://x.com/search?q=from%3A49DegreesNorth%20since%3A2014-11-20%20until%3A2014-12-23&f=live'] },
-  { season: '2015–16', label: 'Sun Dec 6, 2015', start: '2015-12-06', conf: 'Confirmed', src: ['https://x.com/search?q=from%3A49DegreesNorth%20since%3A2015-12-04%20until%3A2015-12-07&f=live'] },
-  { season: '2016–17', label: 'Sun Nov 27, 2016', start: '2016-11-27', conf: 'Confirmed', src: ['https://www.skicentral.com/49degreesnorth.html', 'https://www.spokesman.com/stories/2016/nov/26/49-degrees-north-didnt-open-today-as-planned/'] },
-  { season: '2017–18', label: 'Fri Nov 10, 2017', start: '2017-11-10', conf: 'Confirmed', src: ['https://x.com/search?q=from%3A49DegreesNorth%20since%3A2017-11-07%20until%3A2017-11-11&f=live'] },
-  { season: '2018–19', label: 'Sat Nov 24, 2018', start: '2018-11-24', conf: 'Confirmed', src: ['https://www.skicentral.com/49degreesnorth.html', 'https://x.com/search?q=from%3A49DegreesNorth%20since%3A2018-11-20%20until%3A2018-11-26&f=live'] },
-  { season: '2019–20', label: 'Sat Dec 14, 2019', start: '2019-12-14', conf: 'Confirmed', src: ['https://x.com/search?q=from%3A49DegreesNorth%20since%3A2019-12-13%20until%3A2019-12-16&f=live'] },
-  { season: '2020–21', label: 'Sat Nov 28, 2020', start: '2020-11-28', conf: 'Confirmed', src: ['https://www.skicentral.com/49degreesnorth.html', 'https://x.com/search?q=from%3A49DegreesNorth%20since%3A2020-11-20%20until%3A2020-12-06&src=typed_query'] },
-  { season: '2021–22', label: 'Fri Dec 17, 2021', start: '2021-12-17', conf: 'Confirmed', src: ['https://x.com/search?q=from%3A49DegreesNorth%20since%3A2021-12-14%20until%3A2021-12-16&f=live'] },
-  { season: '2022–23', label: 'Fri Nov 11, 2022', start: '2022-11-11', conf: 'Confirmed', src: ['https://www.instagram.com/p/CkuCIk6v2WY/', 'https://www.instagram.com/p/Ck076VLph57/'] },
-  { season: '2023–24', label: 'Sat Dec 2, 2023', start: '2023-12-02', conf: 'Confirmed', src: ['https://www.skicentral.com/49degreesnorth.html'] },
-  { season: '2024–25', label: 'Fri Nov 22, 2024', start: '2024-11-22', conf: 'Confirmed', src: ['https://www.spokesman.com/stories/2024/nov/15/49-degrees-north-announces-opening-date/', 'https://web.archive.org/web/20241124143516/https://www.ski49n.com/', 'https://www.skicentral.com/49degreesnorth.html'] },
-  { season: '2025–26', label: 'Sun Dec 28, 2025', start: '2025-12-28', conf: 'Confirmed', src: ['https://www.instagram.com/p/DSx-Q_Nkq7M/', 'https://www.kxly.com/news/49-degrees-north-opens-for-ski-season-after-second-latest-start-on-record/article_bf33bb54-b7e8-49da-bd8a-61a44e86c427.html'] },
+  { season: '2008–09', label: 'Dec 14, 2008', start: '2008-12-14', conf: 'Confirmed', src: ['https://web.archive.org/web/20081216032609/http://www.ski49n.com/index.asp'] },
+  { season: '2009–10', label: 'Nov 21, 2009', start: '2009-11-21', conf: 'Confirmed', src: ['https://web.archive.org/web/20131021165629/http://ski49n.com/news.php'] },
+  { season: '2010–11', label: 'Nov 20, 2010', start: '2010-11-20', conf: 'Confirmed', src: ['https://web.archive.org/web/20131021165629/http://ski49n.com/news.php'] },
+  { season: '2011–12', label: '~Nov 19, 2011', start: '2011-11-19', conf: 'Likely', src: ['https://web.archive.org/web/20131021165629/http://ski49n.com/news.php'] },
+  { season: '2012–13', label: 'Nov 23, 2012', start: '2012-11-23', conf: 'Confirmed', src: ['https://www.skicentral.com/49degreesnorth.html', 'https://web.archive.org/web/20121227081657/http://www.ski49n.com/snow_report.php'] },
+  { season: '2013–14', label: 'Nov 17, 2013', start: '2013-11-17', conf: 'Confirmed', src: ['https://www.krem.com/article/news/49-degrees-north-and-lookout-pass-open-for-ski-season/293-168321108', 'https://www.facebook.com/search/posts/?q=49%20Degrees%20North%20opening%20day%202013'] },
+  { season: '2014–15', label: 'Dec 22, 2014', start: '2014-12-22', conf: 'Confirmed', src: ['https://x.com/search?q=from%3A49DegreesNorth%20since%3A2014-11-20%20until%3A2014-12-23&f=live'] },
+  { season: '2015–16', label: 'Dec 6, 2015', start: '2015-12-06', conf: 'Confirmed', src: ['https://x.com/search?q=from%3A49DegreesNorth%20since%3A2015-12-04%20until%3A2015-12-07&f=live'] },
+  { season: '2016–17', label: 'Nov 27, 2016', start: '2016-11-27', conf: 'Confirmed', src: ['https://www.skicentral.com/49degreesnorth.html', 'https://www.spokesman.com/stories/2016/nov/26/49-degrees-north-didnt-open-today-as-planned/'] },
+  { season: '2017–18', label: 'Nov 10, 2017', start: '2017-11-10', conf: 'Confirmed', src: ['https://x.com/search?q=from%3A49DegreesNorth%20since%3A2017-11-07%20until%3A2017-11-11&f=live'] },
+  { season: '2018–19', label: 'Nov 24, 2018', start: '2018-11-24', conf: 'Confirmed', src: ['https://www.skicentral.com/49degreesnorth.html', 'https://x.com/search?q=from%3A49DegreesNorth%20since%3A2018-11-20%20until%3A2018-11-26&f=live'] },
+  { season: '2019–20', label: 'Dec 14, 2019', start: '2019-12-14', conf: 'Confirmed', src: ['https://x.com/search?q=from%3A49DegreesNorth%20since%3A2019-12-13%20until%3A2019-12-16&f=live'] },
+  { season: '2020–21', label: 'Nov 28, 2020', start: '2020-11-28', conf: 'Confirmed', src: ['https://www.skicentral.com/49degreesnorth.html', 'https://x.com/search?q=from%3A49DegreesNorth%20since%3A2020-11-20%20until%3A2020-12-06&src=typed_query'] },
+  { season: '2021–22', label: 'Dec 17, 2021', start: '2021-12-17', conf: 'Confirmed', src: ['https://x.com/search?q=from%3A49DegreesNorth%20since%3A2021-12-14%20until%3A2021-12-16&f=live'] },
+  { season: '2022–23', label: 'Nov 11, 2022', start: '2022-11-11', conf: 'Confirmed', src: ['https://www.instagram.com/p/CkuCIk6v2WY/', 'https://www.instagram.com/p/Ck076VLph57/'] },
+  { season: '2023–24', label: 'Dec 2, 2023', start: '2023-12-02', conf: 'Confirmed', src: ['https://www.skicentral.com/49degreesnorth.html'] },
+  { season: '2024–25', label: 'Nov 22, 2024', start: '2024-11-22', conf: 'Confirmed', src: ['https://www.spokesman.com/stories/2024/nov/15/49-degrees-north-announces-opening-date/', 'https://web.archive.org/web/20241124143516/https://www.ski49n.com/', 'https://www.skicentral.com/49degreesnorth.html'] },
+  { season: '2025–26', label: 'Dec 28, 2025', start: '2025-12-28', conf: 'Confirmed', src: ['https://www.instagram.com/p/DSx-Q_Nkq7M/', 'https://www.kxly.com/news/49-degrees-north-opens-for-ski-season-after-second-latest-start-on-record/article_bf33bb54-b7e8-49da-bd8a-61a44e86c427.html'] },
 ];
 
 const DAY = 86400000;
@@ -224,22 +220,21 @@ function sourceLabel(url) {
   let name = u.hostname.replace(/^www\./, '');
   if (name === 'web.archive.org') {
     const m = u.pathname.match(/^\/web\/(\d{4})(\d{2})(\d{2})/);
-    name = m ? `ski49n.com archive, ${new Date(Date.UTC(+m[1], +m[2] - 1, +m[3])).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' })}` : 'Wayback Machine';
+    name = m ? `Archive ${+m[2]}/${+m[3]}/${m[1].slice(2)}` : 'Archive';
   } else {
-    name = { 'spokesman.com': 'Spokesman-Review', 'krem.com': 'KREM', 'kxly.com': 'KXLY', 'x.com': 'X (Twitter) search', 'instagram.com': 'Instagram post', 'facebook.com': 'Facebook search', 'skicentral.com': 'SkiCentral season dates' }[name] || name;
+    name = { 'spokesman.com': 'Spokesman', 'krem.com': 'KREM', 'kxly.com': 'KXLY', 'x.com': 'X', 'instagram.com': 'Instagram', 'facebook.com': 'Facebook', 'skicentral.com': 'SkiCentral' }[name] || name;
   }
-  return `<a href="${url}" target="_blank" rel="noopener">${name} ⧉</a>`;
+  return `<a href="${url}" target="_blank" rel="noopener">${name}</a>`;
 }
 
 function renderTable() {
-  const cls = { 'Confirmed': 'confirmed', 'Likely': '', 'Window': '', 'Not found': 'notfound' };
   document.getElementById('seasons').innerHTML =
     '<tr><th>Season</th><th>Opening day</th><th>Confidence</th><th>Source</th></tr>' +
     [...SEASONS].reverse().map(s => `<tr>
       <td class="nowrap">${shortSeason(s)}</td>
       <td class="nowrap ${s.start ? '' : 'missing'}">${s.label || '—'}</td>
-      <td><span class="chip ${cls[s.conf]}">${s.conf === 'Window' ? 'Date range' : s.conf}</span></td>
-      <td class="src">${s.src.length ? s.src.map(u => `<div>${sourceLabel(u)}</div>`).join('') : '<span class="missing">—</span>'}</td>
+      <td class="nowrap ${s.start ? '' : 'missing'}">${s.conf === 'Window' ? 'Date range' : s.conf}</td>
+      <td class="src">${s.src.length ? s.src.map(sourceLabel).join(', ') : '<span class="missing">—</span>'}</td>
     </tr>`).join('');
 }
 
