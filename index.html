@@ -484,7 +484,7 @@ body {
         <label for="timelapseImages">Images</label>
         <select id="timelapseImages" style="padding:4px 6px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px;color:#334155;background:#fff;">
           <option value="one">One image / day</option>
-          <option value="all">All images, including nighttime</option>
+          <option value="all">All images (nighttime: last 10 days)</option>
         </select>
         <label for="timelapseDuration">Seconds per image</label>
         <input type="number" id="timelapseDuration" min="0.2" max="5" step="0.05" value="0.25" style="padding:4px 6px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px;color:#334155;background:#fff;width:72px;text-align:center;">
@@ -1308,7 +1308,7 @@ function updateDailyToastText() {
   const startFormatted = startVal
     ? new Date(startVal + 'T12:00:00Z').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
     : startVal;
-  const which = document.getElementById('timelapseImages').value === 'all' ? 'every saved image, including nighttime' : 'one image per day';
+  const which = document.getElementById('timelapseImages').value === 'all' ? 'every saved image (nighttime only for the last 10 days)' : 'one image per day';
   document.getElementById('lodgeDailyToastText').textContent =
     `This will play a time lapse, ${which}, starting on the earliest date of ${startFormatted}.`;
 }

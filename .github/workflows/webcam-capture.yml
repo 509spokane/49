@@ -18,6 +18,14 @@ jobs:
       - name: Install djpeg
         run: sudo apt-get install -y libjpeg-turbo-progs
 
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Pillow
+        run: pip install -q pillow
+
       - name: Capture webcam frame
         run: |
           set -e
@@ -57,6 +65,9 @@ jobs:
             fi
           fi
 
+          # Corruption check needs the full-size frame; store the 1600px version.
+          python3 .github/scripts/frames_maint.py resize "frames/$DATE/lodge/$TIME.jpg"
+
           if [ "$CORRUPTED" = "true" ]; then
             # File stays in place — log it to quarantine index for admin review
             mkdir -p frames/quarantine
@@ -88,14 +99,16 @@ jobs:
             echo "Updated frames/index.json"
           fi
 
+      - name: Prune older days to daytime frames
+        run: python3 .github/scripts/frames_maint.py prune
+
       - name: Commit and push
         run: |
           DATE=$(date -u +%Y-%m-%d)
           TIME=$(date -u +%H-%M)
           git config user.email "github-actions@github.com"
           git config user.name "GitHub Actions"
-          git add "frames/$DATE/" frames/index.json
-          [ -d frames/quarantine ] && git add frames/quarantine/ || true
+          git add -A frames/
           if git diff --cached --quiet; then
             echo "No changes to commit"
           else
