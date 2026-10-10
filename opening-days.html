@@ -60,7 +60,6 @@ td.num { font-variant-numeric: tabular-nums; }
 .src a { color: var(--series-1); text-decoration: none; }
 .src a:hover { text-decoration: underline; }
 .src div + div { margin-top: 2px; }
-.private { color: var(--text-secondary); }
 .note { font-size: 12px; color: var(--text-muted); margin: 8px 2px 0; line-height: 1.5; }
 </style>
 </head>
@@ -107,19 +106,19 @@ const SEASONS = [
   { season: '2009–10', label: 'Sat Nov 21, 2009', start: '2009-11-21', conf: 'Confirmed', src: ['https://web.archive.org/web/20131021165629/http://ski49n.com/news.php'] },
   { season: '2010–11', label: 'Sat Nov 20, 2010', start: '2010-11-20', conf: 'Confirmed', src: ['https://web.archive.org/web/20131021165629/http://ski49n.com/news.php'] },
   { season: '2011–12', label: '~Sat Nov 19, 2011', start: '2011-11-19', conf: 'Likely', src: ['https://web.archive.org/web/20131021165629/http://ski49n.com/news.php'] },
-  { season: '2012–13', conf: 'Not found', src: ['https://web.archive.org/web/20121227081657/http://www.ski49n.com/snow_report.php'] },
+  { season: '2012–13', label: 'Fri Nov 23, 2012', start: '2012-11-23', conf: 'Confirmed', src: ['https://www.skicentral.com/49degreesnorth.html', 'https://web.archive.org/web/20121227081657/http://www.ski49n.com/snow_report.php'] },
   { season: '2013–14', label: 'Sun Nov 17, 2013', start: '2013-11-17', conf: 'Confirmed', src: ['https://www.krem.com/article/news/49-degrees-north-and-lookout-pass-open-for-ski-season/293-168321108', 'https://www.facebook.com/search/posts/?q=49%20Degrees%20North%20opening%20day%202013'] },
   { season: '2014–15', label: 'Mon Dec 22, 2014', start: '2014-12-22', conf: 'Confirmed', src: ['https://x.com/search?q=from%3A49DegreesNorth%20since%3A2014-11-20%20until%3A2014-12-23&f=live'] },
   { season: '2015–16', label: 'Sun Dec 6, 2015', start: '2015-12-06', conf: 'Confirmed', src: ['https://x.com/search?q=from%3A49DegreesNorth%20since%3A2015-12-04%20until%3A2015-12-07&f=live'] },
-  { season: '2016–17', label: 'Sat Nov 26, 2016', start: '2016-11-26', conf: 'Confirmed', src: ['email:Opening Day 2016-2017'] },
+  { season: '2016–17', label: 'Sun Nov 27, 2016', start: '2016-11-27', conf: 'Confirmed', src: ['https://www.skicentral.com/49degreesnorth.html', 'https://www.spokesman.com/stories/2016/nov/26/49-degrees-north-didnt-open-today-as-planned/'] },
   { season: '2017–18', label: 'Fri Nov 10, 2017', start: '2017-11-10', conf: 'Confirmed', src: ['https://x.com/search?q=from%3A49DegreesNorth%20since%3A2017-11-07%20until%3A2017-11-11&f=live'] },
-  { season: '2018–19', label: 'Nov 23 or 24, 2018', start: '2018-11-23', end: '2018-11-24', conf: 'Likely', src: ['https://x.com/search?q=from%3A49DegreesNorth%20since%3A2018-11-20%20until%3A2018-11-26&f=live'] },
+  { season: '2018–19', label: 'Sat Nov 24, 2018', start: '2018-11-24', conf: 'Confirmed', src: ['https://www.skicentral.com/49degreesnorth.html', 'https://x.com/search?q=from%3A49DegreesNorth%20since%3A2018-11-20%20until%3A2018-11-26&f=live'] },
   { season: '2019–20', label: 'Sat Dec 14, 2019', start: '2019-12-14', conf: 'Confirmed', src: ['https://x.com/search?q=from%3A49DegreesNorth%20since%3A2019-12-13%20until%3A2019-12-16&f=live'] },
-  { season: '2020–21', label: '~Fri Dec 4, 2020', start: '2020-12-04', conf: 'Likely', src: ['https://x.com/search?q=from%3A49DegreesNorth%20since%3A2020-11-20%20until%3A2020-12-06&src=typed_query'] },
+  { season: '2020–21', label: 'Sat Nov 28, 2020', start: '2020-11-28', conf: 'Confirmed', src: ['https://www.skicentral.com/49degreesnorth.html', 'https://x.com/search?q=from%3A49DegreesNorth%20since%3A2020-11-20%20until%3A2020-12-06&src=typed_query'] },
   { season: '2021–22', label: 'Fri Dec 17, 2021', start: '2021-12-17', conf: 'Confirmed', src: ['https://x.com/search?q=from%3A49DegreesNorth%20since%3A2021-12-14%20until%3A2021-12-16&f=live'] },
   { season: '2022–23', label: 'Fri Nov 11, 2022', start: '2022-11-11', conf: 'Confirmed', src: ['https://www.instagram.com/p/CkuCIk6v2WY/', 'https://www.instagram.com/p/Ck076VLph57/'] },
-  { season: '2023–24', label: 'Sat Dec 2, 2023', start: '2023-12-02', conf: 'Confirmed', src: ['email:Celebrate the Opening Together'] },
-  { season: '2024–25', label: 'Fri Nov 22, 2024', start: '2024-11-22', conf: 'Confirmed', src: ['email:Officially Official'] },
+  { season: '2023–24', label: 'Sat Dec 2, 2023', start: '2023-12-02', conf: 'Confirmed', src: ['https://www.skicentral.com/49degreesnorth.html'] },
+  { season: '2024–25', label: 'Fri Nov 22, 2024', start: '2024-11-22', conf: 'Confirmed', src: ['https://www.spokesman.com/stories/2024/nov/15/49-degrees-north-announces-opening-date/', 'https://web.archive.org/web/20241124143516/https://www.ski49n.com/', 'https://www.skicentral.com/49degreesnorth.html'] },
   { season: '2025–26', label: 'Sun Dec 28, 2025', start: '2025-12-28', conf: 'Confirmed', src: ['https://www.instagram.com/p/DSx-Q_Nkq7M/', 'https://www.kxly.com/news/49-degrees-north-opens-for-ski-season-after-second-latest-start-on-record/article_bf33bb54-b7e8-49da-bd8a-61a44e86c427.html'] },
 ];
 
@@ -220,14 +219,13 @@ function renderAverages() {
 }
 
 function sourceLabel(url) {
-  if (url.startsWith('email:')) return `<span class="private">49° email: “${url.slice(6)}”</span>`;
   const u = new URL(url);
   let name = u.hostname.replace(/^www\./, '');
   if (name === 'web.archive.org') {
     const m = u.pathname.match(/^\/web\/(\d{4})(\d{2})(\d{2})/);
     name = m ? `ski49n.com archive, ${new Date(Date.UTC(+m[1], +m[2] - 1, +m[3])).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' })}` : 'Wayback Machine';
   } else {
-    name = { 'spokesman.com': 'Spokesman-Review', 'krem.com': 'KREM', 'kxly.com': 'KXLY', 'x.com': 'X (Twitter) search', 'instagram.com': 'Instagram post', 'facebook.com': 'Facebook search' }[name] || name;
+    name = { 'spokesman.com': 'Spokesman-Review', 'krem.com': 'KREM', 'kxly.com': 'KXLY', 'x.com': 'X (Twitter) search', 'instagram.com': 'Instagram post', 'facebook.com': 'Facebook search', 'skicentral.com': 'SkiCentral season dates' }[name] || name;
   }
   return `<a href="${url}" target="_blank" rel="noopener">${name} ⧉</a>`;
 }
