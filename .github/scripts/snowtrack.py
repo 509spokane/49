@@ -22,6 +22,10 @@ ROOT = Path("snowtrack")
 FC_DIR = ROOT / "forecasts"
 REPORTS = ROOT / "reports.json"
 DATA = ROOT / "data.json"
+ALERT_STATE = ROOT / "alert_state.json"
+SITE_URL = "https://509spokane.github.io/49/"
+ALERT_MIN_IN = 0.1
+ALERT_RISE_IN = 1.0
 
 
 def get_json(url, tries=3):
@@ -183,9 +187,56 @@ def rebuild():
     print(f"Rebuilt {DATA}: {len(days)} days, {len(snaps)} snapshots, {len(obs)} observed days")
 
 
+def daily_snow_forecast(now_pt):
+    nws = fetch_nws()
+    if not nws:
+        return None
+    days = {}
+    for i in range(7):
+        day = (now_pt + timedelta(days=i)).date()
+        start = max(datetime(day.year, day.month, day.day, tzinfo=PT), now_pt)
+        end = datetime(day.year, day.month, day.day, tzinfo=PT) + timedelta(days=1)
+        days[str(day)] = round(nws_total_in(nws["snowfallAmount_mm"], start, end), 1)
+    return days
+
+
+def send_ntfy(topic, title, body):
+    req = urllib.request.Request(
+        f"https://ntfy.sh/{topic}", data=body.encode(), method="POST",
+        headers={"Title": title, "Tags": "snowflake", "Click": SITE_URL},
+    )
+    with urllib.request.urlopen(req, timeout=30) as r:
+        print(f"ntfy sent ({r.status})")
+
+
+def snow_alert(now_pt, topic):
+    # Daytime only so alerts never arrive overnight; a pending change goes out on the next morning run.
+    if not 6 <= now_pt.hour < 22:
+        return
+    days = daily_snow_forecast(now_pt)
+    if days is None:
+        return
+    prev = load(ALERT_STATE, {}).get("days", {})
+    snowy = {d: v for d, v in days.items() if v >= ALERT_MIN_IN}
+    changed = [d for d, v in snowy.items() if d not in prev or v >= prev[d] + ALERT_RISE_IN]
+    if changed:
+        lines = []
+        for d, v in snowy.items():
+            label = datetime.fromisoformat(d).strftime("%a %b %-d")
+            lines.append(f"{label}: {v:.1f}\"" + ("  (new)" if d in changed and d not in prev else "  (up)" if d in changed else ""))
+        body = "\n".join(lines) + f"\nTotal: {sum(snowy.values()):.1f}\" over the next 7 days (NOAA, ~4,700 ft)"
+        send_ntfy(topic, "Snow in the 49 North forecast", body)
+    # Keep the highest amount already alerted on, so small wobbles don't re-alert.
+    state = {d: max(v, prev.get(d, 0)) for d, v in snowy.items()}
+    save(ALERT_STATE, {"updated": now_pt.isoformat(timespec="minutes"), "days": state})
+
+
 if __name__ == "__main__":
     now_pt = datetime.now(timezone.utc).astimezone(PT)
     if "--rebuild-only" not in sys.argv:
         snapshot_forecasts(now_pt)
         snapshot_report(now_pt)
+        topic = os.environ.get("NTFY_TOPIC")
+        if topic:
+            snow_alert(now_pt, topic)
     rebuild()
