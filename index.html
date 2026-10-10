@@ -406,6 +406,7 @@ body {
       </div>
     </div>
   </div>
+  <a href="opening-days.html" style="display:block;text-align:center;padding:7px 10px;font-size:13px;font-weight:600;color:#334155;text-decoration:none;background:#f1f5f9;border-bottom:1px solid #e2e8f0;">When will opening day arrive?</a>
   <div id="alertsSection" style="display:none;margin-top:6px;"></div>
 </div>
 
@@ -733,8 +734,10 @@ async function loadForecast() {
     const temps  = data.data.temperature;
     const texts  = data.data.text;
 
+    const starts = data.time.startValidTime || [];
     const periods = names.slice(0, 10).map((name, i) => ({
       name,
+      start: starts[i],
       temperature: parseInt(temps[i]) || null,
       detailedForecast: texts[i] || '',
       isDaytime: labels[i] === 'High'
@@ -758,6 +761,12 @@ async function loadForecast() {
       const singleMatch = s.match(/^(\d+) inch/);
       if (singleMatch) return `${singleMatch[1]}"`;
       return s;
+    }
+
+    // NWS swaps weekdays for holiday names ("Columbus Day"), which overflow the card header
+    function weekdayFor(period) {
+      if (period.start) return new Date(period.start).toLocaleDateString('en-US', { weekday: 'short', timeZone: 'America/Los_Angeles' });
+      return shortDayName(period.name);
     }
 
     function shortDayName(name) {
@@ -856,7 +865,7 @@ async function loadForecast() {
       const totalVal = isToday ? '' : (hasDaySnow ? (afterNight || afterDay) : '');
       if (totalVal) hasAnyTotal = true;
 
-      const headerName = isToday ? 'Today' : shortDayName(day.name);
+      const headerName = isToday ? 'Today' : weekdayFor(day);
       const dayTempStr = day && day.temperature != null ? `High: ${day.temperature}°` : '';
       const nightTempStr = night && night.temperature != null ? `Low: ${night.temperature}°` : '';
       const dayTempStyle = (day && day.temperature === maxHigh) ? ' style="background:#fefacd;"' : '';
