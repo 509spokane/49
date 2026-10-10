@@ -52,11 +52,9 @@ tr:last-child td { border-bottom: none; }
 th { background: var(--panel); font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); font-weight: 600; white-space: nowrap; }
 td.nowrap { white-space: nowrap; }
 td.num { font-variant-numeric: tabular-nums; }
-#averages td:first-child { white-space: nowrap; }
 .missing { color: var(--text-muted); }
 .src a { color: var(--series-1); text-decoration: none; }
 .src a:hover { text-decoration: underline; }
-.note { font-size: 12px; color: var(--text-muted); margin: 8px 2px 0; line-height: 1.5; }
 </style>
 </head>
 <body>
@@ -64,7 +62,7 @@ td.num { font-variant-numeric: tabular-nums; }
 <main>
   <a class="back" href="./">← Back to live conditions</a>
   <h1>Opening Day History</h1>
-  <p class="lede">When 49° North has opened for the ski season, 2000–01 through 2025–26.</p>
+  <p class="lede">When 49° North has opened for the ski season, 2000 through 2025.</p>
 
   <div class="tiles" id="tiles"></div>
 
@@ -80,11 +78,7 @@ td.num { font-variant-numeric: tabular-nums; }
     <div class="tip" id="tip" hidden></div>
   </div>
 
-  <div class="caption">Averages</div>
-  <div class="scroll"><table id="averages"></table></div>
-  <p class="note">"Likely" dates count as given. Seasons with a date range count as the middle of the range.</p>
-
-  <div class="caption">All seasons</div>
+  <div class="caption">Source info</div>
   <div class="scroll"><table id="seasons"></table></div>
 </main>
 
@@ -120,7 +114,6 @@ const SEASONS = [
 
 const DAY = 86400000;
 const AXIS_DAYS = 61; // Nov 1 → Jan 1
-const yearOf = s => parseInt(s.season);
 const shortSeason = s => `’${s.season.slice(2, 4)}–’${s.season.slice(5)}`;
 const offset = iso => (Date.parse(iso + 'T00:00:00Z') - Date.UTC(parseInt(iso), 10, 1)) / DAY;
 const mid = s => s.end ? (offset(s.start) + offset(s.end)) / 2 : offset(s.start);
@@ -129,22 +122,15 @@ const median = xs => { const a = [...xs].sort((x, y) => x - y), m = a.length >> 
 const mean = xs => xs.reduce((a, b) => a + b, 0) / xs.length;
 const dated = SEASONS.filter(s => s.start);
 
-function rangeStats(lo, hi) {
-  const xs = dated.filter(s => yearOf(s) >= lo && yearOf(s) <= hi).map(mid);
-  return { n: xs.length, avg: mean(xs), med: median(xs) };
-}
-
 function renderTiles() {
   const all = dated.map(mid);
   const earliest = dated.reduce((a, b) => mid(b) < mid(a) ? b : a);
   const latest = dated.reduce((a, b) => mid(b) > mid(a) ? b : a);
-  const recent = rangeStats(2015, 2025);
   const tiles = [
     ['Typical opening', offsetLabel(median(all)), 'median, all seasons'],
     ['Average opening', offsetLabel(mean(all)), `${dated.length} seasons with a date`],
     ['Earliest', offsetLabel(mid(earliest)), shortSeason(earliest)],
     ['Latest', offsetLabel(mid(latest)), shortSeason(latest)],
-    ['Last 11 seasons', offsetLabel(recent.avg), 'average, 2015–2025'],
   ];
   document.getElementById('tiles').innerHTML = tiles.map(([k, v, s]) =>
     `<div class="tile"><div><div class="k">${k}</div><div class="s">${s}</div></div><div class="v">${v}</div></div>`).join('');
@@ -205,16 +191,6 @@ function renderChart() {
   svg.onmouseleave = () => { tip.hidden = true; };
 }
 
-function renderAverages() {
-  const ranges = [['All years, 2000–2025', 2000, 2025], ['2004–2024', 2004, 2024], ['2015–2025', 2015, 2025]];
-  document.getElementById('averages').innerHTML =
-    '<tr><th>Range</th><th>Seasons with a date</th><th>Average</th><th>Median</th></tr>' +
-    ranges.map(([name, lo, hi]) => {
-      const r = rangeStats(lo, hi);
-      return `<tr><td>${name}</td><td class="num">${r.n}</td><td class="num">${offsetLabel(r.avg)}</td><td class="num">${offsetLabel(r.med)}</td></tr>`;
-    }).join('');
-}
-
 function sourceLabel(url) {
   const u = new URL(url);
   let name = u.hostname.replace(/^www\./, '');
@@ -244,7 +220,6 @@ renderTiles();
 renderChart();
 let _resizeTimer;
 window.addEventListener('resize', () => { clearTimeout(_resizeTimer); _resizeTimer = setTimeout(renderChart, 150); });
-renderAverages();
 renderTable();
 </script>
 </body>
