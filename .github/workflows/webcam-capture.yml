@@ -1,12 +1,18 @@
 name: Capture Lodge Webcam
 
 on:
+  # Main trigger is the Cloudflare Worker in scheduler/ (every 30 min via workflow_dispatch);
+  # GitHub's own cron is unreliable, so it's only a sparse backup.
   schedule:
-    - cron: '*/30 * * * *'
+    - cron: '17 */3 * * *'
   workflow_dispatch:
 
 permissions:
   contents: write
+
+concurrency:
+  group: webcam-capture
+  cancel-in-progress: false
 
 jobs:
   capture:
