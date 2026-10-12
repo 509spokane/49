@@ -470,22 +470,24 @@ body {
     </div>
   </div>
   <div id="lodgeCamLabel" class="cam-label">Lodge</div>
-  <button id="lodgeRecentButton" type="button" style="position:absolute;top:36px;right:10px;background:rgba(0,0,0,0.6);color:#fff;border:none;border-radius:20px;padding:3px 9px;cursor:pointer;font-size:10px;font-weight:600;z-index:10;">▶ Recent Timelapse</button>
-  <button id="lodgeDailyButton" type="button" style="position:absolute;top:60px;right:10px;background:rgba(0,0,0,0.6);color:#fff;border:none;border-radius:20px;padding:3px 9px;cursor:pointer;font-size:10px;font-weight:600;z-index:10;">▶ Daily Timelapse</button>
+  <button id="lodgeTimelapseButton" type="button" style="position:absolute;top:36px;right:10px;background:rgba(0,0,0,0.6);color:#fff;border:none;border-radius:20px;padding:3px 9px;cursor:pointer;font-size:10px;font-weight:600;z-index:10;">▶ Timelapse</button>
   <button id="lodgeBackButton" type="button" style="display:none;position:absolute;top:36px;right:10px;background:rgba(0,0,0,0.6);color:#fff;border:none;border-radius:20px;padding:3px 9px;cursor:pointer;font-size:10px;font-weight:600;z-index:10;">← Back to Live View</button>
   <div id="lodgeDailyToast" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.55);z-index:1000;align-items:center;justify-content:center;padding:16px;">
     <div id="lodgeDailyCard" style="background:rgba(0,0,0,0.85);color:#fff;border-radius:12px;padding:16px 18px;font-size:13px;line-height:1.5;width:100%;max-width:340px;">
+      <div style="display:flex;gap:8px;margin-bottom:12px;">
+        <button type="button" class="tl-mode" data-mode="recent" style="flex:1;border:1px solid rgba(255,255,255,0.5);border-radius:20px;padding:6px 10px;cursor:pointer;font-size:12px;font-weight:600;background:transparent;color:#fff;">Last 48 hours</button>
+        <button type="button" class="tl-mode" data-mode="daily" style="flex:1;border:1px solid rgba(255,255,255,0.5);border-radius:20px;padding:6px 10px;cursor:pointer;font-size:12px;font-weight:600;background:transparent;color:#fff;">Daily (noon)</button>
+      </div>
       <div id="lodgeDailyToastText" style="text-align:center;"></div>
-      <div style="display:grid;grid-template-columns:auto 1fr;gap:8px 10px;align-items:center;margin-top:14px;">
+      <div id="tlRecentOptions" style="display:grid;grid-template-columns:auto 1fr;gap:8px 10px;align-items:center;margin-top:14px;">
+        <label for="recentDuration">Seconds per image</label>
+        <input type="number" id="recentDuration" min="0.2" max="5" step="0.05" value="0.25" style="padding:4px 6px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px;color:#334155;background:#fff;width:72px;text-align:center;">
+      </div>
+      <div id="tlDailyOptions" style="display:grid;grid-template-columns:auto 1fr;gap:8px 10px;align-items:center;margin-top:14px;">
         <label for="timelapseStartDate">Start date</label>
         <select id="timelapseStartDate" style="padding:4px 6px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px;color:#334155;background:#fff;"></select>
         <label for="timelapseEndDate">End date</label>
         <select id="timelapseEndDate" style="padding:4px 6px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px;color:#334155;background:#fff;"></select>
-        <label for="timelapseImages">Images</label>
-        <select id="timelapseImages" style="padding:4px 6px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px;color:#334155;background:#fff;">
-          <option value="one">One image / day</option>
-          <option value="all">All images (nighttime: last 10 days)</option>
-        </select>
         <label for="timelapseDuration">Seconds per image</label>
         <input type="number" id="timelapseDuration" min="0.2" max="5" step="0.05" value="0.25" style="padding:4px 6px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px;color:#334155;background:#fff;width:72px;text-align:center;">
       </div>
@@ -1109,8 +1111,12 @@ if (savedFacebook !== null) document.getElementById('toggleFacebook').checked = 
 if (savedWebcams !== null) document.getElementById('toggleWebcams').checked = savedWebcams !== 'false';
 const savedSpecialNotes = localStorage.getItem('showSpecialNotes');
 if (savedSpecialNotes !== null) document.getElementById('toggleSpecialNotes').checked = savedSpecialNotes !== 'false';
-const savedTimelapseDuration = localStorage.getItem('timelapseDuration');
-if (savedTimelapseDuration !== null) document.getElementById('timelapseDuration').value = savedTimelapseDuration;
+// Each timelapse type keeps its own speed
+const DURATION_KEYS = { timelapseDuration: 'timelapseDuration', recentDuration: 'recentTimelapseDuration' };
+for (const [id, key] of Object.entries(DURATION_KEYS)) {
+  const saved = localStorage.getItem(key);
+  if (saved !== null) document.getElementById(id).value = saved;
+}
 applySettings();
 
 document.getElementById('toggleConditions').addEventListener('change', applySettings);
@@ -1122,15 +1128,17 @@ document.getElementById('toggleAlerts').addEventListener('change', applySettings
 document.getElementById('toggleFacebook').addEventListener('change', applySettings);
 document.getElementById('toggleWebcams').addEventListener('change', applySettings);
 document.getElementById('toggleSpecialNotes').addEventListener('change', applySettings);
-document.getElementById('timelapseDuration').addEventListener('change', (e) => {
-  let v = parseFloat(e.target.value);
-  if (isNaN(v) || v < 0.2 || v > 5) {
-    alert('Duration must be between 0.2 and 5 seconds.');
-    e.target.value = localStorage.getItem('timelapseDuration') || '0.25';
-    return;
-  }
-  localStorage.setItem('timelapseDuration', v);
-});
+for (const [id, key] of Object.entries(DURATION_KEYS)) {
+  document.getElementById(id).addEventListener('change', (e) => {
+    const v = parseFloat(e.target.value);
+    if (isNaN(v) || v < 0.2 || v > 5) {
+      alert('Duration must be between 0.2 and 5 seconds.');
+      e.target.value = localStorage.getItem(key) || '0.25';
+      return;
+    }
+    localStorage.setItem(key, v);
+  });
+}
 
 // Timelapse date range settings
 let _availableDates = [];
@@ -1180,9 +1188,6 @@ function syncDateDropdowns() {
   endSel.value = (endVal >= startVal && validEnd.includes(endVal)) ? endVal : validEnd[validEnd.length - 1];
 }
 
-const savedImages = localStorage.getItem('timelapseImages') || 'one';
-document.getElementById('timelapseImages').value = savedImages;
-
 document.getElementById('timelapseStartDate').addEventListener('change', (e) => {
   localStorage.setItem('timelapseStartDate', e.target.value);
   syncDateDropdowns();
@@ -1193,9 +1198,6 @@ document.getElementById('timelapseEndDate').addEventListener('change', (e) => {
   localStorage.setItem('timelapseEndDate', e.target.value);
 });
 
-document.getElementById('timelapseImages').addEventListener('change', (e) => {
-  localStorage.setItem('timelapseImages', e.target.value);
-});
 
 // Always load available dates on page load
 loadAvailableDates();
@@ -1204,6 +1206,7 @@ loadAvailableDates();
 let _lodgeAnimationFrames = [];
 let _lodgeAnimationIndex = 0;
 let _lodgeAnimationInterval = null;
+let _lodgeFrameMs = 250;
 
 function lodgeShowTimelapse(frames) {
   _lodgeAnimationFrames = frames;
@@ -1211,8 +1214,7 @@ function lodgeShowTimelapse(frames) {
   document.getElementById('lodgeLiveLink').style.display = 'none';
   document.getElementById('lodgeAnimationContainer').style.display = 'block';
   document.getElementById('lodgeFrameTotal').textContent = frames.length;
-  document.getElementById('lodgeRecentButton').style.display = 'none';
-  document.getElementById('lodgeDailyButton').style.display = 'none';
+  document.getElementById('lodgeTimelapseButton').style.display = 'none';
   document.getElementById('lodgeBackButton').style.display = '';
   document.getElementById('lodgeDailyToast').style.display = 'none';
   playLodgeAnimation();
@@ -1223,10 +1225,11 @@ function lodgeBackToLive() {
   _lodgePaused = false;
   document.getElementById('lodgeAnimationContainer').style.display = 'none';
   document.getElementById('lodgeLiveLink').style.display = '';
-  document.getElementById('lodgeRecentButton').style.display = '';
-  document.getElementById('lodgeDailyButton').style.display = '';
+  document.getElementById('lodgeTimelapseButton').style.display = '';
   document.getElementById('lodgeBackButton').style.display = 'none';
 }
+
+const RECENT_HOURS = 48;
 
 async function loadTimelapseFrames(mode) {
   const cacheBust = '?t=' + Date.now();
@@ -1235,16 +1238,14 @@ async function loadTimelapseFrames(mode) {
   const dates = await idxRes.json();
 
   let datesToLoad = [];
-  let imagesMode = 'all';
+  const cutoff = Date.now() - RECENT_HOURS * 60 * 60 * 1000;
 
   if (mode === 'recent') {
-    const cutoff = Date.now() - 24 * 60 * 60 * 1000;
     datesToLoad = dates.filter(d => new Date(d + 'T23:59:00Z').getTime() >= cutoff);
   } else {
     const startDate = document.getElementById('timelapseStartDate').value;
     const endDate = document.getElementById('timelapseEndDate').value;
     datesToLoad = dates.filter(d => d >= startDate && d <= endDate);
-    imagesMode = document.getElementById('timelapseImages').value;
   }
 
   const manifests = await Promise.all(datesToLoad.map(async date => {
@@ -1261,14 +1262,13 @@ async function loadTimelapseFrames(mode) {
     const lodgeTimes = manifest.lodge || [];
 
     if (mode === 'recent') {
-      const cutoff = Date.now() - 24 * 60 * 60 * 1000;
       for (const time of lodgeTimes) {
         const [hh, mm] = time.split('-');
         if (new Date(`${date}T${hh}:${mm}:00Z`).getTime() >= cutoff) {
           allFrames.push({ date, time });
         }
       }
-    } else if (imagesMode === 'one') {
+    } else {
       const noonUTC = 20 * 60; // noon Pacific ≈ 20:00 UTC
       let best = null, bestDiff = Infinity;
       for (const time of lodgeTimes) {
@@ -1277,53 +1277,44 @@ async function loadTimelapseFrames(mode) {
         if (diff < bestDiff) { bestDiff = diff; best = time; }
       }
       if (best) allFrames.push({ date, time: best });
-    } else {
-      for (const time of lodgeTimes) allFrames.push({ date, time });
     }
   }
   return allFrames;
 }
 
-document.getElementById('lodgeRecentButton').addEventListener('click', async (e) => {
-  e.stopPropagation(); e.preventDefault();
-  try {
-    const frames = await loadTimelapseFrames('recent');
-    if (!frames.length) { alert('No frames available from the last 24 hours.'); return; }
-    lodgeShowTimelapse(frames);
-  } catch (err) { alert('Unable to load timelapse: ' + err.message); }
-});
+let _tlMode = localStorage.getItem('timelapseMode') === 'daily' ? 'daily' : 'recent';
+let _recentCount = null;
 
-document.getElementById('lodgeDailyButton').addEventListener('click', async (e) => {
-  e.stopPropagation(); e.preventDefault();
-  try {
-    updateDailyToastText();
-    updateDailyEstimate();
-    document.getElementById('lodgeDailyToast').style.display = 'flex';
-    loadManifestCounts(_availableDates).then(updateDailyEstimate);
-  } catch (err) { alert('Unable to load timelapse: ' + err.message); }
-});
-
-function updateDailyToastText() {
-  const startVal = document.getElementById('timelapseStartDate').value;
-  const startFormatted = startVal
-    ? new Date(startVal + 'T12:00:00Z').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
-    : startVal;
-  const which = document.getElementById('timelapseImages').value === 'all' ? 'every saved image (nighttime only for the last 10 days)' : 'one image per day';
-  document.getElementById('lodgeDailyToastText').textContent =
-    `This will play a time lapse, ${which}, starting on the earliest date of ${startFormatted}.`;
+function tlDurationInput() {
+  return document.getElementById(_tlMode === 'recent' ? 'recentDuration' : 'timelapseDuration');
 }
-['timelapseStartDate', 'timelapseImages'].forEach(id =>
-  document.getElementById(id).addEventListener('change', updateDailyToastText));
 
-// Image counts per date, for the length estimate. No cache-buster, so repeat opens use the browser cache.
-const _manifestCounts = {};
-async function loadManifestCounts(dates) {
-  await Promise.all(dates.filter(d => !(d in _manifestCounts)).map(async d => {
-    try {
-      const res = await fetch(`frames/${d}/manifest.json`);
-      _manifestCounts[d] = res.ok ? ((await res.json()).lodge || []).length : 0;
-    } catch { _manifestCounts[d] = 0; }
-  }));
+function setTimelapseMode(mode) {
+  _tlMode = mode;
+  localStorage.setItem('timelapseMode', mode);
+  document.querySelectorAll('.tl-mode').forEach(b => {
+    const on = b.dataset.mode === mode;
+    b.style.background = on ? '#fff' : 'transparent';
+    b.style.color = on ? '#111' : '#fff';
+  });
+  document.getElementById('tlRecentOptions').style.display = mode === 'recent' ? 'grid' : 'none';
+  document.getElementById('tlDailyOptions').style.display = mode === 'daily' ? 'grid' : 'none';
+  updateTimelapseText();
+  updateTimelapseEstimate();
+}
+
+function updateTimelapseText() {
+  let text;
+  if (_tlMode === 'recent') {
+    text = `This will play a time lapse of every image from the last ${RECENT_HOURS} hours, including nighttime.`;
+  } else {
+    const startVal = document.getElementById('timelapseStartDate').value;
+    const startFormatted = startVal
+      ? new Date(startVal + 'T12:00:00Z').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+      : startVal;
+    text = `This will play a time lapse, one image per day (closest to noon), starting on the earliest date of ${startFormatted}.`;
+  }
+  document.getElementById('lodgeDailyToastText').textContent = text;
 }
 
 function formatPlayLength(sec) {
@@ -1332,23 +1323,37 @@ function formatPlayLength(sec) {
   return s ? `${m} min ${s} sec` : `${m} min`;
 }
 
-function updateDailyEstimate() {
+function updateTimelapseEstimate() {
   const el = document.getElementById('lodgeDailyEstimate');
-  const start = document.getElementById('timelapseStartDate').value;
-  const end = document.getElementById('timelapseEndDate').value;
-  const all = document.getElementById('timelapseImages').value === 'all';
-  const secs = parseFloat(document.getElementById('timelapseDuration').value);
-  const dates = _availableDates.filter(d => d >= start && d <= end);
-  if (!dates.length || !(secs > 0)) { el.textContent = ''; return; }
-  if (all && dates.some(d => !(d in _manifestCounts))) { el.textContent = 'Counting images…'; return; }
-  const count = all
-    ? dates.reduce((n, d) => n + _manifestCounts[d], 0)
-    : dates.filter(d => _manifestCounts[d] !== 0).length;
-  el.textContent = `${count.toLocaleString()} images · about ${formatPlayLength(count * secs)}`;
+  const secs = parseFloat(tlDurationInput().value);
+  let count;
+  if (_tlMode === 'recent') {
+    if (_recentCount === null) { el.textContent = 'Counting images…'; return; }
+    count = _recentCount;
+  } else {
+    const start = document.getElementById('timelapseStartDate').value;
+    const end = document.getElementById('timelapseEndDate').value;
+    count = _availableDates.filter(d => d >= start && d <= end).length;
+  }
+  el.textContent = count && secs > 0 ? `${count.toLocaleString()} images · about ${formatPlayLength(count * secs)}` : '';
 }
-['timelapseStartDate', 'timelapseEndDate', 'timelapseImages'].forEach(id =>
-  document.getElementById(id).addEventListener('change', updateDailyEstimate));
-document.getElementById('timelapseDuration').addEventListener('input', updateDailyEstimate);
+
+document.querySelectorAll('.tl-mode').forEach(b => b.addEventListener('click', () => setTimelapseMode(b.dataset.mode)));
+document.getElementById('timelapseStartDate').addEventListener('change', updateTimelapseText);
+['timelapseStartDate', 'timelapseEndDate'].forEach(id =>
+  document.getElementById(id).addEventListener('change', updateTimelapseEstimate));
+['timelapseDuration', 'recentDuration'].forEach(id =>
+  document.getElementById(id).addEventListener('input', updateTimelapseEstimate));
+
+document.getElementById('lodgeTimelapseButton').addEventListener('click', (e) => {
+  e.stopPropagation(); e.preventDefault();
+  _recentCount = null;
+  setTimelapseMode(_tlMode);
+  document.getElementById('lodgeDailyToast').style.display = 'flex';
+  loadTimelapseFrames('recent')
+    .then(frames => { _recentCount = frames.length; updateTimelapseEstimate(); })
+    .catch(() => { _recentCount = 0; updateTimelapseEstimate(); });
+});
 
 function closeDailyToast() { document.getElementById('lodgeDailyToast').style.display = 'none'; }
 document.getElementById('lodgeDailyCancelButton').addEventListener('click', closeDailyToast);
@@ -1361,9 +1366,13 @@ document.getElementById('lodgeDailyGoButton').addEventListener('click', async (e
   e.stopPropagation(); e.preventDefault();
   const toast = document.getElementById('lodgeDailyToast');
   try {
-    const frames = await loadTimelapseFrames('daily');
+    const frames = await loadTimelapseFrames(_tlMode);
     toast.style.display = 'none';
-    if (!frames.length) { alert('No frames available for the selected date range.'); return; }
+    if (!frames.length) {
+      alert(_tlMode === 'recent' ? `No frames available from the last ${RECENT_HOURS} hours.` : 'No frames available for the selected date range.');
+      return;
+    }
+    _lodgeFrameMs = Math.round(parseFloat(tlDurationInput().value) * 1000) || 250;
     lodgeShowTimelapse(frames);
   } catch (err) { toast.style.display = 'none'; alert('Unable to load timelapse: ' + err.message); }
 });
@@ -1394,7 +1403,7 @@ function showLodgeFrame(instant) {
     imgB.style.opacity = '0';
   } else {
     // Load into the hidden layer, then fade it in
-    const frameMs = Math.round(parseFloat(document.getElementById('timelapseDuration').value) * 1000) || 250;
+    const frameMs = _lodgeFrameMs;
     const fadeMs = Math.min(600, Math.round(frameMs * 0.6));
     clearTimeout(_lodgeFadeTimer);
     imgB.onload = () => {
@@ -1424,7 +1433,7 @@ let _lodgePaused = false;
 
 function playLodgeAnimation() {
   _lodgePaused = false;
-  const duration = Math.round(parseFloat(document.getElementById('timelapseDuration').value) * 1000) || 250;
+  const duration = _lodgeFrameMs;
   showLodgeFrame(true);
   if (_lodgeAnimationInterval) clearInterval(_lodgeAnimationInterval);
   _lodgeAnimationInterval = setInterval(() => {
