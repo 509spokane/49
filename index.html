@@ -1343,8 +1343,15 @@ document.querySelectorAll('.tl-mode').forEach(b => b.addEventListener('click', (
 ['timelapseDuration', 'recentDuration'].forEach(id =>
   document.getElementById(id).addEventListener('input', updateTimelapseEstimate));
 
+let _resumeAfterSettings = false;
+
 function openTimelapsePopup(e) {
   e.stopPropagation(); e.preventDefault();
+  if (_lodgeAnimationInterval) {
+    clearInterval(_lodgeAnimationInterval); _lodgeAnimationInterval = null;
+    _lodgePaused = true;
+    _resumeAfterSettings = true;
+  }
   _recentCount = null;
   setTimelapseMode(_tlMode);
   document.getElementById('lodgeDailyToast').style.display = 'flex';
@@ -1355,7 +1362,12 @@ function openTimelapsePopup(e) {
 document.getElementById('lodgeTimelapseButton').addEventListener('click', openTimelapsePopup);
 document.getElementById('lodgeSettingsButton').addEventListener('click', openTimelapsePopup);
 
-function closeDailyToast() { document.getElementById('lodgeDailyToast').style.display = 'none'; }
+function closeDailyToast() {
+  const toast = document.getElementById('lodgeDailyToast');
+  if (toast.style.display === 'none') return;
+  toast.style.display = 'none';
+  if (_resumeAfterSettings) { _resumeAfterSettings = false; playLodgeAnimation(); }
+}
 document.getElementById('lodgeDailyCancelButton').addEventListener('click', closeDailyToast);
 document.getElementById('lodgeDailyToast').addEventListener('click', (e) => {
   if (e.target.id === 'lodgeDailyToast') closeDailyToast();
@@ -1367,14 +1379,16 @@ document.getElementById('lodgeDailyGoButton').addEventListener('click', async (e
   const toast = document.getElementById('lodgeDailyToast');
   try {
     const frames = await loadTimelapseFrames(_tlMode);
-    toast.style.display = 'none';
     if (!frames.length) {
+      closeDailyToast();
       alert(_tlMode === 'recent' ? `No frames available from the last ${RECENT_HOURS} hours.` : 'No frames available for the selected date range.');
       return;
     }
+    _resumeAfterSettings = false;
+    toast.style.display = 'none';
     _lodgeFrameMs = Math.round(parseFloat(tlDurationInput().value) * 1000) || 250;
     lodgeShowTimelapse(frames);
-  } catch (err) { toast.style.display = 'none'; alert('Unable to load timelapse: ' + err.message); }
+  } catch (err) { closeDailyToast(); alert('Unable to load timelapse: ' + err.message); }
 });
 
 document.getElementById('lodgeBackButton').addEventListener('click', (e) => {
