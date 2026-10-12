@@ -472,11 +472,12 @@ body {
   <div id="lodgeCamLabel" class="cam-label">Lodge</div>
   <button id="lodgeTimelapseButton" type="button" style="position:absolute;top:36px;right:10px;background:rgba(0,0,0,0.6);color:#fff;border:none;border-radius:20px;padding:3px 9px;cursor:pointer;font-size:10px;font-weight:600;z-index:10;">▶ Timelapse</button>
   <button id="lodgeBackButton" type="button" style="display:none;position:absolute;top:36px;right:10px;background:rgba(0,0,0,0.6);color:#fff;border:none;border-radius:20px;padding:3px 9px;cursor:pointer;font-size:10px;font-weight:600;z-index:10;">← Back to Live View</button>
+  <button id="lodgeSettingsButton" type="button" style="display:none;position:absolute;top:60px;right:10px;background:rgba(0,0,0,0.6);color:#fff;border:none;border-radius:20px;padding:3px 9px;cursor:pointer;font-size:10px;font-weight:600;z-index:10;">⚙ Timelapse settings</button>
   <div id="lodgeDailyToast" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.55);z-index:1000;align-items:center;justify-content:center;padding:16px;">
     <div id="lodgeDailyCard" style="background:rgba(0,0,0,0.85);color:#fff;border-radius:12px;padding:16px 18px;font-size:13px;line-height:1.5;width:100%;max-width:340px;">
       <div style="display:flex;gap:8px;margin-bottom:12px;">
         <button type="button" class="tl-mode" data-mode="recent" style="flex:1;border:1px solid rgba(255,255,255,0.5);border-radius:20px;padding:6px 10px;cursor:pointer;font-size:12px;font-weight:600;background:transparent;color:#fff;">Last 48 hours</button>
-        <button type="button" class="tl-mode" data-mode="daily" style="flex:1;border:1px solid rgba(255,255,255,0.5);border-radius:20px;padding:6px 10px;cursor:pointer;font-size:12px;font-weight:600;background:transparent;color:#fff;">Daily (noon)</button>
+        <button type="button" class="tl-mode" data-mode="daily" style="flex:1;border:1px solid rgba(255,255,255,0.5);border-radius:20px;padding:6px 10px;cursor:pointer;font-size:12px;font-weight:600;background:transparent;color:#fff;">Multiple days</button>
       </div>
       <div id="lodgeDailyToastText" style="text-align:center;"></div>
       <div id="tlRecentOptions" style="display:grid;grid-template-columns:auto 1fr;gap:8px 10px;align-items:center;margin-top:14px;">
@@ -1216,6 +1217,7 @@ function lodgeShowTimelapse(frames) {
   document.getElementById('lodgeFrameTotal').textContent = frames.length;
   document.getElementById('lodgeTimelapseButton').style.display = 'none';
   document.getElementById('lodgeBackButton').style.display = '';
+  document.getElementById('lodgeSettingsButton').style.display = '';
   document.getElementById('lodgeDailyToast').style.display = 'none';
   playLodgeAnimation();
 }
@@ -1227,6 +1229,7 @@ function lodgeBackToLive() {
   document.getElementById('lodgeLiveLink').style.display = '';
   document.getElementById('lodgeTimelapseButton').style.display = '';
   document.getElementById('lodgeBackButton').style.display = 'none';
+  document.getElementById('lodgeSettingsButton').style.display = 'none';
 }
 
 const RECENT_HOURS = 48;
@@ -1308,11 +1311,7 @@ function updateTimelapseText() {
   if (_tlMode === 'recent') {
     text = `This will play a time lapse of every image from the last ${RECENT_HOURS} hours, including nighttime.`;
   } else {
-    const startVal = document.getElementById('timelapseStartDate').value;
-    const startFormatted = startVal
-      ? new Date(startVal + 'T12:00:00Z').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
-      : startVal;
-    text = `This will play a time lapse, one image per day (closest to noon), starting on the earliest date of ${startFormatted}.`;
+    text = 'This will play a time lapse, one image per day.';
   }
   document.getElementById('lodgeDailyToastText').textContent = text;
 }
@@ -1339,13 +1338,12 @@ function updateTimelapseEstimate() {
 }
 
 document.querySelectorAll('.tl-mode').forEach(b => b.addEventListener('click', () => setTimelapseMode(b.dataset.mode)));
-document.getElementById('timelapseStartDate').addEventListener('change', updateTimelapseText);
 ['timelapseStartDate', 'timelapseEndDate'].forEach(id =>
   document.getElementById(id).addEventListener('change', updateTimelapseEstimate));
 ['timelapseDuration', 'recentDuration'].forEach(id =>
   document.getElementById(id).addEventListener('input', updateTimelapseEstimate));
 
-document.getElementById('lodgeTimelapseButton').addEventListener('click', (e) => {
+function openTimelapsePopup(e) {
   e.stopPropagation(); e.preventDefault();
   _recentCount = null;
   setTimelapseMode(_tlMode);
@@ -1353,7 +1351,9 @@ document.getElementById('lodgeTimelapseButton').addEventListener('click', (e) =>
   loadTimelapseFrames('recent')
     .then(frames => { _recentCount = frames.length; updateTimelapseEstimate(); })
     .catch(() => { _recentCount = 0; updateTimelapseEstimate(); });
-});
+}
+document.getElementById('lodgeTimelapseButton').addEventListener('click', openTimelapsePopup);
+document.getElementById('lodgeSettingsButton').addEventListener('click', openTimelapsePopup);
 
 function closeDailyToast() { document.getElementById('lodgeDailyToast').style.display = 'none'; }
 document.getElementById('lodgeDailyCancelButton').addEventListener('click', closeDailyToast);
