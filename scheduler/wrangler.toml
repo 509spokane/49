@@ -1,0 +1,8 @@
+name = "49-capture-scheduler"
+main = "src/index.js"
+compatibility_date = "2026-10-01"
+# No public URL: this Worker only runs on its cron schedule.
+workers_dev = false
+
+[triggers]
+crons = ["*/30 * * * *"]
