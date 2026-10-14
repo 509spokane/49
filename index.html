@@ -700,7 +700,7 @@ async function loadStats() {
       </div>
       <div class="stats-table">
         <div class="stats-row stat-labels">${stats.map(s => {
-          const mb = s.label === '12h' && parseFloat(s.val) > 6
+          const mb = s.label === '12h' && parseFloat(s.val) >= 5
             ? (() => { const g = randomSnowGif(); return `<span class="mb-wrap"><img class="mb-gif" src="${g.src}" style="width:${g.size}px;height:${g.size}px;" alt=""/></span>`; })()
             : '';
           return `<div>${s.label}${mb}</div>`;
@@ -792,7 +792,7 @@ async function loadForecast() {
 
     function needsMindBlown(formatted) {
       if (!formatted) return false;
-      return parseRange(formatted).max > 6;
+      return parseRange(formatted).max >= 5;
     }
 
     const _g = randomSnowGif();
