@@ -141,69 +141,30 @@ body {
 }
 .forecast-grid {
   display: flex;
-  gap: 6px;
+  gap: 5px;
   margin: 0 10px 10px;
+  position: relative;
 }
-.day-card {
-  flex: 1;
-  border-radius: 6px;
-  font-size: 13px;
-  text-align: center;
-}
-.day-card .day-header {
-  background: #94a3b8;
-  color: #fff;
-  font-weight: 700;
-  padding: 7px 4px;
-  font-size: 13px;
-  border-radius: 6px 6px 0 0;
-}
-.day-card .row-temp-day {
-  background: #fefce8;
-  color: #92400e;
-  font-weight: 600;
-  padding: 7px 4px;
-  font-size: 13px;
-}
-.day-card .row-snow-day {
-  background: #fffef5;
-  padding: 6px 4px;
-  border-top: 1px solid rgba(0,0,0,0.05);
-  min-height: 1.2em;
-}
-.day-card .night-label {
-  background: #e2e8f0;
-  color: #334155;
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.05em;
-  padding: 4px 2px;
-  text-transform: uppercase;
-  border-top: 1px solid rgba(0,0,0,0.08);
-}
-.day-card .row-temp-night {
-  background: #f1f5f9;
-  color: #334155;
-  font-weight: 600;
-  padding: 7px 4px;
-  font-size: 13px;
-}
-.day-card .row-snow-night {
-  background: #f8fafc;
-  padding: 6px 4px;
-  border-top: 1px solid rgba(0,0,0,0.05);
-  min-height: 1.2em;
-}
-.day-card .row-total {
-  background: #dde4ed;
-  color: #1e293b;
-  font-weight: 700;
-  font-size: 12px;
-  padding: 7px 4px;
-  border-top: 1px solid rgba(0,0,0,0.08);
-  min-height: 1.2em;
-  border-radius: 0 0 6px 6px;
-}
+/* Fixed row heights keep the five day columns aligned with the band labels */
+.fc-col { flex: 1; min-width: 0; text-align: center; font-size: 13px; }
+.fc-col > div { height: 30px; display: flex; align-items: center; justify-content: center; box-sizing: border-box; border-top: 1px solid rgba(0,0,0,0.05); white-space: nowrap; }
+.fc-col > .fc-h { border-top: none; background: #94a3b8; color: #fff; font-weight: 700; border-radius: 6px 6px 0 0; }
+.fc-col > .fc-band { height: 20px; background: #cbd5e1; border-top: none; }
+.fc-col > .fc-hi { background: #fefce8; color: #92400e; font-weight: 600; border-top: none; }
+.fc-col > .fc-sd { background: #fffef5; }
+.fc-col > .fc-lo { background: #f1f5f9; color: #334155; font-weight: 600; border-top: none; }
+.fc-col > .fc-sn { background: #f8fafc; }
+.fc-col > .fc-tot { height: 40px; flex-direction: column; gap: 1px; background: #dde4ed; color: #1e293b; font-weight: 700; font-size: 12px; }
+.fc-col > :last-child { border-radius: 0 0 6px 6px; }
+.fc-col > .fc-hi.warm { background: #fefacd; }
+.fc-col > .fc-lo.cold { background: #dbeafe; }
+.fc-tot-label { font-size: 10px; font-weight: 600; color: #64748b; letter-spacing: 0.04em; }
+/* Band words span from the right edge of the first day to the left edge of the last */
+.fc-band-label { position: absolute; background: #cbd5e1; display: flex; justify-content: space-between; align-items: flex-end; padding-bottom: 2px; box-sizing: border-box; color: #334155; font-size: 10px; font-weight: 700; line-height: 1; pointer-events: none; }
+.no-temp-only.hidden { display: none; }
+/* DM Sans has no slashed-zero glyph, so draw the slash over the 0 */
+.z0 { position: relative; display: inline-block; }
+.z0::after { content: ''; position: absolute; left: 50%; top: 52%; width: 0.09em; height: 0.78em; background: currentColor; transform: translate(-50%, -50%) rotate(32deg); border-radius: 1px; }
 .weather-temp.hidden { display: none; }
 .snow-label { font-size: 10px; font-weight: 500; color: #64748b; }
 .mb-wrap { position: relative; display: inline-block; width: 0; overflow: visible; }
@@ -361,13 +322,11 @@ body {
   transform: translateY(-50%) rotate(-45deg);
 }
 @media (max-width: 480px) and (orientation: portrait) {
-  .day-card { font-size: 10px; }
-  .day-card .day-header { font-size: 10px; padding: 5px 2px; }
-  .day-card .row-temp-day, .day-card .row-temp-night { font-size: 10px; padding: 5px 2px; }
-  .day-card .row-snow-day, .day-card .row-snow-night { font-size: 10px; padding: 4px 2px; }
-  .day-card .night-label { font-size: 8px; padding: 3px 1px; }
-  .day-card .row-total { font-size: 10px; padding: 5px 2px; }
   .forecast-grid { gap: 3px; }
+}
+@media (max-width: 359px) {
+  .fc-col { font-size: 11px; }
+  .fc-col .snow-label { font-size: 9px; }
 }
 .order-input {
   width: 32px;
@@ -633,6 +592,41 @@ body {
 const statsOverlay = document.getElementById('statsOverlay');
 
 const _snowGifs = ['angel.gif','dog.gif','mind_blown.gif','peanuts.gif','shocked.jpg'];
+// Running snow totals row: off for now (unclear whether it reads as daily or weekly)
+const SHOW_TOTALS = false;
+
+function slashZeros(root) {
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  const nodes = [];
+  while (walker.nextNode()) if (walker.currentNode.nodeValue.includes('0')) nodes.push(walker.currentNode);
+  for (const n of nodes) {
+    const frag = document.createDocumentFragment();
+    n.nodeValue.split(/(0)/).forEach(part => {
+      if (part === '0') { const z = document.createElement('span'); z.className = 'z0'; z.textContent = '0'; frag.appendChild(z); }
+      else if (part) frag.appendChild(document.createTextNode(part));
+    });
+    n.replaceWith(frag);
+  }
+}
+
+function placeForecastBands() {
+  const grid = document.getElementById('forecastGrid');
+  if (!grid || !grid.offsetParent) return;
+  const box = grid.getBoundingClientRect();
+  grid.querySelectorAll('.fc-band-label').forEach(label => {
+    const bands = grid.querySelectorAll(`.fc-col .fc-band[data-band="${label.dataset.band}"]`);
+    if (!bands.length) return;
+    const first = bands[0].getBoundingClientRect(), last = bands[bands.length - 1].getBoundingClientRect();
+    const inset = bands.length > 2;
+    Object.assign(label.style, {
+      left: `${first.left - box.left}px`, top: `${first.top - box.top}px`,
+      width: `${last.right - first.left}px`, height: `${first.height}px`,
+      paddingLeft: inset ? `${first.width}px` : '6px', paddingRight: inset ? `${last.width}px` : '6px',
+    });
+  });
+}
+window.addEventListener('resize', placeForecastBands);
+
 function randomSnowGif() {
   const name = _snowGifs[Math.floor(Math.random() * _snowGifs.length)];
   const size = { 'peanuts.gif': 56, 'shocked.jpg': 48 }[name] || 32;
@@ -714,6 +708,7 @@ async function loadStats() {
         <div class="stats-row stat-values">${stats.map(s => `<div>${s.val}" <span class="snow-label">Snow</span></div>`).join('')}</div>
       </div>
     `;
+    slashZeros(statsOverlay.querySelector('.stat-values'));
   } catch(e) {
     statsOverlay.textContent = "Data Error";
   }
@@ -862,38 +857,38 @@ async function loadForecast() {
       if (totalVal) hasAnyTotal = true;
 
       const headerName = isToday ? 'Today' : weekdayFor(day);
-      const dayTempStr = day && day.temperature != null ? `High: ${day.temperature}°` : '';
-      const nightTempStr = night && night.temperature != null ? `Low: ${night.temperature}°` : '';
-      const dayTempStyle = (day && day.temperature === maxHigh) ? ' style="background:#fefacd;"' : '';
-      const nightTempStyle = (night && night.temperature === minLow) ? ' style="background:#dbeafe;"' : '';
-
+      const warm = day && day.temperature != null && day.temperature === maxHigh ? ' warm' : '';
+      const cold = night && night.temperature != null && night.temperature === minLow ? ' cold' : '';
       const snowCell = (val, snowForGif) =>
-        `${val} <span class="snow-label">Snow</span>${needsMindBlown(snowForGif) ? mbGif : ''}`;
-
-      const daySnowCell = isToday && !day ? '&nbsp;'
-        : snowCell(daySnow || faintZero, daySnow);
-      const nightSnowCell = snowCell(nightSnow || faintZero, nightSnow);
-      const totalCell = isToday
-        ? '<span style="font-size:10px;font-weight:600;color:#64748b;letter-spacing:0.04em">TOTALS:</span>'
-        : (totalVal ? snowCell(totalVal, totalVal) : '&nbsp;');
+        `${val}&nbsp;<span class="snow-label">Snow</span>${needsMindBlown(snowForGif) ? mbGif : ''}`;
 
       const card = document.createElement('div');
-      card.className = 'day-card';
+      card.className = 'fc-col';
       card.innerHTML = `
-        <div class="day-header">${headerName}</div>
-        <div class="row-temp-day weather-temp${tempHidden}"${dayTempStyle}>${dayTempStr || '&nbsp;'}</div>
-        <div class="row-snow-day">${daySnowCell}</div>
-        <div class="night-label">Night</div>
-        <div class="row-temp-night weather-temp${tempHidden}"${nightTempStyle}>${nightTempStr || '&nbsp;'}</div>
-        <div class="row-snow-night">${nightSnowCell}</div>
-        <div class="row-total">${totalCell}</div>`;
+        <div class="fc-h">${headerName}</div>
+        <div class="fc-band" data-band="day"></div>
+        <div class="fc-hi weather-temp${tempHidden}${warm}">${day && day.temperature != null ? `${day.temperature}°` : '&nbsp;'}</div>
+        <div class="fc-sd">${isToday && !day ? '&nbsp;' : snowCell(daySnow || faintZero, daySnow)}</div>
+        <div class="fc-band" data-band="night"></div>
+        <div class="fc-lo weather-temp${tempHidden}${cold}">${night && night.temperature != null ? `${night.temperature}°` : '&nbsp;'}</div>
+        <div class="fc-sn">${snowCell(nightSnow || faintZero, nightSnow)}</div>
+        ${SHOW_TOTALS ? `<div class="fc-tot">${totalVal ? `<span class="fc-tot-label">TOTAL</span><span>${snowCell(totalVal, totalVal)}</span>` : ''}</div>` : ''}`;
       grid.appendChild(card);
     });
 
-    // Hide totals row entirely if no card has a visible cumulative total
-    if (!hasAnyTotal) {
-      grid.querySelectorAll('.row-total').forEach(el => el.remove());
-    }
+    if (SHOW_TOTALS && !hasAnyTotal) grid.querySelectorAll('.fc-tot').forEach(el => el.remove());
+
+    const spread = w => [...w].map(c => `<span>${c === ' ' ? '&nbsp;' : c}</span>`).join('');
+    const tempsOn = !tempHidden;
+    grid.insertAdjacentHTML('beforeend', [
+      ['day', 'DAYTIME HIGH', 'DAYTIME'],
+      ['night', 'OVERNIGHT LOW', 'OVERNIGHT'],
+    ].map(([band, withTemp, noTemp]) =>
+      `<div class="fc-band-label weather-temp${tempHidden}" data-band="${band}">${spread(withTemp)}</div>` +
+      `<div class="fc-band-label no-temp-only${tempsOn ? ' hidden' : ''}" data-band="${band}">${spread(noTemp)}</div>`
+    ).join(''));
+    slashZeros(grid);
+    placeForecastBands();
   } catch(e) {
     document.getElementById('forecastGrid').textContent = 'Forecast unavailable';
   }
@@ -1082,6 +1077,10 @@ function applySettings() {
   document.querySelectorAll('.weather-temp').forEach(el => {
     el.classList.toggle('hidden', !showWeather);
   });
+  document.querySelectorAll('.no-temp-only').forEach(el => {
+    el.classList.toggle('hidden', showWeather);
+  });
+  placeForecastBands();
   localStorage.setItem('showConditions', showConditions);
   localStorage.setItem('showForecast', showForecast);
   localStorage.setItem('showWeather', showWeather);
