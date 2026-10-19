@@ -56,6 +56,10 @@ td.num { font-variant-numeric: tabular-nums; }
 .src a { color: var(--series-1); text-decoration: none; }
 .src a:hover { text-decoration: underline; }
 </style>
+<script>
+// Settings > Text size scales the whole page (text and layout together) so everything stays aligned.
+(function () { const z = { large: 1.12, larger: 1.25 }[localStorage.getItem('textSize')]; if (z) document.documentElement.style.zoom = z; })();
+</script>
 </head>
 <body>
 <div class="top"><a href="./"><img src="49header.png" alt="49° North" /></a></div>
@@ -168,21 +172,24 @@ function renderChart() {
     } else {
       out += `<circle cx="${x(offset(s.start))}" cy="${cy}" r="5" fill="var(--series-1)" stroke="#fff" stroke-width="2"/>`;
     }
-    out += `<rect class="hit" data-i="${SEASONS.length - 1 - i}" x="0" y="${cy - rowH / 2}" width="${W}" height="${rowH}" fill="transparent"/>`;
+    out += `<rect class="hit" data-i="${SEASONS.length - 1 - i}" data-cy="${cy}" x="0" y="${cy - rowH / 2}" width="${W}" height="${rowH}" fill="transparent"/>`;
   });
   svg.innerHTML = out;
 
   const wrap = document.getElementById('chartWrap'), tip = document.getElementById('tip');
   const show = (e, rect) => {
     const s = SEASONS[rect.dataset.i];
-    const r = rect.getBoundingClientRect(), w = wrap.getBoundingClientRect();
-    const scale = r.width / W;
+    // Work in the wrap's own (unzoomed) pixels so Settings > Text size doesn't misplace the tip.
+    const svgBox = svg.getBoundingClientRect(), w = wrap.getBoundingClientRect();
+    const zoom = w.width / wrap.offsetWidth;
+    const scale = svgBox.width / zoom / W;
+    const svgLeft = (svgBox.left - w.left) / zoom, svgTop = (svgBox.top - w.top) / zoom;
     const markX = s.start ? x(mid(s)) * scale : x(8) * scale;
     tip.innerHTML = `<b>${shortSeason(s)}</b> · ${s.label || 'Opening day not found'}${s.start ? ' · ' + s.conf : ''}`;
     tip.hidden = false;
     const tw = tip.offsetWidth / 2;
-    tip.style.left = Math.min(Math.max(r.left - w.left + markX, tw + 4), w.width - tw - 4) + 'px';
-    tip.style.top = (r.top - w.top + r.height / 2 - 4) + 'px';
+    tip.style.left = Math.min(Math.max(svgLeft + markX, tw + 4), wrap.offsetWidth - tw - 4) + 'px';
+    tip.style.top = (svgTop + rect.dataset.cy * scale - 4) + 'px';
   };
   svg.querySelectorAll('.hit').forEach(rect => {
     rect.addEventListener('mouseenter', e => show(e, rect));

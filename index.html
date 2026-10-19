@@ -331,7 +331,8 @@ body {
 @media (max-width: 480px) and (orientation: portrait) {
   .forecast-grid { gap: 3px; }
 }
-@media (max-width: 359px) {
+#forecastGrid { container-type: inline-size; }
+@container (max-width: 340px) {
   .fc-col { font-size: 11px; }
   .fc-col .snow-label { font-size: 9px; }
 }
@@ -350,6 +351,10 @@ body {
 .order-input::-webkit-outer-spin-button,
 .order-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 </style>
+<script>
+// Settings > Text size scales the whole page (text and layout together) so everything stays aligned.
+(function () { const z = { large: 1.12, larger: 1.25 }[localStorage.getItem('textSize')]; if (z) document.documentElement.style.zoom = z; })();
+</script>
 </head>
 <body>
 <div id="fb-root"></div>
@@ -591,6 +596,14 @@ body {
       <span class="toggle-slider"></span>
     </label>
   </div>
+  <div class="settings-row" style="border-top:1px solid #e2e8f0;margin-top:4px;padding-top:11px;">
+    <label for="textSizeSelect">Text size</label>
+    <select id="textSizeSelect" style="padding:3px 6px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px;color:#334155;background:#fff;">
+      <option value="normal">Normal</option>
+      <option value="large">Large</option>
+      <option value="larger">Larger</option>
+    </select>
+  </div>
 </details>
 
 </div>
@@ -599,6 +612,15 @@ body {
 const statsOverlay = document.getElementById('statsOverlay');
 
 const _snowGifs = ['angel.gif','dog.gif','mind_blown.gif','peanuts.gif','shocked.jpg'];
+const TEXT_ZOOM = { normal: 1, large: 1.12, larger: 1.25 };
+const textSizeSelect = document.getElementById('textSizeSelect');
+textSizeSelect.value = TEXT_ZOOM[localStorage.getItem('textSize')] ? localStorage.getItem('textSize') : 'normal';
+textSizeSelect.addEventListener('change', () => {
+  localStorage.setItem('textSize', textSizeSelect.value);
+  document.documentElement.style.zoom = TEXT_ZOOM[textSizeSelect.value] === 1 ? '' : TEXT_ZOOM[textSizeSelect.value];
+  requestAnimationFrame(placeForecastBands);
+});
+
 // Running snow totals row: off for now (unclear whether it reads as daily or weekly)
 const SHOW_TOTALS = false;
 
@@ -619,16 +641,16 @@ function slashZeros(root) {
 function placeForecastBands() {
   const grid = document.getElementById('forecastGrid');
   if (!grid || !grid.offsetParent) return;
-  const box = grid.getBoundingClientRect();
+  // offset* values are relative to the grid and unaffected by the Text size zoom
   grid.querySelectorAll('.fc-band-label').forEach(label => {
     const bands = grid.querySelectorAll(`.fc-col .fc-band[data-band="${label.dataset.band}"]`);
     if (!bands.length) return;
-    const first = bands[0].getBoundingClientRect(), last = bands[bands.length - 1].getBoundingClientRect();
+    const first = bands[0], last = bands[bands.length - 1];
     const inset = bands.length > 2;
     Object.assign(label.style, {
-      left: `${first.left - box.left}px`, top: `${first.top - box.top}px`,
-      width: `${last.right - first.left}px`, height: `${first.height}px`,
-      paddingLeft: inset ? `${first.width}px` : '6px', paddingRight: inset ? `${last.width}px` : '6px',
+      left: `${first.offsetLeft}px`, top: `${first.offsetTop}px`,
+      width: `${last.offsetLeft + last.offsetWidth - first.offsetLeft}px`, height: `${first.offsetHeight}px`,
+      paddingLeft: inset ? `${first.offsetWidth}px` : '6px', paddingRight: inset ? `${last.offsetWidth}px` : '6px',
     });
   });
 }
