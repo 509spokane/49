@@ -112,6 +112,11 @@ body {
   height: auto;
   display: block;
 }
+.cam-unavailable { aspect-ratio: 16 / 9; background: #e2e8f0; color: #334155; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; text-align: center; }
+.cam-unavailable b { font-size: 17px; }
+.cam-unavailable span { font-size: 13px; color: #64748b; }
+.section.cam-down > a { display: none !important; }
+.section.cam-down > .cam-label, .section.timelapse-on > .cam-unavailable { display: none; }
 .cam-label {
   position: absolute;
   top: 8px;
@@ -366,7 +371,7 @@ body {
       </div>
     </div>
   </div>
-  <a href="opening-days.html" style="display:block;text-align:center;padding:7px 10px;font-size:13px;font-weight:600;color:#334155;text-decoration:none;background:#f1f5f9;border-bottom:1px solid #e2e8f0;">When will opening day arrive?</a>
+  <a href="opening-days.html" style="display:block;text-align:center;padding:7px 10px;font-size:15px;font-weight:700;color:#334155;text-decoration:none;background:#f1f5f9;border-bottom:1px solid #e2e8f0;">When will opening day arrive?</a>
   <div id="alertsSection" style="display:none;margin-top:6px;"></div>
 </div>
 
@@ -1212,6 +1217,7 @@ function lodgeShowTimelapse(frames) {
   _lodgeAnimationFrames = frames;
   _lodgeAnimationIndex = 0;
   document.getElementById('lodgeLiveLink').style.display = 'none';
+  document.getElementById('lodgeLiveLink').closest('.section').classList.add('timelapse-on');
   document.getElementById('lodgeAnimationContainer').style.display = 'block';
   document.getElementById('lodgeFrameTotal').textContent = frames.length;
   document.getElementById('lodgeTimelapseButton').style.display = 'none';
@@ -1226,6 +1232,7 @@ function lodgeBackToLive() {
   _lodgePaused = false;
   document.getElementById('lodgeAnimationContainer').style.display = 'none';
   document.getElementById('lodgeLiveLink').style.display = '';
+  document.getElementById('lodgeLiveLink').closest('.section').classList.remove('timelapse-on');
   document.getElementById('lodgeTimelapseButton').style.display = '';
   document.getElementById('lodgeBackButton').style.display = 'none';
   document.getElementById('lodgeSettingsButton').style.display = 'none';
@@ -1515,6 +1522,26 @@ document.getElementById('specialNotesHeader').addEventListener('click', () => {
     }));
   }
 });
+
+// Swap a webcam that fails to load for a "not available" panel; undo it if a later refresh succeeds.
+function watchWebcam(img) {
+  const section = img.closest('.section');
+  const name = (section.querySelector('.cam-label') || {}).textContent || img.alt.replace(/ Webcam$/, '');
+  const down = () => {
+    section.classList.add('cam-down');
+    if (!section.querySelector('.cam-unavailable')) {
+      section.insertAdjacentHTML('beforeend', `<div class="cam-unavailable"><b>${name}</b><span>Current image not available</span></div>`);
+    }
+  };
+  const up = () => {
+    section.classList.remove('cam-down');
+    section.querySelector('.cam-unavailable')?.remove();
+  };
+  img.addEventListener('error', down);
+  img.addEventListener('load', up);
+  if (img.complete && img.naturalWidth === 0) down();
+}
+document.querySelectorAll('#webcamSections .section > a > img').forEach(watchWebcam);
 
 // Refresh live Lodge image every 5 minutes to ensure it's always fresh
 // (even though captures happen every 30 min, users see the most current image available)
