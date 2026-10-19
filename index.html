@@ -650,6 +650,27 @@ function dateLabel(date, hourStr) {
   const dy = date.getDate().toString().padStart(2,'0');
   return `${mo}/${dy} ${hourStr}`;
 }
+// Resort report time, e.g. "06/25/26 2:10pm" -> "Today @ 2pm" / "110 days ago, 06/25 @ 2pm"
+function formatUpdated(str) {
+  const match = str.match(/(\d+)\/(\d+)\/(\d+)\s+(\d+):(\d+)(am|pm)/i);
+  if (!match) return str;
+  const [, mo, dy, yr, hr, min, ampm] = match;
+  const updated = new Date(2000 + parseInt(yr), parseInt(mo)-1, parseInt(dy));
+  const today = new Date(); today.setHours(0,0,0,0);
+  updated.setHours(0,0,0,0);
+  const diffDays = Math.round((today - updated) / 86400000);
+  const dateStr = `${mo.padStart(2,'0')}/${dy.padStart(2,'0')}`;
+  // Round to nearest hour
+  let h = parseInt(hr), isPM = ampm.toLowerCase() === 'pm';
+  if (isPM && h !== 12) h += 12; else if (!isPM && h === 12) h = 0;
+  if (parseInt(min) >= 30) h = (h + 1) % 24;
+  const rAmPm = h >= 12 ? 'pm' : 'am';
+  const timeStr = `@ ${h % 12 || 12}${rAmPm}`;
+  if (diffDays === 0) return `Today ${timeStr}`;
+  if (diffDays === 1) return `Yesterday ${timeStr}`;
+  return `${diffDays} days ago, ${dateStr} ${timeStr}`;
+}
+
 function asOfHtml(label) {
   const isToday = label.startsWith('Today');
   return `<span style="color:${isToday ? '#888' : '#ef4444'};">As of ${label}</span>`;
@@ -669,26 +690,6 @@ async function loadStats() {
     const data = await fetchWorker();
     const t = data.totals;
     if (!t) { statsOverlay.textContent = "Data Error"; return; }
-
-    function formatUpdated(str) {
-      const match = str.match(/(\d+)\/(\d+)\/(\d+)\s+(\d+):(\d+)(am|pm)/i);
-      if (!match) return str;
-      const [, mo, dy, yr, hr, min, ampm] = match;
-      const updated = new Date(2000 + parseInt(yr), parseInt(mo)-1, parseInt(dy));
-      const today = new Date(); today.setHours(0,0,0,0);
-      updated.setHours(0,0,0,0);
-      const diffDays = Math.round((today - updated) / 86400000);
-      const dateStr = `${mo.padStart(2,'0')}/${dy.padStart(2,'0')}`;
-      // Round to nearest hour
-      let h = parseInt(hr), isPM = ampm.toLowerCase() === 'pm';
-      if (isPM && h !== 12) h += 12; else if (!isPM && h === 12) h = 0;
-      if (parseInt(min) >= 30) h = (h + 1) % 24;
-      const rAmPm = h >= 12 ? 'pm' : 'am';
-      const timeStr = `@ ${h % 12 || 12}${rAmPm}`;
-      if (diffDays === 0) return `Today ${timeStr}`;
-      if (diffDays === 1) return `Yesterday ${timeStr}`;
-      return `${diffDays} days ago, ${dateStr} ${timeStr}`;
-    }
 
     const stats = [
       { label: '12h',   val: t["12h"]       },
@@ -904,11 +905,10 @@ async function loadSpecialNotes() {
     const data = await fetchWorker();
     if (!data.specialNotes) return;
     document.getElementById('specialNotesOverlayText').textContent = data.specialNotes;
-    const now = new Date();
-    let hr = now.getHours(), ampm = hr >= 12 ? 'pm' : 'am';
-    hr = hr % 12 || 12;
+    // The notes have no date of their own; they're part of the conditions report, so use its "Last updated" time.
     const asOfEl = document.getElementById('specialNotesAsOf');
-    if (asOfEl) asOfEl.innerHTML = asOfHtml(dateLabel(now, `@ ${hr}${ampm}`));
+    const updated = data.totals && data.totals.updated;
+    if (asOfEl) asOfEl.innerHTML = updated ? asOfHtml(formatUpdated(updated)) : '';
     document.getElementById('specialNotesSection').dataset.loaded = 'true';
     applySettings();
   } catch(e) {}
