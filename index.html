@@ -332,6 +332,11 @@ body {
   .forecast-grid { gap: 3px; }
 }
 #forecastGrid { container-type: inline-size; }
+/* At Large/Larger text, put each "As of ..." on its own line under the section title */
+html.text-big #specialNotesHeader,
+html.text-big #statsOverlay .stats-header,
+html.text-big .forecast-caption:has(#noaaUpdated),
+html.text-big div:has(> #liftsAsOf) { flex-direction: column !important; align-items: flex-start !important; gap: 2px; }
 @container (max-width: 340px) {
   .fc-col { font-size: 11px; }
   .fc-col .snow-label { font-size: 9px; }
@@ -353,7 +358,7 @@ body {
 </style>
 <script>
 // Settings > Text size scales the whole page (text and layout together) so everything stays aligned.
-(function () { const z = { large: 1.12, larger: 1.25 }[localStorage.getItem('textSize')]; if (z) document.documentElement.style.zoom = z; })();
+(function () { const z = { large: 1.12, larger: 1.25 }[localStorage.getItem('textSize')]; if (z) { document.documentElement.style.zoom = z; document.documentElement.classList.add('text-big'); } })();
 </script>
 </head>
 <body>
@@ -618,6 +623,7 @@ textSizeSelect.value = TEXT_ZOOM[localStorage.getItem('textSize')] ? localStorag
 textSizeSelect.addEventListener('change', () => {
   localStorage.setItem('textSize', textSizeSelect.value);
   document.documentElement.style.zoom = TEXT_ZOOM[textSizeSelect.value] === 1 ? '' : TEXT_ZOOM[textSizeSelect.value];
+  document.documentElement.classList.toggle('text-big', TEXT_ZOOM[textSizeSelect.value] !== 1);
   requestAnimationFrame(placeForecastBands);
 });
 
