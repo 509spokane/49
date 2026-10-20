@@ -16,5 +16,11 @@
     "time": "14-31",
     "reason": "JPEG integrity check failed",
     "quarantined_at": "2026-10-19T14:31:05Z"
+  },
+  {
+    "date": "2026-10-20",
+    "time": "17-00",
+    "reason": "JPEG integrity check failed",
+    "quarantined_at": "2026-10-20T17:00:48Z"
   }
 ]
