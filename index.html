@@ -451,9 +451,10 @@ html.text-big div:has(> #liftsAsOf) { flex-direction: column !important; align-i
   <button id="lodgeSettingsButton" type="button" style="display:none;position:absolute;top:60px;right:10px;background:rgba(0,0,0,0.6);color:#fff;border:none;border-radius:20px;padding:3px 9px;cursor:pointer;font-size:10px;font-weight:600;z-index:20;">⚙ Timelapse settings</button>
   <div id="lodgeDailyToast" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.55);z-index:1000;align-items:center;justify-content:center;padding:16px;">
     <div id="lodgeDailyCard" style="background:rgba(0,0,0,0.85);color:#fff;border-radius:12px;padding:16px 18px;font-size:13px;line-height:1.5;width:100%;max-width:340px;">
-      <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px;">
-        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:13px;font-weight:600;"><input type="radio" name="tlMode" class="tl-mode" data-mode="recent" value="recent" checked style="accent-color:#fff;width:16px;height:16px;cursor:pointer;">Make a time-lapse of the last 48 hours</label>
-        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:13px;font-weight:600;"><input type="radio" name="tlMode" class="tl-mode" data-mode="daily" value="daily" style="accent-color:#fff;width:16px;height:16px;cursor:pointer;">Make a time-lapse for multiple days</label>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:8px;margin-bottom:12px;">
+        <div style="font-size:13px;font-weight:600;">Make a time-lapse of</div>
+        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:13px;font-weight:600;"><input type="radio" name="tlMode" class="tl-mode" data-mode="recent" value="recent" checked style="accent-color:#fff;width:16px;height:16px;cursor:pointer;">The last 48 hours</label>
+        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:13px;font-weight:600;"><input type="radio" name="tlMode" class="tl-mode" data-mode="daily" value="daily" style="accent-color:#fff;width:16px;height:16px;cursor:pointer;">Multiple days</label>
       </div>
       <div id="lodgeDailyToastText" style="text-align:center;"></div>
       <div id="tlRecentOptions" style="display:grid;grid-template-columns:auto 1fr;gap:8px 10px;align-items:center;margin-top:14px;">
