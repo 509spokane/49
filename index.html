@@ -453,7 +453,8 @@ html.text-big div:has(> #liftsAsOf) { flex-direction: column !important; align-i
     <div id="lodgeDailyCard" style="background:rgba(0,0,0,0.85);color:#fff;border-radius:12px;padding:16px 18px;font-size:13px;line-height:1.5;width:100%;max-width:340px;">
       <div style="display:flex;flex-direction:column;align-items:center;gap:8px;margin-bottom:12px;">
         <div style="font-size:13px;font-weight:600;">Make a time-lapse of</div>
-        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:13px;font-weight:600;"><input type="radio" name="tlMode" class="tl-mode" data-mode="recent" value="recent" checked style="accent-color:#fff;width:16px;height:16px;cursor:pointer;">The last 48 hours</label>
+        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:13px;font-weight:600;"><input type="radio" name="tlMode" class="tl-mode" data-mode="recent24" value="recent24" style="accent-color:#fff;width:16px;height:16px;cursor:pointer;">The last 24 hours</label>
+        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:13px;font-weight:600;"><input type="radio" name="tlMode" class="tl-mode" data-mode="recent48" value="recent48" checked style="accent-color:#fff;width:16px;height:16px;cursor:pointer;">The last 48 hours</label>
         <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:13px;font-weight:600;"><input type="radio" name="tlMode" class="tl-mode" data-mode="daily" value="daily" style="accent-color:#fff;width:16px;height:16px;cursor:pointer;">Multiple days</label>
       </div>
       <div id="lodgeDailyToastText" style="text-align:center;"></div>
@@ -1269,7 +1270,7 @@ function lodgeBackToLive() {
   document.getElementById('lodgeSettingsButton').style.display = 'none';
 }
 
-const RECENT_HOURS = 48;
+const MODE_HOURS = { recent24: 24, recent48: 48 };
 
 async function loadTimelapseFrames(mode) {
   const cacheBust = '?t=' + Date.now();
@@ -1278,9 +1279,10 @@ async function loadTimelapseFrames(mode) {
   const dates = await idxRes.json();
 
   let datesToLoad = [];
-  const cutoff = Date.now() - RECENT_HOURS * 60 * 60 * 1000;
+  const hours = MODE_HOURS[mode];
+  const cutoff = hours ? Date.now() - hours * 60 * 60 * 1000 : 0;
 
-  if (mode === 'recent') {
+  if (hours) {
     datesToLoad = dates.filter(d => new Date(d + 'T23:59:00Z').getTime() >= cutoff);
   } else {
     const startDate = document.getElementById('timelapseStartDate').value;
@@ -1301,7 +1303,7 @@ async function loadTimelapseFrames(mode) {
     const { date, manifest } = entry;
     const lodgeTimes = manifest.lodge || [];
 
-    if (mode === 'recent') {
+    if (hours) {
       for (const time of lodgeTimes) {
         const [hh, mm] = time.split('-');
         if (new Date(`${date}T${hh}:${mm}:00Z`).getTime() >= cutoff) {
@@ -1322,27 +1324,38 @@ async function loadTimelapseFrames(mode) {
   return allFrames;
 }
 
-let _tlMode = localStorage.getItem('timelapseMode') === 'daily' ? 'daily' : 'recent';
-let _recentCount = null;
+let _tlMode = (() => {
+  const m = localStorage.getItem('timelapseMode');
+  if (m === 'daily' || m === 'recent24' || m === 'recent48') return m;
+  if (m === 'recent') return 'recent48';
+  return 'recent48';
+})();
+let _recentCounts = { recent24: null, recent48: null };
 
 function tlDurationInput() {
-  return document.getElementById(_tlMode === 'recent' ? 'recentDuration' : 'timelapseDuration');
+  return document.getElementById(_tlMode === 'daily' ? 'timelapseDuration' : 'recentDuration');
 }
 
 function setTimelapseMode(mode) {
   _tlMode = mode;
   localStorage.setItem('timelapseMode', mode);
   document.querySelectorAll('.tl-mode').forEach(b => { b.checked = b.dataset.mode === mode; });
-  document.getElementById('tlRecentOptions').style.display = mode === 'recent' ? 'grid' : 'none';
+  const isRecent = mode in MODE_HOURS;
+  document.getElementById('tlRecentOptions').style.display = isRecent ? 'grid' : 'none';
   document.getElementById('tlDailyOptions').style.display = mode === 'daily' ? 'grid' : 'none';
   updateTimelapseText();
   updateTimelapseEstimate();
+  if (isRecent && _recentCounts[mode] === null) {
+    loadTimelapseFrames(mode)
+      .then(frames => { _recentCounts[mode] = frames.length; updateTimelapseEstimate(); })
+      .catch(() => { _recentCounts[mode] = 0; updateTimelapseEstimate(); });
+  }
 }
 
 function updateTimelapseText() {
   let text;
-  if (_tlMode === 'recent') {
-    text = `This will play a time lapse of every image from the last ${RECENT_HOURS} hours, including nighttime.`;
+  if (_tlMode in MODE_HOURS) {
+    text = `This will play a time lapse of every image from the last ${MODE_HOURS[_tlMode]} hours, including nighttime.`;
   } else {
     text = 'This will play a time lapse, one image per day.';
   }
@@ -1359,9 +1372,10 @@ function updateTimelapseEstimate() {
   const el = document.getElementById('lodgeDailyEstimate');
   const secs = parseFloat(tlDurationInput().value);
   let count;
-  if (_tlMode === 'recent') {
-    if (_recentCount === null) { el.textContent = 'Counting images…'; return; }
-    count = _recentCount;
+  if (_tlMode in MODE_HOURS) {
+    const c = _recentCounts[_tlMode];
+    if (c === null) { el.textContent = 'Counting images…'; return; }
+    count = c;
   } else {
     const start = document.getElementById('timelapseStartDate').value;
     const end = document.getElementById('timelapseEndDate').value;
@@ -1385,12 +1399,9 @@ function openTimelapsePopup(e) {
     _lodgePaused = true;
     _resumeAfterSettings = true;
   }
-  _recentCount = null;
+  _recentCounts = { recent24: null, recent48: null };
   setTimelapseMode(_tlMode);
   document.getElementById('lodgeDailyToast').style.display = 'flex';
-  loadTimelapseFrames('recent')
-    .then(frames => { _recentCount = frames.length; updateTimelapseEstimate(); })
-    .catch(() => { _recentCount = 0; updateTimelapseEstimate(); });
 }
 document.getElementById('lodgeTimelapseButton').addEventListener('click', openTimelapsePopup);
 document.getElementById('lodgeSettingsButton').addEventListener('click', openTimelapsePopup);
@@ -1414,7 +1425,7 @@ document.getElementById('lodgeDailyGoButton').addEventListener('click', async (e
     const frames = await loadTimelapseFrames(_tlMode);
     if (!frames.length) {
       closeDailyToast();
-      alert(_tlMode === 'recent' ? `No frames available from the last ${RECENT_HOURS} hours.` : 'No frames available for the selected date range.');
+      alert(_tlMode in MODE_HOURS ? `No frames available from the last ${MODE_HOURS[_tlMode]} hours.` : 'No frames available for the selected date range.');
       return;
     }
     _resumeAfterSettings = false;
