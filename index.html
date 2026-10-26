@@ -451,14 +451,14 @@ html.text-big div:has(> #liftsAsOf) { flex-direction: column !important; align-i
   <button id="lodgeSettingsButton" type="button" style="display:none;position:absolute;top:60px;right:10px;background:rgba(0,0,0,0.6);color:#fff;border:none;border-radius:20px;padding:3px 9px;cursor:pointer;font-size:10px;font-weight:600;z-index:20;">⚙ Timelapse settings</button>
   <div id="lodgeDailyToast" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.55);z-index:1000;align-items:center;justify-content:center;padding:16px;">
     <div id="lodgeDailyCard" style="background:rgba(0,0,0,0.85);color:#fff;border-radius:12px;padding:16px 18px;font-size:13px;line-height:1.5;width:100%;max-width:340px;">
-      <div style="display:flex;gap:8px;margin-bottom:12px;">
-        <button type="button" class="tl-mode" data-mode="recent" style="flex:1;border:1px solid rgba(255,255,255,0.5);border-radius:20px;padding:6px 10px;cursor:pointer;font-size:12px;font-weight:600;background:transparent;color:#fff;">Last 48 hours</button>
-        <button type="button" class="tl-mode" data-mode="daily" style="flex:1;border:1px solid rgba(255,255,255,0.5);border-radius:20px;padding:6px 10px;cursor:pointer;font-size:12px;font-weight:600;background:transparent;color:#fff;">Multiple days</button>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px;">
+        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:13px;font-weight:600;"><input type="radio" name="tlMode" class="tl-mode" data-mode="recent" value="recent" checked style="accent-color:#fff;width:16px;height:16px;cursor:pointer;">Last 48 hours</label>
+        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:13px;font-weight:600;"><input type="radio" name="tlMode" class="tl-mode" data-mode="daily" value="daily" style="accent-color:#fff;width:16px;height:16px;cursor:pointer;">Multiple days</label>
       </div>
       <div id="lodgeDailyToastText" style="text-align:center;"></div>
       <div id="tlRecentOptions" style="display:grid;grid-template-columns:auto 1fr;gap:8px 10px;align-items:center;margin-top:14px;">
         <label for="recentDuration">Seconds per image</label>
-        <input type="number" id="recentDuration" min="0.2" max="5" step="0.05" value="0.25" style="padding:4px 6px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px;color:#334155;background:#fff;width:72px;text-align:center;">
+        <input type="number" id="recentDuration" min="0.2" max="5" step="0.05" value="0.3" style="padding:4px 6px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px;color:#334155;background:#fff;width:72px;text-align:center;">
       </div>
       <div id="tlDailyOptions" style="display:grid;grid-template-columns:auto 1fr;gap:8px 10px;align-items:center;margin-top:14px;">
         <label for="timelapseStartDate">Start date</label>
@@ -466,12 +466,12 @@ html.text-big div:has(> #liftsAsOf) { flex-direction: column !important; align-i
         <label for="timelapseEndDate">End date</label>
         <select id="timelapseEndDate" style="padding:4px 6px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px;color:#334155;background:#fff;"></select>
         <label for="timelapseDuration">Seconds per image</label>
-        <input type="number" id="timelapseDuration" min="0.2" max="5" step="0.05" value="0.25" style="padding:4px 6px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px;color:#334155;background:#fff;width:72px;text-align:center;">
+        <input type="number" id="timelapseDuration" min="0.2" max="5" step="0.05" value="0.3" style="padding:4px 6px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px;color:#334155;background:#fff;width:72px;text-align:center;">
       </div>
       <div id="lodgeDailyEstimate" style="text-align:center;margin-top:12px;font-size:12px;color:#cbd5e1;"></div>
-      <div style="display:flex;gap:8px;justify-content:center;margin-top:12px;">
+      <div style="display:flex;flex-direction:column;align-items:center;gap:14px;margin-top:12px;">
+        <button id="lodgeDailyGoButton" type="button" style="background:#fff;color:#111;border:none;border-radius:20px;padding:6px 16px;cursor:pointer;font-size:12px;font-weight:600;">View time-lapse</button>
         <button id="lodgeDailyCancelButton" type="button" style="background:transparent;color:#fff;border:1px solid rgba(255,255,255,0.5);border-radius:20px;padding:6px 16px;cursor:pointer;font-size:12px;font-weight:600;">Cancel</button>
-        <button id="lodgeDailyGoButton" type="button" style="background:#fff;color:#111;border:none;border-radius:20px;padding:6px 16px;cursor:pointer;font-size:12px;font-weight:600;">Let's see it</button>
       </div>
     </div>
   </div>
@@ -1331,11 +1331,7 @@ function tlDurationInput() {
 function setTimelapseMode(mode) {
   _tlMode = mode;
   localStorage.setItem('timelapseMode', mode);
-  document.querySelectorAll('.tl-mode').forEach(b => {
-    const on = b.dataset.mode === mode;
-    b.style.background = on ? '#fff' : 'transparent';
-    b.style.color = on ? '#111' : '#fff';
-  });
+  document.querySelectorAll('.tl-mode').forEach(b => { b.checked = b.dataset.mode === mode; });
   document.getElementById('tlRecentOptions').style.display = mode === 'recent' ? 'grid' : 'none';
   document.getElementById('tlDailyOptions').style.display = mode === 'daily' ? 'grid' : 'none';
   updateTimelapseText();
@@ -1373,7 +1369,7 @@ function updateTimelapseEstimate() {
   el.textContent = count && secs > 0 ? `${count.toLocaleString()} images · about ${formatPlayLength(count * secs)}` : '';
 }
 
-document.querySelectorAll('.tl-mode').forEach(b => b.addEventListener('click', () => setTimelapseMode(b.dataset.mode)));
+document.querySelectorAll('.tl-mode').forEach(b => b.addEventListener('change', () => { if (b.checked) setTimelapseMode(b.dataset.mode); }));
 ['timelapseStartDate', 'timelapseEndDate'].forEach(id =>
   document.getElementById(id).addEventListener('change', updateTimelapseEstimate));
 ['timelapseDuration', 'recentDuration'].forEach(id =>

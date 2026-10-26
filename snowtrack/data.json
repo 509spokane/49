@@ -1,8 +1,13 @@
 {
- "generated": "2026-10-26T14:02-07:00",
+ "generated": "2026-10-26T15:15-07:00",
  "firstSnapshot": "2026-09-30",
  "snapshotCount": 24,
  "reportCount": 1,
+ "obsSources": {
+  "resort": 0,
+  "openmeteo": 14,
+  "snotel": 14
+ },
  "days": {
   "2026-10-01": {
    "fc": {
@@ -299,6 +304,15 @@
      "2": 0.0,
      "1": 0.0
     }
+   },
+   "obs": {
+    "in": 0.0,
+    "sources": {
+     "snotel": {
+      "bunchgrass": 0.0,
+      "quartz": 0.0
+     }
+    }
    }
   },
   "2026-10-13": {
@@ -324,6 +338,16 @@
      "3": 0.0,
      "2": 0.0
     }
+   },
+   "obs": {
+    "in": 0.0,
+    "sources": {
+     "openmeteo": 0.0,
+     "snotel": {
+      "bunchgrass": 0.0,
+      "quartz": 0.0
+     }
+    }
    }
   },
   "2026-10-14": {
@@ -346,6 +370,16 @@
      "4": 0.0,
      "3": 0.0
     }
+   },
+   "obs": {
+    "in": 0.0,
+    "sources": {
+     "openmeteo": 0.0,
+     "snotel": {
+      "bunchgrass": 0.0,
+      "quartz": 0.0
+     }
+    }
    }
   },
   "2026-10-15": {
@@ -367,6 +401,16 @@
      "5": 0.0,
      "4": 0.0,
      "1": 0.0
+    }
+   },
+   "obs": {
+    "in": 0.0,
+    "sources": {
+     "openmeteo": 0.0,
+     "snotel": {
+      "bunchgrass": 0.0,
+      "quartz": 0.0
+     }
     }
    }
   },
@@ -393,6 +437,16 @@
      "2": 0.0,
      "1": 0.0
     }
+   },
+   "obs": {
+    "in": 0.0,
+    "sources": {
+     "openmeteo": 0.0,
+     "snotel": {
+      "bunchgrass": 0.0,
+      "quartz": 0.0
+     }
+    }
    }
   },
   "2026-10-17": {
@@ -417,6 +471,16 @@
      "3": 0.0,
      "2": 0.0,
      "1": 0.0
+    }
+   },
+   "obs": {
+    "in": 0.0,
+    "sources": {
+     "openmeteo": 0.0,
+     "snotel": {
+      "bunchgrass": 0.0,
+      "quartz": 0.0
+     }
     }
    }
   },
@@ -443,6 +507,16 @@
      "2": 0.0,
      "1": 0.0
     }
+   },
+   "obs": {
+    "in": 0.0,
+    "sources": {
+     "openmeteo": 0.0,
+     "snotel": {
+      "bunchgrass": 0.0,
+      "quartz": 0.0
+     }
+    }
    }
   },
   "2026-10-19": {
@@ -467,6 +541,16 @@
      "3": 0.0,
      "2": 0.0,
      "1": 0.0
+    }
+   },
+   "obs": {
+    "in": 0.0,
+    "sources": {
+     "openmeteo": 0.0,
+     "snotel": {
+      "bunchgrass": 0.0,
+      "quartz": 0.0
+     }
     }
    }
   },
@@ -495,6 +579,16 @@
      "3": 0.0,
      "2": 0.0,
      "1": 0.0
+    }
+   },
+   "obs": {
+    "in": 0.0,
+    "sources": {
+     "openmeteo": 0.0,
+     "snotel": {
+      "bunchgrass": 0.0,
+      "quartz": 0.0
+     }
     }
    }
   },
@@ -527,6 +621,16 @@
      "2": 0.0,
      "1": 0.0
     }
+   },
+   "obs": {
+    "in": 0.0,
+    "sources": {
+     "openmeteo": 0.0,
+     "snotel": {
+      "bunchgrass": 0.0,
+      "quartz": 0.0
+     }
+    }
    }
   },
   "2026-10-22": {
@@ -557,6 +661,16 @@
      "3": 0.0,
      "2": 0.0,
      "1": 0.0
+    }
+   },
+   "obs": {
+    "in": 0.0,
+    "sources": {
+     "openmeteo": 0.0,
+     "snotel": {
+      "bunchgrass": 0.0,
+      "quartz": 0.0
+     }
     }
    }
   },
@@ -589,6 +703,16 @@
      "2": 0.0,
      "1": 0.0
     }
+   },
+   "obs": {
+    "in": 0.0,
+    "sources": {
+     "openmeteo": 0.0,
+     "snotel": {
+      "bunchgrass": 0.0,
+      "quartz": 0.0
+     }
+    }
    }
   },
   "2026-10-24": {
@@ -619,6 +743,16 @@
      "3": 0.0,
      "2": 0.0,
      "1": 0.0
+    }
+   },
+   "obs": {
+    "in": 0.0,
+    "sources": {
+     "openmeteo": 0.0,
+     "snotel": {
+      "bunchgrass": 0.0,
+      "quartz": 0.0
+     }
     }
    }
   },
@@ -651,6 +785,16 @@
      "2": 0.0,
      "1": 0.0
     }
+   },
+   "obs": {
+    "in": 0.0,
+    "sources": {
+     "openmeteo": 0.0,
+     "snotel": {
+      "bunchgrass": 0.0,
+      "quartz": 0.0
+     }
+    }
    }
   },
   "2026-10-26": {
@@ -681,6 +825,12 @@
      "3": 0.0,
      "2": 0.0,
      "1": 0.0
+    }
+   },
+   "obs": {
+    "in": 0.0,
+    "sources": {
+     "openmeteo": 0.0
     }
    }
   },

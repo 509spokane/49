@@ -23,6 +23,11 @@ FC_DIR = ROOT / "forecasts"
 REPORTS = ROOT / "reports.json"
 DATA = ROOT / "data.json"
 ALERT_STATE = ROOT / "alert_state.json"
+OBS_OM = ROOT / "obs_openmeteo.json"
+OBS_SNOTEL = ROOT / "obs_snotel.json"
+# Closest SNOTEL stations to 49° North (base 3,923 ft, summit 5,774 ft).
+SNOTEL_STATIONS = {"376:WA:SNTL": "bunchgrass", "707:WA:SNTL": "quartz"}
+OBS_LOOKBACK_DAYS = 14
 SITE_URL = "https://509spokane.github.io/49/"
 ALERT_MIN_IN = 0.1
 ALERT_RISE_IN = 1.0
@@ -108,6 +113,79 @@ def snapshot_report(now_pt):
     print(f"Saved new mountain report: updated {t.get('updated')}, 24h={t.get('24h')}")
 
 
+def fetch_openmeteo_past():
+    url = (
+        f"https://api.open-meteo.com/v1/forecast"
+        f"?latitude={LAT}&longitude={LON}&elevation={ELEV_M}"
+        f"&hourly=snowfall&past_days={OBS_LOOKBACK_DAYS}&forecast_days=1"
+        "&timezone=America/Los_Angeles"
+    )
+    d = get_json(url)
+    if not d or "hourly" not in d:
+        return None
+    return {"time_pt": d["hourly"]["time"], "snowfall_cm": d["hourly"]["snowfall"]}
+
+
+def fetch_snotel():
+    today = datetime.now(PT).date()
+    begin = today - timedelta(days=OBS_LOOKBACK_DAYS + 1)
+    triplets = ",".join(SNOTEL_STATIONS)
+    url = (
+        f"https://wcc.sc.egov.usda.gov/awdbRestApi/services/v1/data"
+        f"?stationTriplets={triplets}&elements=SNWD&duration=DAILY"
+        f"&beginDate={begin}&endDate={today}"
+    )
+    d = get_json(url)
+    if not d:
+        return None
+    depths = {name: {} for name in SNOTEL_STATIONS.values()}
+    for station in d:
+        name = SNOTEL_STATIONS.get(station.get("stationTriplet"))
+        if not name:
+            continue
+        for el in station.get("data", []):
+            if el.get("stationElement", {}).get("elementCode") != "SNWD":
+                continue
+            for v in el.get("values", []):
+                if v.get("value") is not None:
+                    depths[name][v["date"]] = v["value"]
+    return depths
+
+
+def openmeteo_past_by_date(now_pt):
+    om = fetch_openmeteo_past()
+    cache = load(OBS_OM, {})
+    if om:
+        times, vals = om["time_pt"], om["snowfall_cm"]
+        for i in range(1, OBS_LOOKBACK_DAYS + 1):
+            target = (now_pt.date() - timedelta(days=i - 1))
+            start, end = window(target)
+            # Only accept a day whose 06:00 window has fully elapsed.
+            if end > now_pt:
+                continue
+            total = om_total_in(times, vals, start, end)
+            if total is not None:
+                cache[str(target)] = round(total, 2)
+        save(OBS_OM, cache)
+    return cache
+
+
+def snotel_new_snow_by_date():
+    snot = fetch_snotel()
+    cache = load(OBS_SNOTEL, {})
+    if snot:
+        for name, series in snot.items():
+            for date_s, depth in series.items():
+                prev_s = str(datetime.fromisoformat(date_s).date() - timedelta(days=1))
+                prev = series.get(prev_s)
+                if prev is None:
+                    continue
+                new = round(max(0.0, depth - prev), 1)
+                cache.setdefault(date_s, {})[name] = new
+        save(OBS_SNOTEL, cache)
+    return cache
+
+
 def window(target):
     end = datetime(target.year, target.month, target.day, WINDOW_END_HOUR, tzinfo=PT)
     return end - timedelta(days=1), end
@@ -155,7 +233,9 @@ def morning_report_by_date(reports):
 
 def rebuild():
     reports = load(REPORTS, [])
-    obs = morning_report_by_date(reports)
+    obs_resort = morning_report_by_date(reports)
+    obs_om = load(OBS_OM, {})
+    obs_snotel = load(OBS_SNOTEL, {})
     days = {}
     snaps = sorted(FC_DIR.glob("*.json")) if FC_DIR.exists() else []
     for path in snaps:
@@ -175,16 +255,40 @@ def rebuild():
                     v = om_total_in(om["time_pt"], om[f"{src}_cm"], start, end)
                     if v is not None:
                         fc.setdefault(src, {})[lead] = round(v, 2)
-    for d, o in obs.items():
-        days.setdefault(d, {"fc": {}})["obs"] = o
+    for d in set(obs_resort) | set(obs_om) | set(obs_snotel):
+        sources = {}
+        if d in obs_resort:
+            sources["resort"] = obs_resort[d]
+        if d in obs_om:
+            sources["openmeteo"] = obs_om[d]
+        if d in obs_snotel:
+            sources["snotel"] = obs_snotel[d]
+        # Pick the best single number for the "obs.in" the chart reads:
+        # resort report when posted, else SNOTEL average, else OpenMeteo past-weather.
+        best = None
+        if "resort" in sources:
+            best = sources["resort"].get("in")
+        if best is None and "snotel" in sources:
+            vals = [v for v in sources["snotel"].values() if v is not None]
+            if vals:
+                best = round(sum(vals) / len(vals), 1)
+        if best is None and "openmeteo" in sources:
+            best = sources["openmeteo"]
+        days.setdefault(d, {"fc": {}})["obs"] = {"in": best, "sources": sources}
     save(DATA, {
         "generated": datetime.now(PT).isoformat(timespec="minutes"),
         "firstSnapshot": snaps[0].stem if snaps else None,
         "snapshotCount": len(snaps),
         "reportCount": len(reports),
+        "obsSources": {
+            "resort": len(obs_resort),
+            "openmeteo": len(obs_om),
+            "snotel": len(obs_snotel),
+        },
         "days": dict(sorted(days.items())),
     })
-    print(f"Rebuilt {DATA}: {len(days)} days, {len(snaps)} snapshots, {len(obs)} observed days")
+    print(f"Rebuilt {DATA}: {len(days)} days, {len(snaps)} snapshots, "
+          f"obs resort={len(obs_resort)} openmeteo={len(obs_om)} snotel={len(obs_snotel)}")
 
 
 def daily_snow_forecast(now_pt):
@@ -236,6 +340,8 @@ if __name__ == "__main__":
     if "--rebuild-only" not in sys.argv:
         snapshot_forecasts(now_pt)
         snapshot_report(now_pt)
+        openmeteo_past_by_date(now_pt)
+        snotel_new_snow_by_date()
         topic = os.environ.get("NTFY_TOPIC")
         if topic:
             snow_alert(now_pt, topic)
