@@ -218,6 +218,48 @@ def om_total_in(times, vals, start, end):
     return total_cm / 2.54 if hours >= 20 else None
 
 
+def season_start_date(now_pt):
+    y = now_pt.year if now_pt.month >= 9 else now_pt.year - 1
+    return datetime(y, 9, 1).date()
+
+
+def season_snowfall(reports, now_pt):
+    start = season_start_date(now_pt)
+    by_date = {}
+    for r in reports:
+        try:
+            u = datetime.strptime(r["updated"].strip().upper(), "%m/%d/%y %I:%M%p")
+        except (ValueError, TypeError, AttributeError, KeyError):
+            continue
+        if u.date() < start:
+            continue
+        prev = by_date.get(u.date())
+        if prev is None or r.get("fetched", "") < prev.get("fetched", ""):
+            by_date[u.date()] = r
+    daily = []
+    cum = 0.0
+    for d in sorted(by_date):
+        r = by_date[d]
+        try:
+            new24 = float(r.get("24h") or 0)
+        except (ValueError, TypeError):
+            new24 = 0.0
+        cum += new24
+        depth = None
+        try:
+            depth = float(r.get("summitDepth"))
+        except (ValueError, TypeError):
+            pass
+        daily.append({
+            "date": str(d),
+            "updated": r.get("updated"),
+            "new": round(new24, 1),
+            "cumulative": round(cum, 1),
+            "summitDepth": depth,
+        })
+    return {"seasonStart": str(start), "daily": daily}
+
+
 def morning_report_by_date(reports):
     by_date = {}
     for r in reports:
@@ -275,8 +317,9 @@ def rebuild():
         if best is None and "openmeteo" in sources:
             best = sources["openmeteo"]
         days.setdefault(d, {"fc": {}})["obs"] = {"in": best, "sources": sources}
+    now = datetime.now(PT)
     save(DATA, {
-        "generated": datetime.now(PT).isoformat(timespec="minutes"),
+        "generated": now.isoformat(timespec="minutes"),
         "firstSnapshot": snaps[0].stem if snaps else None,
         "snapshotCount": len(snaps),
         "reportCount": len(reports),
@@ -285,6 +328,7 @@ def rebuild():
             "openmeteo": len(obs_om),
             "snotel": len(obs_snotel),
         },
+        "season": season_snowfall(reports, now),
         "days": dict(sorted(days.items())),
     })
     print(f"Rebuilt {DATA}: {len(days)} days, {len(snaps)} snapshots, "

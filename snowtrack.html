@@ -38,6 +38,15 @@ tr.future td { color: #94a3b8; }
   </div>
 
   <div class="card">
+    <h2>Season snowfall</h2>
+    <p class="note">Each daily total is the first morning 24-hour new-snow number the resort posts. <b>Cumulative</b> adds them up. <b>Summit depth</b> is what the resort reports standing at the summit — the gap below cumulative is settling and melt.</p>
+    <div id="seasonSummary" class="status"></div>
+    <svg id="seasonChart" viewBox="0 0 480 180" preserveAspectRatio="none" style="display:none;width:100%;height:180px;margin-top:12px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;"></svg>
+    <div id="seasonChartLegend" class="note" style="display:none;margin-top:6px;text-align:center;"><span style="color:#0f172a;">■</span> Cumulative reported snowfall &nbsp; <span style="color:#0369a1;">■</span> Summit depth</div>
+    <div class="scroll" style="margin-top:12px;"><table id="seasonLog"></table></div>
+  </div>
+
+  <div class="card">
     <h2>Accuracy by days out</h2>
     <p class="note">
       Each forecast's predicted snow for a day is compared with 49°'s morning 24-hour new-snow report.
@@ -114,6 +123,81 @@ function renderLog(days) {
   document.getElementById('log').innerHTML = html;
 }
 
+function renderSeason(season) {
+  const summary = document.getElementById('seasonSummary');
+  const chart = document.getElementById('seasonChart');
+  const legend = document.getElementById('seasonChartLegend');
+  const table = document.getElementById('seasonLog');
+  if (!season || !season.daily?.length) {
+    summary.innerHTML = '<div>Waiting for 49° to post the first snow report of the season.</div>';
+    chart.style.display = 'none';
+    legend.style.display = 'none';
+    table.innerHTML = '';
+    return;
+  }
+  const d = season.daily;
+  const latest = d[d.length - 1];
+  const totalCum = latest.cumulative;
+  const depths = d.map(x => x.summitDepth).filter(x => x != null);
+  const depth = depths.length ? depths[depths.length - 1] : null;
+  const lost = depth != null ? Math.max(0, totalCum - depth) : null;
+  summary.innerHTML = `
+    <div><b>${totalCum.toFixed(1)}"</b>reported this season</div>
+    <div><b>${depth != null ? depth.toFixed(0) + '"' : '—'}</b>at summit now</div>
+    <div><b>${lost != null ? lost.toFixed(1) + '"' : '—'}</b>net lost (settling + melt)</div>`;
+
+  // Chart: cumulative + summit-depth lines, one tick per day the resort posted.
+  if (d.length >= 2) {
+    const W = 480, H = 180, PAD = { t: 10, r: 10, b: 22, l: 32 };
+    const start = new Date(d[0].date + 'T12:00:00Z').getTime();
+    const end = new Date(d[d.length - 1].date + 'T12:00:00Z').getTime();
+    const xSpan = Math.max(1, end - start);
+    const yMax = Math.max(totalCum, depth || 0, 1);
+    const niceMax = Math.ceil(yMax / 10) * 10 || 10;
+    const x = t => PAD.l + (t - start) / xSpan * (W - PAD.l - PAD.r);
+    const y = v => H - PAD.b - (v / niceMax) * (H - PAD.t - PAD.b);
+    const path = (pts) => 'M' + pts.map(([a, b]) => `${a.toFixed(1)},${b.toFixed(1)}`).join(' L');
+    const cumPts = d.map(r => [x(new Date(r.date + 'T12:00:00Z').getTime()), y(r.cumulative)]);
+    const depthPts = d.filter(r => r.summitDepth != null)
+      .map(r => [x(new Date(r.date + 'T12:00:00Z').getTime()), y(r.summitDepth)]);
+    // Y gridlines + labels
+    const ticks = 4;
+    let axis = '';
+    for (let i = 0; i <= ticks; i++) {
+      const v = (niceMax / ticks) * i;
+      const yy = y(v);
+      axis += `<line x1="${PAD.l}" y1="${yy}" x2="${W - PAD.r}" y2="${yy}" stroke="#e2e8f0" stroke-width="1"/>`;
+      axis += `<text x="${PAD.l - 4}" y="${yy + 3}" font-size="9" fill="#94a3b8" text-anchor="end">${v.toFixed(0)}"</text>`;
+    }
+    // X labels: first, middle, last
+    const xLabels = [d[0], d[Math.floor(d.length / 2)], d[d.length - 1]];
+    for (const r of xLabels) {
+      const xx = x(new Date(r.date + 'T12:00:00Z').getTime());
+      const lab = new Date(r.date + 'T12:00:00Z').toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
+      axis += `<text x="${xx}" y="${H - 6}" font-size="9" fill="#64748b" text-anchor="middle">${lab}</text>`;
+    }
+    let lines = `<path d="${path(cumPts)}" fill="none" stroke="#0f172a" stroke-width="1.8"/>`;
+    for (const [cx, cy] of cumPts) lines += `<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="2.5" fill="#0f172a"/>`;
+    if (depthPts.length) {
+      lines += `<path d="${path(depthPts)}" fill="none" stroke="#0369a1" stroke-width="1.8"/>`;
+      for (const [cx, cy] of depthPts) lines += `<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="2.5" fill="#0369a1"/>`;
+    }
+    chart.innerHTML = axis + lines;
+    chart.style.display = 'block';
+    legend.style.display = '';
+  } else {
+    chart.style.display = 'none';
+    legend.style.display = 'none';
+  }
+
+  let html = '<tr><th>Date</th><th>New</th><th>Cumulative</th><th>Summit depth</th><th>Net lost</th></tr>';
+  for (const r of [...d].reverse()) {
+    const l = r.summitDepth != null ? Math.max(0, r.cumulative - r.summitDepth) : null;
+    html += `<tr><td>${dayLabel(r.date)}</td><td>${r.new.toFixed(1)}"</td><td>${r.cumulative.toFixed(1)}"</td><td>${r.summitDepth != null ? r.summitDepth.toFixed(0) + '"' : '<span class="empty">—</span>'}</td><td>${l != null ? l.toFixed(1) + '"' : '<span class="empty">—</span>'}</td></tr>`;
+  }
+  table.innerHTML = html;
+}
+
 async function main() {
   try {
     const res = await fetch('snowtrack/data.json?t=' + Date.now());
@@ -134,6 +218,7 @@ async function main() {
       banner.textContent = "Forecasts are being saved every morning. Scoring starts once 49° begins posting daily 24-hour snow totals for the season.";
       banner.hidden = false;
     }
+    renderSeason(data.season);
     renderAccuracy(days);
     renderLog(days);
   } catch (err) {

@@ -8,6 +8,18 @@
   "openmeteo": 15,
   "snotel": 15
  },
+ "season": {
+  "seasonStart": "2026-09-01",
+  "daily": [
+   {
+    "date": "2026-10-27",
+    "updated": "10/27/26 7:48am",
+    "new": 1.0,
+    "cumulative": 1.0,
+    "summitDepth": null
+   }
+  ]
+ },
  "days": {
   "2026-10-01": {
    "fc": {
