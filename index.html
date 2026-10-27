@@ -785,6 +785,7 @@ async function loadForecast() {
       if (rangeMatch) return `${rangeMatch[1]}-${rangeMatch[2]}"`;
       const aroundMatch = s.match(/around (\d+) inch/);
       if (aroundMatch) return `~${aroundMatch[1]}"`;
+      if (/around an inch/.test(s)) return `~1"`;
       const upToMatch = s.match(/up to (\d+) inch/);
       if (upToMatch) return `up to ${upToMatch[1]}"`;
       const singleMatch = s.match(/^(\d+) inch/);
