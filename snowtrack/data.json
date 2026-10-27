@@ -1,12 +1,12 @@
 {
- "generated": "2026-10-26T18:30-07:00",
+ "generated": "2026-10-27T02:51-07:00",
  "firstSnapshot": "2026-09-30",
  "snapshotCount": 24,
  "reportCount": 1,
  "obsSources": {
   "resort": 0,
   "openmeteo": 14,
-  "snotel": 14
+  "snotel": 15
  },
  "days": {
   "2026-10-01": {
@@ -830,7 +830,11 @@
    "obs": {
     "in": 0.0,
     "sources": {
-     "openmeteo": 0.0
+     "openmeteo": 0.0,
+     "snotel": {
+      "bunchgrass": 0.0,
+      "quartz": 0.0
+     }
     }
    }
   },
