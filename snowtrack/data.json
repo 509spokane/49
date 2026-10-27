@@ -1,8 +1,8 @@
 {
- "generated": "2026-10-27T08:54-07:00",
+ "generated": "2026-10-27T13:44-07:00",
  "firstSnapshot": "2026-09-30",
  "snapshotCount": 25,
- "reportCount": 2,
+ "reportCount": 3,
  "obsSources": {
   "resort": 1,
   "openmeteo": 15,
