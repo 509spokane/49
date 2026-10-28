@@ -1,12 +1,12 @@
 {
- "generated": "2026-10-27T18:26-07:00",
+ "generated": "2026-10-28T03:37-07:00",
  "firstSnapshot": "2026-09-30",
  "snapshotCount": 25,
  "reportCount": 3,
  "obsSources": {
   "resort": 1,
   "openmeteo": 15,
-  "snotel": 15
+  "snotel": 16
  },
  "season": {
   "seasonStart": "2026-09-01",
@@ -887,7 +887,11 @@
       "in": 1.0,
       "updated": "10/27/26 7:48am"
      },
-     "openmeteo": 0.28
+     "openmeteo": 0.28,
+     "snotel": {
+      "bunchgrass": 4,
+      "quartz": 0.0
+     }
     }
    }
   },
