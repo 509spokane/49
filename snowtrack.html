@@ -222,7 +222,16 @@ async function main() {
     renderAccuracy(days);
     renderLog(days);
   } catch (err) {
-    document.getElementById('status').textContent = 'Unable to load tracker data: ' + err.message;
+    const status = document.getElementById('status');
+    status.innerHTML = '';
+    const msg = document.createElement('div');
+    msg.textContent = 'Unable to load tracker data: ' + err.message + '. ';
+    const retry = document.createElement('a');
+    retry.href = '#'; retry.textContent = 'Retry';
+    retry.style.color = '#0369a1';
+    retry.addEventListener('click', (e) => { e.preventDefault(); status.textContent = 'Loading…'; main(); });
+    msg.appendChild(retry);
+    status.appendChild(msg);
   }
 }
 main();

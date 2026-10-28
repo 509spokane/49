@@ -450,7 +450,8 @@ html.text-big div:has(> #liftsAsOf) { flex-direction: column !important; align-i
   <button id="lodgeBackButton" type="button" style="display:none;position:absolute;top:36px;right:10px;background:rgba(0,0,0,0.6);color:#fff;border:none;border-radius:20px;padding:3px 9px;cursor:pointer;font-size:10px;font-weight:600;z-index:20;">← Back to Live View</button>
   <button id="lodgeSettingsButton" type="button" style="display:none;position:absolute;top:60px;right:10px;background:rgba(0,0,0,0.6);color:#fff;border:none;border-radius:20px;padding:3px 9px;cursor:pointer;font-size:10px;font-weight:600;z-index:20;">⚙ Timelapse settings</button>
   <div id="lodgeDailyToast" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.55);z-index:1000;align-items:center;justify-content:center;padding:16px;">
-    <div id="lodgeDailyCard" style="background:rgba(0,0,0,0.85);color:#fff;border-radius:12px;padding:16px 18px;font-size:13px;line-height:1.5;width:100%;max-width:340px;">
+    <div id="lodgeDailyCard" style="position:relative;background:rgba(0,0,0,0.85);color:#fff;border-radius:12px;padding:16px 18px;font-size:13px;line-height:1.5;width:100%;max-width:340px;">
+      <button id="lodgeDailyCloseButton" type="button" aria-label="Close" style="position:absolute;top:8px;right:10px;background:transparent;color:#fff;border:none;font-size:20px;line-height:1;padding:4px 8px;cursor:pointer;">×</button>
       <div style="display:flex;flex-direction:column;align-items:center;gap:8px;margin-bottom:12px;">
         <div style="font-size:13px;font-weight:600;">Make a time-lapse of</div>
         <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:13px;font-weight:600;"><input type="radio" name="tlMode" class="tl-mode" data-mode="recent24" value="recent24" style="accent-color:#fff;width:16px;height:16px;cursor:pointer;">The last 24 hours</label>
@@ -471,9 +472,8 @@ html.text-big div:has(> #liftsAsOf) { flex-direction: column !important; align-i
         <input type="number" id="timelapseDuration" min="0.2" max="5" step="0.05" value="0.3" style="padding:4px 6px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px;color:#334155;background:#fff;width:72px;text-align:center;">
       </div>
       <div id="lodgeDailyEstimate" style="text-align:center;margin-top:12px;font-size:12px;color:#cbd5e1;"></div>
-      <div style="display:flex;flex-direction:column;align-items:center;gap:14px;margin-top:12px;">
+      <div style="display:flex;justify-content:center;margin-top:12px;">
         <button id="lodgeDailyGoButton" type="button" style="background:#fff;color:#111;border:none;border-radius:20px;padding:6px 16px;cursor:pointer;font-size:12px;font-weight:600;">View time-lapse</button>
-        <button id="lodgeDailyCancelButton" type="button" style="background:transparent;color:#fff;border:1px solid rgba(255,255,255,0.5);border-radius:20px;padding:6px 16px;cursor:pointer;font-size:12px;font-weight:600;">Cancel</button>
       </div>
     </div>
   </div>
@@ -1413,7 +1413,7 @@ function closeDailyToast() {
   toast.style.display = 'none';
   if (_resumeAfterSettings) { _resumeAfterSettings = false; playLodgeAnimation(); }
 }
-document.getElementById('lodgeDailyCancelButton').addEventListener('click', closeDailyToast);
+document.getElementById('lodgeDailyCloseButton').addEventListener('click', closeDailyToast);
 document.getElementById('lodgeDailyToast').addEventListener('click', (e) => {
   if (e.target.id === 'lodgeDailyToast') closeDailyToast();
 });
@@ -1492,10 +1492,17 @@ let _lodgePaused = false;
 
 function playLodgeAnimation() {
   _lodgePaused = false;
+  // Starting a fresh play from the end restarts from the first frame.
+  if (_lodgeAnimationIndex >= _lodgeAnimationFrames.length - 1) _lodgeAnimationIndex = 0;
   const duration = _lodgeFrameMs;
   showLodgeFrame(true);
   if (_lodgeAnimationInterval) clearInterval(_lodgeAnimationInterval);
   _lodgeAnimationInterval = setInterval(() => {
+    if (_lodgeAnimationIndex >= _lodgeAnimationFrames.length - 1) {
+      clearInterval(_lodgeAnimationInterval); _lodgeAnimationInterval = null;
+      _lodgePaused = true;
+      return;
+    }
     _lodgeAnimationIndex++;
     showLodgeFrame();
   }, duration);
