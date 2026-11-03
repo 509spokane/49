@@ -1204,11 +1204,11 @@ async function loadAvailableDates() {
       endSel.appendChild(new Option(formatDateLabel(d), d));
     });
 
-    // Default start = earliest, end = most recent
+    // Default start = earliest, end = most recent (always today, or yesterday if today's
+    // capture hasn't landed yet — never a saved older value).
     const savedStart = localStorage.getItem('timelapseStartDate');
-    const savedEnd = localStorage.getItem('timelapseEndDate');
     startSel.value = (savedStart && _availableDates.includes(savedStart)) ? savedStart : _availableDates[0];
-    endSel.value = (savedEnd && _availableDates.includes(savedEnd)) ? savedEnd : _availableDates[_availableDates.length - 1];
+    endSel.value = _availableDates[_availableDates.length - 1];
 
     syncDateDropdowns();
   } catch(e) {}
@@ -1344,6 +1344,11 @@ function setTimelapseMode(mode) {
   const isRecent = mode in MODE_HOURS;
   document.getElementById('tlRecentOptions').style.display = isRecent ? 'grid' : 'none';
   document.getElementById('tlDailyOptions').style.display = mode === 'daily' ? 'grid' : 'none';
+  if (mode === 'daily' && _availableDates.length) {
+    // Always jump the end date to today (= most recent captured date).
+    document.getElementById('timelapseEndDate').value = _availableDates[_availableDates.length - 1];
+    syncDateDropdowns();
+  }
   updateTimelapseText();
   updateTimelapseEstimate();
   if (isRecent && _recentCounts[mode] === null) {
