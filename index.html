@@ -119,6 +119,11 @@ body {
 .section.cam-down:has(#lodgeTimelapseButton) .cam-unavailable { text-align: left; padding-right: 100px; }
 .section.cam-down > a { display: none !important; }
 .section.cam-down > .cam-label, .section.timelapse-on > .cam-unavailable { display: none; }
+.cam-pill {
+  position: absolute; right: 10px;
+  background: rgba(0,0,0,0.6); color: #fff; border: none; border-radius: 20px;
+  padding: 3px 9px; cursor: pointer; font-size: 10px; font-weight: 600; z-index: 20;
+}
 .cam-label {
   position: absolute;
   top: 8px;
@@ -446,9 +451,9 @@ html.text-big div:has(> #liftsAsOf) { flex-direction: column !important; align-i
     </div>
   </div>
   <div id="lodgeCamLabel" class="cam-label">Lodge</div>
-  <button id="lodgeTimelapseButton" type="button" style="position:absolute;top:36px;right:10px;background:rgba(0,0,0,0.6);color:#fff;border:none;border-radius:20px;padding:3px 9px;cursor:pointer;font-size:10px;font-weight:600;z-index:20;">▶ Timelapse</button>
-  <button id="lodgeBackButton" type="button" style="display:none;position:absolute;top:36px;right:10px;background:rgba(0,0,0,0.6);color:#fff;border:none;border-radius:20px;padding:3px 9px;cursor:pointer;font-size:10px;font-weight:600;z-index:20;">← Back to Live View</button>
-  <button id="lodgeSettingsButton" type="button" style="display:none;position:absolute;top:60px;right:10px;background:rgba(0,0,0,0.6);color:#fff;border:none;border-radius:20px;padding:3px 9px;cursor:pointer;font-size:10px;font-weight:600;z-index:20;">⚙ Timelapse settings</button>
+  <button id="lodgeTimelapseButton" type="button" class="cam-pill" style="top:36px;">▶ Timelapse</button>
+  <button id="lodgeBackButton" type="button" class="cam-pill" style="top:36px;display:none;">← Back to Live View</button>
+  <button id="lodgeSettingsButton" type="button" class="cam-pill" style="top:60px;display:none;">⚙ Timelapse settings</button>
   <div id="lodgeDailyToast" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.55);z-index:1000;align-items:center;justify-content:center;padding:16px;">
     <div id="lodgeDailyCard" style="position:relative;background:rgba(0,0,0,0.85);color:#fff;border-radius:12px;padding:16px 18px;font-size:13px;line-height:1.5;width:100%;max-width:340px;">
       <button id="lodgeDailyCloseButton" type="button" aria-label="Close" style="position:absolute;top:8px;right:10px;background:transparent;color:#fff;border:none;font-size:20px;line-height:1;padding:4px 8px;cursor:pointer;">×</button>
@@ -708,11 +713,28 @@ function asOfHtml(label) {
   return `<span style="color:${isToday ? '#888' : '#ef4444'};">As of ${label}</span>`;
 }
 
+// One retry with a short backoff absorbs transient network blips / brief Pages redeploys
+// without the user seeing a "Failed to fetch" on first paint.
+async function fetchRetry(url, init = {}, tries = 2, delayMs = 1500) {
+  let lastErr;
+  for (let i = 0; i < tries; i++) {
+    try {
+      const res = await fetch(url, init);
+      if (res.ok || (res.status >= 400 && res.status < 500)) return res;
+      lastErr = new Error('HTTP ' + res.status);
+    } catch (err) {
+      lastErr = err;
+    }
+    if (i < tries - 1) await new Promise(r => setTimeout(r, delayMs));
+  }
+  throw lastErr;
+}
+
 // Single fetch for all ski49n.com data via Cloudflare Worker
 let _workerData = null;
 async function fetchWorker() {
   if (_workerData) return _workerData;
-  const res = await fetch('https://49.todd-0ce.workers.dev?t=' + Date.now());
+  const res = await fetchRetry('https://49.todd-0ce.workers.dev?t=' + Date.now());
   _workerData = await res.json();
   return _workerData;
 }
@@ -755,7 +777,7 @@ async function loadStats() {
 // Load 5-day snowfall forecast from NWS MapClick (mountain-elevation-aware)
 async function loadForecast() {
   try {
-    const res = await fetch('https://forecast.weather.gov/MapClick.php?lon=-117.56499767303468&lat=48.285800530169524&FcstType=json');
+    const res = await fetchRetry('https://forecast.weather.gov/MapClick.php?lon=-117.56499767303468&lat=48.285800530169524&FcstType=json');
     const data = await res.json();
 
     const names  = data.time.startPeriodName;
@@ -778,18 +800,34 @@ async function loadForecast() {
       const match = detail.match(/(?:Total (?:daytime|nighttime) snow accumulation|new snow accumulation) of ([^.]+)/i);
       if (!match) return '';
       let s = match[1].trim().toLowerCase().replace(/\s*possible\s*$/, '').trim();
+
+      // Idiomatic phrasings first — these have to match before we rewrite number words into digits,
+      // or "an inch or two" turns into "an inch or 2" and the idiom is lost.
       if (/less than half an inch/.test(s)) return '< .5"';
-      const ltMatch = s.match(/less than (\d+) inch/);
+      if (/less than an inch/.test(s)) return '< 1"';
+      if (/an inch or less/.test(s)) return '< 1"';
+      if (/an inch or two|inch or two/.test(s)) return '1-2"';
+      if (/around an inch/.test(s)) return '~1"';
+      if (/a couple of inches|a couple inches/.test(s)) return '~2"';
+      if (/a few inches/.test(s)) return '2-4"';
+      if (/several inches/.test(s)) return '3-5"';
+
+      // NWS spells small numbers out. Normalize so the digit-based patterns below cover both.
+      const WORDS = { one: '1', two: '2', three: '3', four: '4', five: '5', six: '6', seven: '7', eight: '8', nine: '9', ten: '10' };
+      s = s.replace(/\b(one|two|three|four|five|six|seven|eight|nine|ten)\b/g, (_, w) => WORDS[w]);
+
+      const ltMatch = s.match(/less than (\d+(?:\.\d+)?) inch/);
       if (ltMatch) return `< ${ltMatch[1]}"`;
-      const rangeMatch = s.match(/(\d+) to (\d+) inch/);
+      const rangeMatch = s.match(/(\d+) to (\d+) inch/) || s.match(/between (\d+) and (\d+) inch/);
       if (rangeMatch) return `${rangeMatch[1]}-${rangeMatch[2]}"`;
       const aroundMatch = s.match(/around (\d+) inch/);
       if (aroundMatch) return `~${aroundMatch[1]}"`;
-      if (/around an inch/.test(s)) return `~1"`;
-      const upToMatch = s.match(/up to (\d+) inch/);
+      const upToMatch = s.match(/up to (\d+(?:\.\d+)?) inch/);
       if (upToMatch) return `up to ${upToMatch[1]}"`;
-      const singleMatch = s.match(/^(\d+) inch/);
+      if (/half an inch/.test(s)) return '0.5"';
+      const singleMatch = s.match(/^(\d+(?:\.\d+)?) inch/);
       if (singleMatch) return `${singleMatch[1]}"`;
+
       return s;
     }
 
@@ -1018,7 +1056,7 @@ function renderAlerts() {
 
 async function loadAlerts() {
   try {
-    const res = await fetch('https://api.weather.gov/alerts/active?point=48.2858,-117.565');
+    const res = await fetchRetry('https://api.weather.gov/alerts/active?point=48.2858,-117.565');
     const data = await res.json();
     const features = (data.features || []).filter(f => f.properties && f.properties.event);
     if (!features.length) { renderAlerts(); return; }
@@ -1189,7 +1227,7 @@ function formatDateLabel(dateStr) {
 
 async function loadAvailableDates() {
   try {
-    const res = await fetch('frames/index.json?t=' + Date.now());
+    const res = await fetchRetry('frames/index.json?t=' + Date.now());
     if (!res.ok) return;
     _availableDates = await res.json();
     if (!_availableDates.length) return;
@@ -1246,6 +1284,11 @@ let _lodgeAnimationIndex = 0;
 let _lodgeAnimationInterval = null;
 let _lodgeFrameMs = 250;
 
+function pauseLodgeAnimation() {
+  if (_lodgeAnimationInterval) { clearInterval(_lodgeAnimationInterval); _lodgeAnimationInterval = null; }
+  _lodgePaused = true;
+}
+
 function lodgeShowTimelapse(frames) {
   _lodgeAnimationFrames = frames;
   _lodgeAnimationIndex = 0;
@@ -1275,7 +1318,7 @@ const MODE_HOURS = { recent24: 24, recent48: 48 };
 
 async function loadTimelapseFrames(mode) {
   const cacheBust = '?t=' + Date.now();
-  const idxRes = await fetch('frames/index.json' + cacheBust);
+  const idxRes = await fetchRetry('frames/index.json' + cacheBust);
   if (!idxRes.ok) throw new Error('Frame index not found');
   const dates = await idxRes.json();
 
@@ -1401,8 +1444,7 @@ let _resumeAfterSettings = false;
 function openTimelapsePopup(e) {
   e.stopPropagation(); e.preventDefault();
   if (_lodgeAnimationInterval) {
-    clearInterval(_lodgeAnimationInterval); _lodgeAnimationInterval = null;
-    _lodgePaused = true;
+    pauseLodgeAnimation();
     _resumeAfterSettings = true;
   }
   _recentCounts = { recent24: null, recent48: null };
@@ -1504,8 +1546,7 @@ function playLodgeAnimation() {
   if (_lodgeAnimationInterval) clearInterval(_lodgeAnimationInterval);
   _lodgeAnimationInterval = setInterval(() => {
     if (_lodgeAnimationIndex >= _lodgeAnimationFrames.length - 1) {
-      clearInterval(_lodgeAnimationInterval); _lodgeAnimationInterval = null;
-      _lodgePaused = true;
+      pauseLodgeAnimation();
       return;
     }
     _lodgeAnimationIndex++;
@@ -1516,28 +1557,22 @@ function playLodgeAnimation() {
 // Tap zones: left 30% = back 1 frame, middle 40% = pause/play, right 30% = forward 1 frame
 document.getElementById('lodgeTapBack').addEventListener('click', (e) => {
   e.stopPropagation();
-  if (_lodgeAnimationInterval) { clearInterval(_lodgeAnimationInterval); _lodgeAnimationInterval = null; }
-  _lodgePaused = true;
+  pauseLodgeAnimation();
   _lodgeAnimationIndex--;
   showLodgeFrame(true);
 });
 
 document.getElementById('lodgeTapFwd').addEventListener('click', (e) => {
   e.stopPropagation();
-  if (_lodgeAnimationInterval) { clearInterval(_lodgeAnimationInterval); _lodgeAnimationInterval = null; }
-  _lodgePaused = true;
+  pauseLodgeAnimation();
   _lodgeAnimationIndex++;
   showLodgeFrame(true);
 });
 
 document.getElementById('lodgeTapPause').addEventListener('click', (e) => {
   e.stopPropagation();
-  if (_lodgePaused) {
-    playLodgeAnimation();
-  } else {
-    if (_lodgeAnimationInterval) { clearInterval(_lodgeAnimationInterval); _lodgeAnimationInterval = null; }
-    _lodgePaused = true;
-  }
+  if (_lodgePaused) playLodgeAnimation();
+  else pauseLodgeAnimation();
 });
 
 
