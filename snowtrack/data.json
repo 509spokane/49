@@ -1,11 +1,11 @@
 {
- "generated": "2026-11-10T04:42-08:00",
+ "generated": "2026-11-10T12:29-08:00",
  "firstSnapshot": "2026-09-30",
  "snapshotCount": 33,
  "reportCount": 9,
  "obsSources": {
   "resort": 2,
-  "openmeteo": 28,
+  "openmeteo": 29,
   "snotel": 29
  },
  "season": {
@@ -1396,6 +1396,12 @@
      "4": 0.0,
      "3": 0.0,
      "2": 0.28
+    }
+   },
+   "obs": {
+    "in": 0.0,
+    "sources": {
+     "openmeteo": 0.0
     }
    }
   },
