@@ -1,11 +1,11 @@
 {
- "generated": "2026-11-19T05:17-08:00",
+ "generated": "2026-11-19T15:04-08:00",
  "firstSnapshot": "2026-09-30",
  "snapshotCount": 38,
- "reportCount": 10,
+ "reportCount": 11,
  "obsSources": {
-  "resort": 3,
-  "openmeteo": 37,
+  "resort": 4,
+  "openmeteo": 38,
   "snotel": 38
  },
  "season": {
@@ -37,6 +37,13 @@
     "updated": "11/14/26 7:37am",
     "new": 1.0,
     "cumulative": 6.0,
+    "summitDepth": 1.0
+   },
+   {
+    "date": "2026-11-19",
+    "updated": "11/19/26 8:12am",
+    "new": 1.0,
+    "cumulative": 7.0,
     "summitDepth": 1.0
    }
   ]
@@ -1657,6 +1664,16 @@
      "5": 0.0,
      "4": 0.0,
      "2": 0.22
+    }
+   },
+   "obs": {
+    "in": 1.0,
+    "sources": {
+     "resort": {
+      "in": 1.0,
+      "updated": "11/19/26 8:12am"
+     },
+     "openmeteo": 0.0
     }
    }
   },
