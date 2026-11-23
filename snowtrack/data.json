@@ -1,11 +1,11 @@
 {
- "generated": "2026-11-23T01:09-08:00",
+ "generated": "2026-11-23T14:04-08:00",
  "firstSnapshot": "2026-09-30",
  "snapshotCount": 41,
  "reportCount": 12,
  "obsSources": {
   "resort": 4,
-  "openmeteo": 41,
+  "openmeteo": 42,
   "snotel": 42
  },
  "season": {
@@ -1747,12 +1747,12 @@
     }
    },
    "obs": {
-    "in": 0.0,
+    "in": 0.5,
     "sources": {
      "openmeteo": 0.0,
      "snotel": {
       "bunchgrass": 0.0,
-      "quartz": 0.0
+      "quartz": 1
      }
     }
    }
@@ -1783,12 +1783,12 @@
     }
    },
    "obs": {
-    "in": 2.0,
+    "in": 1.5,
     "sources": {
      "openmeteo": 0.0,
      "snotel": {
       "bunchgrass": 2,
-      "quartz": 2
+      "quartz": 1
      }
     }
    }
@@ -1816,6 +1816,12 @@
      "3": 0.74,
      "2": 1.71,
      "1": 1.6
+    }
+   },
+   "obs": {
+    "in": 1.32,
+    "sources": {
+     "openmeteo": 1.32
     }
    }
   },
