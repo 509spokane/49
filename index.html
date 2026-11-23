@@ -95,6 +95,11 @@ body {
 .stats-row.stat-values > div:last-child { border-right: none; }
 .stats-row.stat-values > div:first-child { border-radius: 0 0 0 6px; }
 .stats-row.stat-values > div:last-child  { border-radius: 0 0 6px 0; }
+/* Reserve slot heights so late-arriving data doesn't push the webcam images down. */
+#secw-specialNotes { min-height: 78px; }
+#secw-snowfall { min-height: 91px; }
+#forecastGrid { min-height: 190px; }
+#secw-lifts { min-height: 116px; }
 #specialNotesDismissedHint {
   display: none;
   font-size: 11px;
