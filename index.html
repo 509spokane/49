@@ -117,7 +117,7 @@ body {
 /* Lodge keeps its Timelapse button: center it in the strip and make room for it */
 .section.cam-down #lodgeTimelapseButton { top: 50% !important; transform: translateY(-50%); }
 .section.cam-down:has(#lodgeTimelapseButton) .cam-unavailable { text-align: left; padding-right: 100px; }
-.section.cam-down > a { display: none !important; }
+.section.cam-down > .cam-img-wrap { display: none !important; }
 .section.cam-down > .cam-label, .section.timelapse-on > .cam-unavailable { display: none; }
 .cam-pill {
   position: absolute; right: 10px;
@@ -433,9 +433,9 @@ html.text-big div:has(> #liftsAsOf) { flex-direction: column !important; align-i
 <!-- Webcam sections -->
 <div id="webcamSections">
 <div class="section">
-  <a id="lodgeLiveLink" href="https://www.ski49n.com/webcams/lodge.jpg">
+  <div id="lodgeLiveLink" class="cam-img-wrap">
     <img id="lodgeLiveImage" src="https://www.ski49n.com/webcams/lodge.jpg" alt="Lodge Webcam" width="1600" height="900" />
-  </a>
+  </div>
   <div id="lodgeAnimationContainer" style="display:none;position:relative;">
     <img id="lodgeAnimationFrame" src="" alt="Timelapse frame" style="width:100%;display:block;" />
     <img id="lodgeAnimationFrameB" src="" alt="" style="width:100%;display:block;position:absolute;top:0;left:0;opacity:0;transition:opacity 0.6s ease;" />
@@ -484,15 +484,15 @@ html.text-big div:has(> #liftsAsOf) { flex-direction: column !important; align-i
   </div>
 </div>
 <div class="section">
-  <a href="https://www.ski49n.com/webcams/summit.jpg">
+  <div class="cam-img-wrap">
     <img src="https://www.ski49n.com/webcams/summit.jpg" alt="Summit Webcam" width="1600" height="900" />
-  </a>
+  </div>
   <div class="cam-label">Summit</div>
 </div>
 <div class="section">
-  <a href="https://www.ski49n.com/webcams/sunrise.jpg">
+  <div class="cam-img-wrap">
     <img src="https://www.ski49n.com/webcams/sunrise.jpg" alt="Chair 5 Webcam" width="1600" height="900" />
-  </a>
+  </div>
   <div class="cam-label">Chair 5</div>
 </div>
 </div>
@@ -1627,7 +1627,7 @@ function watchWebcam(img) {
   img.addEventListener('load', up);
   if (img.complete && img.naturalWidth === 0) down();
 }
-document.querySelectorAll('#webcamSections .section > a > img').forEach(watchWebcam);
+document.querySelectorAll('#webcamSections .section > .cam-img-wrap > img').forEach(watchWebcam);
 
 // Refresh live Lodge image every 5 minutes to ensure it's always fresh
 // (even though captures happen every 30 min, users see the most current image available)
