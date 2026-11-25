@@ -1,8 +1,8 @@
 {
- "generated": "2026-11-24T10:55-08:00",
+ "generated": "2026-11-24T19:03-08:00",
  "firstSnapshot": "2026-09-30",
  "snapshotCount": 42,
- "reportCount": 12,
+ "reportCount": 13,
  "obsSources": {
   "resort": 4,
   "openmeteo": 43,
@@ -51,6 +51,13 @@
     "updated": "11/22/26 1:12pm",
     "new": 4.0,
     "cumulative": 11.0,
+    "summitDepth": null
+   },
+   {
+    "date": "2026-11-24",
+    "updated": "11/24/26 12:11pm",
+    "new": 6.0,
+    "cumulative": 17.0,
     "summitDepth": null
    }
   ]
