@@ -95,6 +95,13 @@ body {
 .stats-row.stat-values > div:last-child { border-right: none; }
 .stats-row.stat-values > div:first-child { border-radius: 0 0 0 6px; }
 .stats-row.stat-values > div:last-child  { border-radius: 0 0 6px 0; }
+/* Forecast detail popup highlights */
+#forecastDetailBody .fc-day { margin-bottom: 12px; }
+#forecastDetailBody .fc-day-name { font-weight: 700; font-size: 13px; color: #334155; margin-bottom: 2px; }
+#forecastDetailBody .fc-day-text { color: #1f2937; }
+#forecastDetailBody mark.fc-snow { background: #dbeafe; color: #1e3a8a; padding: 0 2px; border-radius: 2px; }
+#forecastDetailBody mark.fc-inch { background: #fde68a; color: #78350f; padding: 0 2px; border-radius: 2px; font-weight: 600; }
+
 /* Reserve slot heights while data is loading so webcams don't jump down. Cleared once each section has loaded. */
 #secw-specialNotes.reserving { min-height: 78px; }
 #secw-snowfall.reserving { min-height: 91px; }
@@ -419,8 +426,17 @@ html.text-big div:has(> #liftsAsOf) { flex-direction: column !important; align-i
 
 <div id="secw-forecast">
 <!-- Forecast cards -->
-<div class="forecast-caption"><span><a href="https://forecast.weather.gov/MapClick.php?lon=-117.56499767303468&lat=48.285800530169524" target="_blank" style="color:inherit;text-decoration:none;">NOAA Snow Forecast ⧉</a></span><span id="noaaUpdated"></span></div>
+<div class="forecast-caption"><span><a href="#" id="noaaForecastLink" style="color:inherit;text-decoration:none;cursor:pointer;">NOAA Snow Forecast ⧉</a></span><span id="noaaUpdated"></span></div>
 <div class="forecast-grid reserving" id="forecastGrid"></div>
+</div>
+
+<div id="forecastDetailToast" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.55);z-index:1000;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto;">
+  <div id="forecastDetailCard" style="position:relative;background:#fff;color:#1f2937;border-radius:12px;padding:16px 18px 18px;font-size:14px;line-height:1.55;width:100%;max-width:520px;margin:24px 0;box-shadow:0 10px 30px rgba(0,0,0,0.2);">
+    <button id="forecastDetailClose" type="button" aria-label="Close" style="position:absolute;top:8px;right:10px;background:transparent;color:#334155;border:none;font-size:22px;line-height:1;padding:4px 8px;cursor:pointer;">×</button>
+    <div style="font-weight:700;font-size:13px;letter-spacing:0.08em;text-transform:uppercase;color:#888;margin-bottom:4px;padding-right:28px;">NOAA Detailed Forecast</div>
+    <a href="https://forecast.weather.gov/MapClick.php?lon=-117.56499767303468&lat=48.285800530169524" target="_blank" style="font-size:12px;color:#2563eb;text-decoration:none;">View full NOAA forecast ⧉</a>
+    <div id="forecastDetailBody" style="margin-top:12px;"></div>
+  </div>
 </div>
 
 <div id="secw-lifts" class="reserving">
@@ -779,6 +795,67 @@ async function loadStats() {
   }
 }
 
+// Full periods from the latest NOAA fetch — read by the detail popup.
+let _forecastPeriods = [];
+
+function highlightForecastText(text) {
+  const escape = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  const matches = [];
+  // snow / snowfall / snowing / snowy / snowflakes
+  for (const m of text.matchAll(/\bsnow(?:fall|ing|y|flakes?)?\b/gi)) {
+    matches.push({ start: m.index, end: m.index + m[0].length, cls: 'fc-inch-snow' });
+  }
+  // amount + inch(es): "3 inches", "2 to 4 inches", "around 3 inches", "less than an inch", "a few inches", etc.
+  const inchRe = /\b(?:(?:less than|around|up to|about|roughly|approximately)\s+)?(?:\d+(?:\.\d+)?(?:\s+to\s+\d+(?:\.\d+)?)?|an|half\s+an|a\s+half|a\s+quarter|a\s+tenth|a\s+couple(?:\s+of)?|a\s+few|several)\s+inch(?:es)?\b/gi;
+  for (const m of text.matchAll(inchRe)) {
+    matches.push({ start: m.index, end: m.index + m[0].length, cls: 'fc-inch' });
+  }
+  // Any bare inch/inches not already covered
+  for (const m of text.matchAll(/\binch(?:es)?\b/gi)) {
+    const start = m.index, end = start + m[0].length;
+    if (!matches.some(x => x.start <= start && x.end >= end)) {
+      matches.push({ start, end, cls: 'fc-inch' });
+    }
+  }
+  // Rename the snow-tagged entries now that overlaps are resolved
+  matches.forEach(m => { if (m.cls === 'fc-inch-snow') m.cls = 'fc-snow'; });
+  // Sort by start; drop any overlap (earlier wins)
+  matches.sort((a, b) => a.start - b.start);
+  const kept = [];
+  for (const m of matches) {
+    if (kept.length && m.start < kept[kept.length - 1].end) continue;
+    kept.push(m);
+  }
+  let out = '', pos = 0;
+  for (const m of kept) {
+    out += escape(text.slice(pos, m.start));
+    out += `<mark class="${m.cls}">${escape(text.slice(m.start, m.end))}</mark>`;
+    pos = m.end;
+  }
+  out += escape(text.slice(pos));
+  return out;
+}
+
+function openForecastDetail() {
+  const body = document.getElementById('forecastDetailBody');
+  if (!_forecastPeriods.length) {
+    body.innerHTML = '<div style="color:#64748b;">Forecast text not loaded yet.</div>';
+  } else {
+    body.innerHTML = _forecastPeriods.map(p => {
+      const text = (p.detailedForecast || '').trim();
+      if (!text) return '';
+      return `<div class="fc-day"><div class="fc-day-name">${p.name}</div><div class="fc-day-text">${highlightForecastText(text)}</div></div>`;
+    }).join('');
+  }
+  document.getElementById('forecastDetailToast').style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+
+function closeForecastDetail() {
+  document.getElementById('forecastDetailToast').style.display = 'none';
+  document.body.style.overflow = '';
+}
+
 // Load 5-day snowfall forecast from NWS MapClick (mountain-elevation-aware)
 async function loadForecast() {
   try {
@@ -791,13 +868,15 @@ async function loadForecast() {
     const texts  = data.data.text;
 
     const starts = data.time.startValidTime || [];
-    const periods = names.slice(0, 10).map((name, i) => ({
+    const allPeriods = names.map((name, i) => ({
       name,
       start: starts[i],
       temperature: parseInt(temps[i]) || null,
       detailedForecast: texts[i] || '',
       isDaytime: labels[i] === 'High'
     }));
+    _forecastPeriods = allPeriods;
+    const periods = allPeriods.slice(0, 10);
 
     function extractSnow(detail) {
       // MapClick: "Total daytime/nighttime snow accumulation of X"
@@ -1470,7 +1549,21 @@ document.getElementById('lodgeDailyCloseButton').addEventListener('click', close
 document.getElementById('lodgeDailyToast').addEventListener('click', (e) => {
   if (e.target.id === 'lodgeDailyToast') closeDailyToast();
 });
-document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeDailyToast(); });
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    closeDailyToast();
+    closeForecastDetail();
+  }
+});
+
+document.getElementById('noaaForecastLink').addEventListener('click', (e) => {
+  e.preventDefault();
+  openForecastDetail();
+});
+document.getElementById('forecastDetailClose').addEventListener('click', closeForecastDetail);
+document.getElementById('forecastDetailToast').addEventListener('click', (e) => {
+  if (e.target.id === 'forecastDetailToast') closeForecastDetail();
+});
 
 document.getElementById('lodgeDailyGoButton').addEventListener('click', async (e) => {
   e.stopPropagation(); e.preventDefault();
