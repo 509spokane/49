@@ -30,36 +30,6 @@
     "quarantined_at": "2026-11-01T23:30:38Z"
   },
   {
-    "date": "2026-11-17",
-    "time": "08-01",
-    "reason": "JPEG integrity check failed",
-    "quarantined_at": "2026-11-17T08:01:06Z"
-  },
-  {
-    "date": "2026-11-17",
-    "time": "09-01",
-    "reason": "JPEG integrity check failed",
-    "quarantined_at": "2026-11-17T09:01:02Z"
-  },
-  {
-    "date": "2026-11-17",
-    "time": "12-00",
-    "reason": "JPEG integrity check failed",
-    "quarantined_at": "2026-11-17T12:00:40Z"
-  },
-  {
-    "date": "2026-11-17",
-    "time": "13-00",
-    "reason": "JPEG integrity check failed",
-    "quarantined_at": "2026-11-17T13:00:37Z"
-  },
-  {
-    "date": "2026-11-17",
-    "time": "14-00",
-    "reason": "JPEG integrity check failed",
-    "quarantined_at": "2026-11-17T14:00:40Z"
-  },
-  {
     "date": "2026-11-23",
     "time": "21-01",
     "reason": "JPEG integrity check failed",
