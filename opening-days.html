@@ -30,11 +30,10 @@ h1 { font-size: 22px; margin: 10px 0 2px; }
 .lede { margin: 0 0 16px; color: var(--text-secondary); font-size: 14px; }
 .caption { font-weight: 700; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: #888; margin: 22px 0 8px; }
 
-.tiles { display: flex; flex-direction: column; gap: 6px; }
-.tile { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-.tile .k { font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-primary); font-weight: 800; }
-.tile .v { font-size: 16px; font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
-.tile .s { font-size: 12px; color: var(--text-muted); }
+.stat-sentences { display: flex; flex-direction: column; gap: 10px; margin-bottom: 4px; }
+.stat-sentences p { margin: 0; font-size: 15px; line-height: 1.5; color: var(--text-primary); }
+.stat-sentences b { font-weight: 700; }
+.stat-sentences .note { color: var(--text-muted); font-size: 13px; }
 
 .chart-wrap { position: relative; border: 1px solid var(--border); border-radius: 8px; padding: 10px 8px 4px; }
 .legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 12px; color: var(--text-secondary); padding: 0 4px 6px; align-items: center; }
@@ -68,7 +67,7 @@ td.num { font-variant-numeric: tabular-nums; }
   <h1>Opening Day History</h1>
   <p class="lede">When 49° North has opened for the ski season, 2000 through 2025.</p>
 
-  <div class="tiles" id="tiles"></div>
+  <div class="stat-sentences" id="tiles"></div>
 
   <div class="caption">Opening day by season</div>
   <div class="chart-wrap" id="chartWrap">
@@ -130,14 +129,13 @@ function renderTiles() {
   const all = dated.map(mid);
   const earliest = dated.reduce((a, b) => mid(b) < mid(a) ? b : a);
   const latest = dated.reduce((a, b) => mid(b) > mid(a) ? b : a);
-  const tiles = [
-    ['Typical opening', offsetLabel(median(all)), 'median, all seasons'],
-    ['Average opening', offsetLabel(mean(all)), `${dated.length} seasons with a date`],
-    ['Earliest', offsetLabel(mid(earliest)), shortSeason(earliest)],
-    ['Latest', offsetLabel(mid(latest)), shortSeason(latest)],
+  const sentences = [
+    `The typical opening day has been <b>${offsetLabel(median(all))}</b> <span class="note">(median across all seasons).</span>`,
+    `The average opening day has been <b>${offsetLabel(mean(all))}</b> <span class="note">(across ${dated.length} seasons with a confirmed date).</span>`,
+    `The earliest opening day was <b>${offsetLabel(mid(earliest))}</b>, in the <b>${shortSeason(earliest)}</b> season.`,
+    `The latest opening day was <b>${offsetLabel(mid(latest))}</b>, in the <b>${shortSeason(latest)}</b> season.`,
   ];
-  document.getElementById('tiles').innerHTML = tiles.map(([k, v, s]) =>
-    `<div class="tile"><div><div class="k">${k}</div><div class="s">${s}</div></div><div class="v">${v}</div></div>`).join('');
+  document.getElementById('tiles').innerHTML = sentences.map(s => `<p>${s}</p>`).join('');
 }
 
 function renderChart() {
